@@ -569,6 +569,38 @@ body {
   border-radius: 4px;
 }
 
+.dx-input,
+.dx-textarea,
+.dx-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--dx-bg);
+  border: 1px solid var(--dx-border-strong);
+  border-radius: 8px;
+  color: var(--dx-text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.dx-input:focus,
+.dx-textarea:focus,
+.dx-select:focus { border-color: var(--dx-purple); }
+.dx-textarea { resize: vertical; }
+
+.dx-links {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--dx-muted-soft);
+}
+.dx-links a {
+  color: #c4b5fd;
+  text-decoration: none;
+  font-weight: 600;
+}
+.dx-links a:hover { color: #ffffff; }
+
+
 .dx-auth-shell {
   min-height: 100vh;
   position: relative;
