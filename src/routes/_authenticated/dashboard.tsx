@@ -183,7 +183,7 @@ function Dashboard() {
                   </div>
                   <button
                     onClick={() => {
-                      fetch("/flow-extension.zip")
+                      fetch(`/flow-extension.zip?v=${Date.now()}`, { cache: "no-store" })
                         .then((res) => {
                           if (!res.ok) throw new Error(`Download failed: ${res.status}`);
                           return res.blob();
@@ -296,9 +296,9 @@ function Dashboard() {
               </ol>
             </div>
             <button
-              className="dx-btn dx-btn-premium"
+              className="dx-download-btn"
               onClick={() => {
-                fetch("/flow-extension.zip")
+                fetch(`/flow-extension.zip?v=${Date.now()}`, { cache: "no-store" })
                   .then((res) => {
                     if (!res.ok) throw new Error(`Download failed: ${res.status}`);
                     return res.blob();
@@ -313,7 +313,13 @@ function Dashboard() {
                   .catch((err) => alert(err.message));
               }}
             >
-              📥 Get Extension
+              <span className="dx-download-glow" />
+              <span className="dx-download-icon">📥</span>
+              <span className="dx-download-text">
+                <span className="dx-download-title">Download Extension</span>
+                <span className="dx-download-sub">Latest build · v3.5.0 · Always fresh</span>
+              </span>
+              <span className="dx-download-arrow">↓</span>
             </button>
           </section>
         </main>
