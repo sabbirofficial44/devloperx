@@ -1,12 +1,12 @@
-/* DeveloperX — Veu Unlimited popup
- * Fully connected to this project's server.
- */
+/* DeveloperX — Veu Unlimited popup */
 const DEFAULT_API = "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app";
 const FLOW_URL = "https://labs.google/fx/tools/flow";
+const FLOW_MATCH = /^https:\/\/labs\.google\/fx\/tools\/flow/i;
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
 
 const $ = (id) => document.getElementById(id);
 
+/* ---------------- storage ---------------- */
 async function getApiBase() {
   const { apiBase } = await chrome.storage.local.get("apiBase");
   const clean = (apiBase && apiBase.trim().replace(/\/$/, "")) || "";
@@ -20,14 +20,18 @@ async function setApiBase(v) {
   await chrome.storage.local.set({ apiBase: (v || "").trim().replace(/\/$/, "") || DEFAULT_API });
 }
 
-function fmtTime(mins) {
-  if (mins == null || isNaN(mins)) return "—";
-  mins = Math.max(0, Math.floor(mins));
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+/* ---------------- time format ---------------- */
+function fmtHMS(mins) {
+  if (mins == null || isNaN(mins)) return "--:--:--";
+  const totalSec = Math.max(0, Math.floor(Number(mins) * 60));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
+/* ---------------- api ---------------- */
 async function login(email, password) {
   const base = await getApiBase();
   const res = await fetch(`${base}/api/public/auth/login`, {
@@ -66,7 +70,6 @@ async function saveSession(payload) {
     apiBase: await getApiBase(),
     loggedInAt: Date.now(),
   });
-  // broadcast to background so overlay picks it up
   try { chrome.runtime.sendMessage({ type: "DX_SESSION_UPDATED" }); } catch {}
 }
 
@@ -77,7 +80,44 @@ async function clearSession() {
   try { chrome.runtime.sendMessage({ type: "DX_SESSION_CLEARED" }); } catch {}
 }
 
-function renderStatus(user, serverUrl) {
+/* ---------------- live countdown ---------------- */
+let liveTimer = null;
+let liveState = { credits: 0, unlimited: false, total: 1, syncedAt: 0 };
+
+function stopLive() { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } }
+
+function startLive() {
+  stopLive();
+  tickLive();
+  liveTimer = setInterval(tickLive, 1000);
+}
+
+function tickLive() {
+  if (liveState.unlimited) {
+    $("s-time").textContent = "∞ Unlimited";
+    $("s-credits").textContent = "∞";
+    $("s-bar").style.width = "100%";
+    return;
+  }
+  const elapsedSec = (Date.now() - liveState.syncedAt) / 1000;
+  const remainingMin = Math.max(0, liveState.credits - elapsedSec / 60);
+  $("s-time").textContent = fmtHMS(remainingMin);
+  $("s-credits").textContent = Math.max(0, Math.floor(remainingMin)).toLocaleString();
+  const total = Math.max(liveState.total, liveState.credits, 1);
+  const pct = Math.max(0, Math.min(100, (remainingMin / total) * 100));
+  $("s-bar").style.width = pct + "%";
+
+  if (remainingMin <= 0) {
+    $("s-plan").className = "badge danger";
+    $("s-alert").style.color = "#f87171";
+    $("s-alert").textContent = "Credits exhausted. Top up to continue.";
+    $("s-upgrade").classList.remove("hidden");
+    stopLive();
+  }
+}
+
+/* ---------------- render ---------------- */
+function renderStatus(user) {
   $("view-login").classList.add("hidden");
   $("view-status").classList.remove("hidden");
   $("s-name").textContent = user.name || user.email || "User";
@@ -87,17 +127,19 @@ function renderStatus(user, serverUrl) {
   $("s-plan").textContent = plan;
 
   const credits = Number(user.creditsLeft ?? 0);
-  $("s-credits").textContent = isUnlimited ? "∞" : credits.toLocaleString();
-  $("s-time").textContent = isUnlimited ? "Unlimited" : fmtTime(credits);
-
   const total = Number(user.creditsTotal || credits || 1);
-  const pct = isUnlimited ? 100 : Math.max(0, Math.min(100, (credits / Math.max(total, credits, 1)) * 100));
-  $("s-bar").style.width = pct + "%";
+
+  liveState = {
+    credits,
+    unlimited: isUnlimited,
+    total,
+    syncedAt: Date.now(),
+  };
 
   const alertEl = $("s-alert");
   const upgrade = $("s-upgrade");
   const planBadge = $("s-plan");
-  planBadge.classList.remove("warn","danger","ok");
+  planBadge.className = "badge";
   alertEl.textContent = "";
   upgrade.classList.add("hidden");
 
@@ -111,13 +153,15 @@ function renderStatus(user, serverUrl) {
   } else if (credits <= 60) {
     planBadge.classList.add("warn");
     alertEl.style.color = "#fbbf24";
-    alertEl.textContent = `Low balance — only ${fmtTime(credits)} left.`;
+    alertEl.textContent = `Low balance — only ${fmtHMS(credits)} left.`;
     upgrade.classList.remove("hidden");
   }
+
+  startLive();
 }
 
 async function refreshLive() {
-  const store = await chrome.storage.local.get(["userId","userEmail","userName","userPlan"]);
+  const store = await chrome.storage.local.get(["userId"]);
   if (!store.userId) return;
   try {
     const { data } = await fetchStatus(store.userId);
@@ -126,11 +170,12 @@ async function refreshLive() {
         creditsLeft: data.user.creditsLeft,
         userPlan: data.user.plan,
       });
-      renderStatus(data.user, await getApiBase());
+      renderStatus(data.user);
     }
-  } catch { /* offline; keep cached */ }
+  } catch { /* offline */ }
 }
 
+/* ---------------- init ---------------- */
 async function init() {
   const base = await getApiBase();
   $("api-base").value = base;
@@ -140,9 +185,9 @@ async function init() {
     renderStatus({
       id: store.userId, name: store.userName, email: store.userEmail,
       plan: store.userPlan, creditsLeft: store.creditsLeft,
-    }, base);
+    });
     refreshLive();
-    setInterval(refreshLive, 10000);
+    setInterval(refreshLive, 15000);
   }
 
   $("login-btn").addEventListener("click", async () => {
@@ -150,16 +195,14 @@ async function init() {
     errEl.textContent = "";
     const email = $("email").value.trim();
     const password = $("password").value;
-    const apiBase = $("api-base").value.trim();
     if (!email || !password) { errEl.textContent = "Enter email and password"; return; }
     btn.disabled = true; btn.textContent = "Signing in…";
     try {
-      await setApiBase(apiBase);
       const payload = await login(email, password);
       await saveSession(payload);
-      renderStatus(payload.user, await getApiBase());
+      renderStatus(payload.user);
       refreshLive();
-      setInterval(refreshLive, 10000);
+      setInterval(refreshLive, 15000);
     } catch (e) {
       errEl.textContent = e.message || "Login failed";
     } finally {
@@ -169,6 +212,7 @@ async function init() {
 
   $("logout-btn").addEventListener("click", async () => {
     await clearSession();
+    stopLive();
     $("view-status").classList.add("hidden");
     $("view-login").classList.remove("hidden");
   });
@@ -180,12 +224,11 @@ async function init() {
   $("inject-flow").addEventListener("click", injectAndOpenFlow);
 }
 
-const GOOGLE_DOMAINS = [".google.com", ".youtube.com", "accounts.google.com", "labs.google"];
-
+/* ---------------- inject flow ---------------- */
 function setStatus(msg, color) {
   const el = $("inject-status");
   el.textContent = msg || "";
-  el.style.color = color || "#9ba3b4";
+  el.style.color = color || "#a2acc0";
 }
 
 async function clearGoogleCookies() {
@@ -208,12 +251,8 @@ async function setCookie(c) {
   const path = c.path || "/";
   const url = `https://${host}${path}`;
   const details = {
-    url,
-    name: c.name,
-    value: String(c.value ?? ""),
-    path,
-    secure: c.secure !== false,
-    httpOnly: !!c.httpOnly,
+    url, name: c.name, value: String(c.value ?? ""), path,
+    secure: c.secure !== false, httpOnly: !!c.httpOnly,
   };
   if (domain.startsWith(".")) details.domain = domain;
   if (c.sameSite) {
@@ -223,6 +262,13 @@ async function setCookie(c) {
   }
   if (c.expirationDate && !c.session) details.expirationDate = Number(c.expirationDate);
   try { await chrome.cookies.set(details); return true; } catch { return false; }
+}
+
+async function getActiveTab() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    return tab || null;
+  } catch { return null; }
 }
 
 async function injectAndOpenFlow() {
@@ -235,19 +281,19 @@ async function injectAndOpenFlow() {
 
     const { status, data } = await fetchStatus(store.userId);
     if (status === 402 || data?.blocked || data?.disabled) {
-      setStatus("🚫 Credits exhausted — buy more via WhatsApp 01410014442", "#f87171");
+      setStatus("🚫 Credits exhausted — top up via WhatsApp", "#f87171");
       $("s-upgrade").classList.remove("hidden");
       btn.disabled = false;
       return;
     }
     if (!data?.valid || !Array.isArray(data.cookies) || data.cookies.length === 0) {
-      throw new Error(data?.message || "No live session cookies found. Click Fetch Live in admin panel, then try again.");
+      throw new Error(data?.message || "No live session cookies found.");
     }
 
     const plan = (data.user?.plan || "basic").toLowerCase();
     const credits = Number(data.user?.creditsLeft ?? 0);
     if (!UNLIMITED.has(plan) && credits <= 0) {
-      setStatus("🚫 Credits exhausted — buy more via WhatsApp 01410014442", "#f87171");
+      setStatus("🚫 Credits exhausted — top up via WhatsApp", "#f87171");
       $("s-upgrade").classList.remove("hidden");
       btn.disabled = false;
       return;
@@ -260,9 +306,21 @@ async function injectAndOpenFlow() {
     let ok = 0;
     for (const c of data.cookies) if (await setCookie(c)) ok++;
 
-    setStatus(`✅ Injected ${ok}/${data.cookies.length} — opening Flow…`, "#34d399");
     await chrome.storage.local.set({ creditsLeft: data.user?.creditsLeft, userPlan: data.user?.plan });
-    setTimeout(() => chrome.tabs.create({ url: FLOW_URL }), 500);
+    renderStatus(data.user);
+
+    // If active tab is already Flow → reload it in place, otherwise navigate/open.
+    const tab = await getActiveTab();
+    if (tab && tab.id != null && tab.url && FLOW_MATCH.test(tab.url)) {
+      setStatus(`✅ Injected ${ok}/${data.cookies.length} — reloading…`, "#34d399");
+      setTimeout(() => { try { chrome.tabs.reload(tab.id, { bypassCache: true }); } catch {} window.close(); }, 400);
+    } else if (tab && tab.id != null) {
+      setStatus(`✅ Injected ${ok}/${data.cookies.length} — opening Flow here…`, "#34d399");
+      setTimeout(() => { try { chrome.tabs.update(tab.id, { url: FLOW_URL }); } catch { chrome.tabs.create({ url: FLOW_URL }); } window.close(); }, 400);
+    } else {
+      setStatus(`✅ Injected ${ok}/${data.cookies.length} — opening Flow…`, "#34d399");
+      setTimeout(() => chrome.tabs.create({ url: FLOW_URL }), 400);
+    }
   } catch (e) {
     setStatus("❌ " + (e.message || "Injection failed"), "#f87171");
   } finally {
