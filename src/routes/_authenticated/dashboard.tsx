@@ -37,6 +37,7 @@ function normalizeWa(raw: string) {
 
 function Dashboard() {
   const fetchProfile = useServerFn(getMyProfile);
+  const fetchSettings = useServerFn(getSiteSettings);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -50,6 +51,13 @@ function Dashboard() {
     queryFn: () => fetchProfile(),
     refetchInterval: 15000,
   });
+
+  const { data: siteSettings } = useQuery({
+    queryKey: ["site-settings"],
+    queryFn: () => fetchSettings(),
+    staleTime: 60_000,
+  });
+  const UPGRADE_URL = normalizeWa(siteSettings?.whatsappNumber ?? siteSettings?.contactNumber ?? "01410014442");
 
   useEffect(() => {
     const t = setTimeout(() => setShowWelcome(false), 3000);
