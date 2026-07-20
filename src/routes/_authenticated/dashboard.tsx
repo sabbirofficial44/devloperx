@@ -9,8 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Veu Unlimited" },
-      { name: "description", content: "Veu Unlimited — AI video generation." },
+      { title: "Dashboard — DeveloperX" },
+      { name: "description", content: "DeveloperX dashboard — manage credits, extension, and Google Flow access." },
     ],
   }),
   component: Dashboard,
@@ -334,7 +334,7 @@ function Dashboard() {
               <span className="dx-download-icon">📥</span>
               <span className="dx-download-text">
                 <span className="dx-download-title">Download Extension</span>
-                <span className="dx-download-sub">Latest build · v3.5.0 · Always fresh</span>
+                <span className="dx-download-sub">Latest build · v3.7.0 · Always fresh</span>
               </span>
               <span className="dx-download-arrow">↓</span>
             </button>

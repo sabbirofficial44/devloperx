@@ -231,12 +231,14 @@ function setStatus(msg, color) {
   el.style.color = color || "#a2acc0";
 }
 
-// NOTE: We intentionally do NOT clear existing cookies before injecting.
-// chrome.cookies.set overwrites same-name cookies in place; touching
-// unrelated cookies (Google identity/trust) is what triggers the
-// "unusual activity" flow. Keep everything else intact.
+// Cookie injection strategy — MAX PERSISTENCE:
+// 1. Never touch unrelated cookies (would trip Google's anti-abuse)
+// 2. Overwrite same-name cookies in place, force 1-year expiry
+// 3. Triple-pass for critical auth cookies (SID/HSID/SSID/APISID/SAPISID/__Secure-*)
+// 4. Verify readback and retry failed critical cookies
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
+const AUTH_CRITICAL = /^(SID|HSID|SSID|APISID|SAPISID|SIDCC|LSID|OSID|ACCOUNT_CHOOSER|__Secure-(1?PSID|1?PAPISID|1?PSIDCC|1?PSIDTS|OSID|3PSID|3PAPISID)|__Host-)/i;
 
 function normalizeSameSite(v, secure) {
   const s = String(v || "").toLowerCase();
@@ -246,9 +248,9 @@ function normalizeSameSite(v, secure) {
   return secure ? "no_restriction" : "lax";
 }
 
-async function setCookie(c) {
+function buildCookieDetails(c) {
   const rawName = String(c.name || "");
-  if (!rawName) return false;
+  if (!rawName) return null;
   const isHost = rawName.startsWith("__Host-");
   const isSecurePrefix = rawName.startsWith("__Secure-") || isHost;
   const secure = isSecurePrefix ? true : c.secure !== false;
@@ -267,13 +269,16 @@ async function setCookie(c) {
     httpOnly: !!c.httpOnly,
     sameSite: normalizeSameSite(c.sameSite, secure),
   };
-  // __Host- cookies MUST NOT carry a domain attribute.
   if (!isHost && domain.startsWith(".")) details.domain = domain;
 
-  // Force long-lived; ignore short server expiries so the session sticks.
   const farFuture = Math.floor(Date.now() / 1000) + ONE_YEAR;
   details.expirationDate = Math.max(Number(c.expirationDate || 0), farFuture);
+  return details;
+}
 
+async function setCookie(c) {
+  const details = buildCookieDetails(c);
+  if (!details) return false;
   try {
     await chrome.cookies.set(details);
     return true;
@@ -289,6 +294,18 @@ async function setCookie(c) {
   }
 }
 
+async function verifyCookie(c) {
+  try {
+    const domain = c.domain || ".google.com";
+    const host = domain.replace(/^\./, "");
+    const url = `https://${host}${c.path || "/"}`;
+    const found = await chrome.cookies.get({ url, name: c.name });
+    return found && found.value === String(c.value ?? "");
+  } catch {
+    return false;
+  }
+}
+
 async function getActiveTab() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -299,7 +316,7 @@ async function getActiveTab() {
 async function injectAndOpenFlow() {
   const btn = $("inject-flow");
   btn.disabled = true;
-  setStatus("Verifying account…");
+  setStatus("🔒 Verifying session…");
   try {
     const store = await chrome.storage.local.get(["userId"]);
     if (!store.userId) throw new Error("Please sign in first.");
@@ -324,36 +341,52 @@ async function injectAndOpenFlow() {
       return;
     }
 
-    setStatus(`Injecting ${data.cookies.length} cookies…`);
-    // No pre-clear — overwrite same-name cookies in place; leave the rest.
+    const total = data.cookies.length;
+    setStatus(`🍪 Injecting ${total} cookies…`);
+
+    // Pass 1: set every cookie once
     let ok = 0;
     for (const c of data.cookies) {
       if (await setCookie(c)) ok++;
-      await new Promise((r) => setTimeout(r, 10));
+      await new Promise((r) => setTimeout(r, 8));
     }
-    // Second pass — re-apply high-priority auth cookies last so they win.
-    const AUTH_RE = /^(SID|HSID|SSID|APISID|SAPISID|SIDCC|LSID|OSID|ACCOUNT_CHOOSER|__Secure-|__Host-)/i;
-    for (const c of data.cookies) {
-      if (AUTH_RE.test(c.name || "")) {
+
+    // Pass 2 + 3: re-apply critical auth cookies so they win any race
+    const critical = data.cookies.filter((c) => AUTH_CRITICAL.test(c.name || ""));
+    for (let pass = 0; pass < 2; pass++) {
+      for (const c of critical) {
         await setCookie(c);
-        await new Promise((r) => setTimeout(r, 5));
+        await new Promise((r) => setTimeout(r, 4));
+      }
+    }
+
+    // Pass 4: verify readback of critical cookies and retry misses
+    setStatus(`🔍 Verifying ${critical.length} auth cookies…`);
+    let missing = 0;
+    for (const c of critical) {
+      if (!(await verifyCookie(c))) {
+        await setCookie(c);
+        if (!(await verifyCookie(c))) missing++;
       }
     }
 
     await chrome.storage.local.set({ creditsLeft: data.user?.creditsLeft, userPlan: data.user?.plan });
     renderStatus(data.user);
 
-    // If active tab is already Flow → reload it in place, otherwise navigate/open.
+    const okMsg = missing > 0
+      ? `⚠ Injected ${ok}/${total} (${missing} missed) — reloading…`
+      : `✅ Injected ${ok}/${total} · session locked — reloading…`;
+
     const tab = await getActiveTab();
     if (tab && tab.id != null && tab.url && FLOW_MATCH.test(tab.url)) {
-      setStatus(`✅ Injected ${ok}/${data.cookies.length} — reloading…`, "#34d399");
-      setTimeout(() => { try { chrome.tabs.reload(tab.id, { bypassCache: true }); } catch {} window.close(); }, 400);
+      setStatus(okMsg, missing > 0 ? "#fbbf24" : "#34d399");
+      setTimeout(() => { try { chrome.tabs.reload(tab.id, { bypassCache: true }); } catch {} window.close(); }, 500);
     } else if (tab && tab.id != null) {
-      setStatus(`✅ Injected ${ok}/${data.cookies.length} — opening Flow here…`, "#34d399");
-      setTimeout(() => { try { chrome.tabs.update(tab.id, { url: FLOW_URL }); } catch { chrome.tabs.create({ url: FLOW_URL }); } window.close(); }, 400);
+      setStatus(okMsg.replace("reloading", "opening Flow here"), missing > 0 ? "#fbbf24" : "#34d399");
+      setTimeout(() => { try { chrome.tabs.update(tab.id, { url: FLOW_URL }); } catch { chrome.tabs.create({ url: FLOW_URL }); } window.close(); }, 500);
     } else {
-      setStatus(`✅ Injected ${ok}/${data.cookies.length} — opening Flow…`, "#34d399");
-      setTimeout(() => chrome.tabs.create({ url: FLOW_URL }), 400);
+      setStatus(okMsg.replace("reloading", "opening Flow"), missing > 0 ? "#fbbf24" : "#34d399");
+      setTimeout(() => chrome.tabs.create({ url: FLOW_URL }), 500);
     }
   } catch (e) {
     setStatus("❌ " + (e.message || "Injection failed"), "#f87171");
