@@ -1,7 +1,7 @@
 /* DeveloperX — Veu Unlimited popup
  * Fully connected to this project's server.
  */
-const DEFAULT_API = "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app";
+const DEFAULT_API = "https://project--419703e7-8466-4d48-adf9-ae7a596f3a61-dev.lovable.app";
 const FLOW_URL = "https://labs.google/fx/tools/flow";
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
 
@@ -9,13 +9,7 @@ const $ = (id) => document.getElementById(id);
 
 async function getApiBase() {
   const { apiBase } = await chrome.storage.local.get("apiBase");
-  const clean = (apiBase && apiBase.trim().replace(/\/$/, "")) || "";
-  // Force-migrate old project URLs to the current server.
-  if (!clean || clean.includes("419703e7-8466-4d48-adf9-ae7a596f3a61")) {
-    await chrome.storage.local.set({ apiBase: DEFAULT_API });
-    return DEFAULT_API;
-  }
-  return clean;
+  return (apiBase && apiBase.trim().replace(/\/$/, "")) || DEFAULT_API;
 }
 async function setApiBase(v) {
   await chrome.storage.local.set({ apiBase: (v || "").trim().replace(/\/$/, "") || DEFAULT_API });
