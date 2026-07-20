@@ -1,16 +1,13 @@
-/* Flow Model Lock (display remap) — v3.6
+/* Flow Model Lock (display remap) — v3.9
  *
- * Backend model stays "Veo 3.1 - Lite [Lower Priority]" (the only allowed one).
- * Visually we show:
- *   - "Veo 3.1 Pro"     (primary, overlays the real allowed option)
+ * Backend model = whichever real option Google currently exposes to this account
+ * (e.g. "Omni Flash", or legacy "Veo 3.1 - Lite [Lower Priority]").
+ * Visually we always show:
+ *   - "Veo 3.1 Pro"     (primary, overlays the real allowed option + trigger)
  *   - "Veo 3.1 - Lite"  (fake sibling, routes clicks to the real option)
  *
- * Strategy (survives React re-renders):
- *   - Instead of mutating React-owned text nodes, we OVERLAY a <span> on top
- *     of the real label with position:absolute + background, and hide the
- *     original text via CSS. React can re-render freely; overlay persists.
- *   - Fake sibling is tagged, deduped, and re-inserted if React removes it.
- *   - Trigger button gets same overlay treatment.
+ * Also: auto-click the real allowed option on first open so the trigger locks
+ * to Pro instead of leaving Omni Flash showing.
  */
 (function () {
   "use strict";
@@ -24,13 +21,20 @@
   function textOf(el) {
     try { return norm(el.innerText || el.textContent || ""); } catch (_) { return ""; }
   }
+  // Accept whatever Google currently ships as the allowed model.
+  // Historically: "Veo 3.1 - Lite [Lower Priority]".
+  // Currently:   "Omni Flash".
   function isAllowedReal(t) {
-    return !!t && t.indexOf("veo") !== -1 && /\blite\b/.test(t) && t.indexOf("lower priority") !== -1;
+    if (!t) return false;
+    if (/omni\s*flash/.test(t)) return true;
+    if (t.indexOf("veo") !== -1 && /\blite\b/.test(t) && t.indexOf("lower priority") !== -1) return true;
+    return false;
   }
   function looksLikeModelOption(t) {
     if (!t) return false;
-    return /\bveo\b/.test(t) || /omni\s*flash/.test(t) || /lower priority/.test(t) || /\bimagen\b/.test(t);
+    return /\bveo\b/.test(t) || /omni\s*flash/.test(t) || /lower priority/.test(t) || /\bimagen\b/.test(t) || /\bflash\b/.test(t);
   }
+
 
   // Inject once
   function injectCSS() {
