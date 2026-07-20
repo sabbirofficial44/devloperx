@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { getMyProfile } from "@/lib/flow-admin.functions";
+import { getSiteSettings } from "@/lib/site-settings.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -26,7 +27,13 @@ const PLAN_TOTALS: Record<string, number> = {
   free: 300,
 };
 const UNLIMITED_PLANS = new Set(["unlimited", "ultra", "lifetime"]);
-const UPGRADE_URL = "https://t.me/DeveloperX";
+
+function normalizeWa(raw: string) {
+  const digits = (raw || "").replace(/[^0-9]/g, "");
+  if (!digits) return "https://wa.me/8801410014442";
+  if (digits.startsWith("880")) return `https://wa.me/${digits}`;
+  return `https://wa.me/880${digits.replace(/^0/, "")}`;
+}
 
 function Dashboard() {
   const fetchProfile = useServerFn(getMyProfile);
