@@ -47,6 +47,13 @@ function AuthPage() {
 
   return (
     <div className="dx-auth-shell">
+      <div className="dx-auth-topbar">
+        <Link to="/" className="dx-auth-brand">
+          <span className="dx-auth-brand-mark">D</span>
+          <span>DeveloperX</span>
+        </Link>
+        <Link to="/signup" className="dx-auth-topcta">Sign Up →</Link>
+      </div>
       <div className="dx-auth-card">
         <h1>Welcome Back</h1>
         <div className="dx-auth-sub">Sign in to your DeveloperX account</div>
@@ -67,7 +74,7 @@ function AuthPage() {
           </button>
         </form>
         <div className="dx-links">
-          No account? <Link to="/signup">Create one</Link> · <Link to="/">Home</Link>
+          <Link to="/">← Back to Home</Link>
         </div>
       </div>
     </div>
