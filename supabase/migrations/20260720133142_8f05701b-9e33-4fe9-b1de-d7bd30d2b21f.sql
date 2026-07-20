@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.tick_trial_credits(uuid) FROM PUBLIC, anon, authenticated;
