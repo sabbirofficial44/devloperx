@@ -14,221 +14,16 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_created_users: {
-        Row: {
-          created_at: string
-          created_by: string
-          credits: number | null
-          display_name: string | null
-          email: string
-          id: string
-          password: string
-          plan: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          credits?: number | null
-          display_name?: string | null
-          email: string
-          id?: string
-          password: string
-          plan?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          credits?: number | null
-          display_name?: string | null
-          email?: string
-          id?: string
-          password?: string
-          plan?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      credit_ledger: {
-        Row: {
-          amount: number
-          balance_after: number | null
-          created_at: string
-          id: string
-          metadata: Json
-          reason: string | null
-          source: string | null
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          balance_after?: number | null
-          created_at?: string
-          id?: string
-          metadata?: Json
-          reason?: string | null
-          source?: string | null
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          balance_after?: number | null
-          created_at?: string
-          id?: string
-          metadata?: Json
-          reason?: string | null
-          source?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          assigned_cookies: Json | null
-          cookies_rotated_at: string | null
-          created_at: string
-          credits: number
-          display_name: string | null
-          email: string | null
-          last_tick_at: string
-          updated_at: string
-          user_id: string
-          user_plan: string
-        }
-        Insert: {
-          assigned_cookies?: Json | null
-          cookies_rotated_at?: string | null
-          created_at?: string
-          credits?: number
-          display_name?: string | null
-          email?: string | null
-          last_tick_at?: string
-          updated_at?: string
-          user_id: string
-          user_plan?: string
-        }
-        Update: {
-          assigned_cookies?: Json | null
-          cookies_rotated_at?: string | null
-          created_at?: string
-          credits?: number
-          display_name?: string | null
-          email?: string | null
-          last_tick_at?: string
-          updated_at?: string
-          user_id?: string
-          user_plan?: string
-        }
-        Relationships: []
-      }
-      session_cookies: {
-        Row: {
-          cookies: Json
-          created_at: string
-          gmail: string | null
-          id: string
-          total_cookies: number
-          updated_at: string
-          user_name: string | null
-        }
-        Insert: {
-          cookies?: Json
-          created_at?: string
-          gmail?: string | null
-          id?: string
-          total_cookies?: number
-          updated_at?: string
-          user_name?: string | null
-        }
-        Update: {
-          cookies?: Json
-          created_at?: string
-          gmail?: string | null
-          id?: string
-          total_cookies?: number
-          updated_at?: string
-          user_name?: string | null
-        }
-        Relationships: []
-      }
-      site_settings: {
-        Row: {
-          bkash_number: string
-          contact_number: string
-          id: number
-          offer_text: string
-          plans: Json
-          telegram_url: string
-          updated_at: string
-          whatsapp_number: string
-        }
-        Insert: {
-          bkash_number?: string
-          contact_number?: string
-          id?: number
-          offer_text?: string
-          plans?: Json
-          telegram_url?: string
-          updated_at?: string
-          whatsapp_number?: string
-        }
-        Update: {
-          bkash_number?: string
-          contact_number?: string
-          id?: number
-          offer_text?: string
-          plans?: Json
-          telegram_url?: string
-          updated_at?: string
-          whatsapp_number?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      tick_trial_credits: {
-        Args: { _user_id: string }
-        Returns: {
-          credits: number
-          last_tick_at: string
-          plan: string
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -355,8 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "user"],
-    },
+    Enums: {},
   },
 } as const
