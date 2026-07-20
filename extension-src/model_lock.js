@@ -259,6 +259,7 @@
         scanOptions();
         relabelTrigger();
         reselectIfOpen();
+        autoLockToAllowed();
       } catch (_) {}
     });
   }
