@@ -1,21 +1,20 @@
-/* Flow Model Lock
+/* Flow Model Lock (display remap)
  *
- * Force the Google Flow model picker to expose ONLY
- * "Veo 3.1 - Lite [Lower Priority]" and keep it selected by default.
- * All other model options in the same dropdown are hidden, and the
- * currently-selected model is auto-switched to the allowed one whenever
- * a different option (e.g. "Omni Flash", "Veo 3.1 - Fast", "Veo 2") is
- * active.
+ * Backend model stays "Veo 3.1 - Lite [Lower Priority]" (the only allowed one).
+ * Visually we relabel it as "Veo 3.1 Pro" and inject a second fake option
+ * "Veo 3.1 - Lite" that, when clicked, actually selects the same underlying
+ * Lower Priority option. All other real model options remain hidden.
  */
 (function () {
   "use strict";
 
-  var ALLOWED_LABEL = "Veo 3.1 - Lite [Lower Priority]";
+  var PRIMARY_LABEL = "Veo 3.1 Pro";
+  var SECONDARY_LABEL = "Veo 3.1 - Lite";
+  var TRIGGER_LABEL = PRIMARY_LABEL;
 
   function norm(s) {
     return (s || "").replace(/\s+/g, " ").trim().toLowerCase();
   }
-  var ALLOWED = norm(ALLOWED_LABEL);
 
   function textOf(el) {
     try {
@@ -25,10 +24,8 @@
     }
   }
 
-  // Strict: must contain veo, lite, AND lower priority.
-  function isAllowed(t) {
+  function isAllowedReal(t) {
     if (!t) return false;
-    if (t === ALLOWED) return true;
     return (
       t.indexOf("veo") !== -1 &&
       /\blite\b/.test(t) &&
@@ -36,8 +33,6 @@
     );
   }
 
-
-  // Anything that looks like a model option text we recognize.
   function looksLikeModelOption(t) {
     if (!t) return false;
     return (
@@ -48,8 +43,81 @@
     );
   }
 
+  // Deeply rewrite every text node under `el` so the first non-empty text node
+  // shows `label`. Preserves the rest of the DOM (icons, badges, etc.).
+  function setVisibleLabel(el, label) {
+    try {
+      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+      var first = true;
+      var node;
+      while ((node = walker.nextNode())) {
+        var raw = (node.nodeValue || "").trim();
+        if (!raw) continue;
+        if (first) {
+          if (node.nodeValue !== label) node.nodeValue = label;
+          first = false;
+        } else {
+          // Strip trailing badges like "[Lower Priority]", "Fast", etc.
+          if (/lower priority|lite|fast|pro/i.test(raw)) {
+            node.nodeValue = "";
+          }
+        }
+      }
+      if (first) {
+        // No text node existed — inject one.
+        el.appendChild(document.createTextNode(label));
+      }
+    } catch (_e) {}
+  }
+
+  function relabelAllowedOption(el) {
+    if (el.__fx_relabeled === PRIMARY_LABEL) return;
+    setVisibleLabel(el, PRIMARY_LABEL);
+    el.__fx_relabeled = PRIMARY_LABEL;
+  }
+
+  function ensureFakeSibling(realOpt) {
+    try {
+      var parent = realOpt.parentElement;
+      if (!parent) return;
+      // Already injected?
+      var siblings = parent.children;
+      for (var i = 0; i < siblings.length; i++) {
+        if (siblings[i].__fx_fake === true) return;
+      }
+      var fake = realOpt.cloneNode(true);
+      fake.__fx_fake = true;
+      fake.style.display = "";
+      fake.removeAttribute("aria-hidden");
+      fake.setAttribute("aria-selected", "false");
+      fake.setAttribute("aria-checked", "false");
+      // Force secondary label
+      setVisibleLabel(fake, SECONDARY_LABEL);
+      fake.__fx_relabeled = SECONDARY_LABEL;
+      // Route clicks to the real option
+      fake.addEventListener(
+        "click",
+        function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          try {
+            realOpt.click();
+          } catch (_e) {}
+        },
+        true,
+      );
+      fake.addEventListener(
+        "mousedown",
+        function (ev) {
+          ev.stopPropagation();
+        },
+        true,
+      );
+      parent.insertBefore(fake, realOpt.nextSibling);
+    } catch (_e) {}
+  }
+
   function listboxContainers() {
-    // Listboxes / menus that contain at least one model-like option.
     var hosts = document.querySelectorAll(
       '[role="listbox"],[role="menu"],[role="radiogroup"]'
     );
@@ -68,22 +136,24 @@
       }
       if (hit) out.push(host);
     }
-    // Fallback: also consider loose document scan when no role host found.
     if (out.length === 0) out.push(document);
     return out;
   }
 
-  function hideOthersIn(host) {
+  function processHost(host) {
     var opts = host.querySelectorAll(
       '[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
     );
     for (var i = 0; i < opts.length; i++) {
       var el = opts[i];
+      if (el.__fx_fake) continue;
       var t = textOf(el);
       if (!looksLikeModelOption(t)) continue;
-      if (isAllowed(t)) {
+      if (isAllowedReal(t)) {
         el.style.display = "";
         el.removeAttribute("aria-hidden");
+        relabelAllowedOption(el);
+        ensureFakeSibling(el);
       } else if (el.style.display !== "none") {
         el.style.setProperty("display", "none", "important");
         el.setAttribute("aria-hidden", "true");
@@ -91,9 +161,6 @@
     }
   }
 
-  // Returns true if `el` is (or sits inside) a dropdown trigger control
-  // rather than an option item. We must never hide the trigger button —
-  // hiding it removes the model picker entirely from the page.
   function isTriggerLike(el) {
     try {
       var cur = el;
@@ -112,7 +179,6 @@
     return false;
   }
 
-  // Returns true if `el` is inside an open menu/listbox/popover container.
   function isInsidePopup(el) {
     try {
       var cur = el.parentElement;
@@ -129,14 +195,13 @@
     return false;
   }
 
-  // Global sweep: hide popup/menu items whose text is a disallowed model.
-  // Skips trigger buttons so the picker control itself stays visible.
   function hideOthersGlobal() {
     var cands = document.querySelectorAll(
       'li,[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
     );
     for (var i = 0; i < cands.length; i++) {
       var el = cands[i];
+      if (el.__fx_fake) continue;
       if (el.childElementCount > 6) continue;
       if (isTriggerLike(el)) continue;
       var role = el.getAttribute && el.getAttribute("role");
@@ -145,12 +210,11 @@
         role === "menuitem" ||
         role === "menuitemradio" ||
         role === "radio";
-      // Plain <li> only counts when inside a popup (otherwise we'd hit page chrome).
       if (!isItem && !isInsidePopup(el)) continue;
       var t = textOf(el);
       if (!t || t.length > 80) continue;
       if (!looksLikeModelOption(t)) continue;
-      if (isAllowed(t)) continue;
+      if (isAllowedReal(t)) continue;
       if (el.style.display !== "none") {
         el.style.setProperty("display", "none", "important");
         el.setAttribute("aria-hidden", "true");
@@ -158,34 +222,17 @@
     }
   }
 
-
-
   function findAllowedOption() {
     var opts = document.querySelectorAll(
       '[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
     );
     for (var i = 0; i < opts.length; i++) {
-      if (isAllowed(textOf(opts[i]))) return opts[i];
+      if (opts[i].__fx_fake) continue;
+      if (isAllowedReal(textOf(opts[i]))) return opts[i];
     }
     return null;
   }
 
-  function findModelTrigger() {
-    // Buttons / comboboxes whose visible text is a model name.
-    var cands = document.querySelectorAll(
-      'button,[role="combobox"],[role="button"],[aria-haspopup="listbox"],[aria-haspopup="menu"]'
-    );
-    for (var i = 0; i < cands.length; i++) {
-      var t = textOf(cands[i]);
-      if (!t) continue;
-      if (looksLikeModelOption(t) && !isAllowed(t)) return cands[i];
-    }
-    return null;
-  }
-
-  // Only switch the selected model if the allowed option already exists in the
-  // DOM (i.e. the dropdown is open). Never auto-open or auto-close the picker —
-  // that would yank the menu open/closed in the user's face every tick.
   var _switching = false;
   var _attempted = false;
   function ensureDefault() {
@@ -214,13 +261,33 @@
     }
   }
 
+  // Relabel the closed trigger button too, so users see "Veo 3.1 Pro"
+  // even when the dropdown is not open.
+  function relabelTrigger() {
+    try {
+      var cands = document.querySelectorAll(
+        'button,[role="combobox"],[aria-haspopup="listbox"],[aria-haspopup="menu"]'
+      );
+      for (var i = 0; i < cands.length; i++) {
+        var t = textOf(cands[i]);
+        if (!t) continue;
+        if (isAllowedReal(t) || /\bveo\b.*\blite\b/.test(t) || /omni\s*flash/.test(t)) {
+          if (cands[i].__fx_trigger_label !== TRIGGER_LABEL) {
+            setVisibleLabel(cands[i], TRIGGER_LABEL);
+            cands[i].__fx_trigger_label = TRIGGER_LABEL;
+          }
+        }
+      }
+    } catch (_e) {}
+  }
 
   function tick() {
     try {
       var hosts = listboxContainers();
-      for (var i = 0; i < hosts.length; i++) hideOthersIn(hosts[i]);
+      for (var i = 0; i < hosts.length; i++) processHost(hosts[i]);
       hideOthersGlobal();
       ensureDefault();
+      relabelTrigger();
     } catch (_e) {}
   }
 
