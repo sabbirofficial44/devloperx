@@ -1,6 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureDefaultAdmin } from "@/lib/ensure-admin.functions";
+
+const DEFAULT_ADMIN_EMAIL = "admin@gmail.com";
+const DEFAULT_ADMIN_PASSWORD = "admin1122";
 
 export const Route = createFileRoute("/admin-login")({
   ssr: false,
@@ -15,13 +19,14 @@ export const Route = createFileRoute("/admin-login")({
 
 function AdminLoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(DEFAULT_ADMIN_EMAIL);
+  const [password, setPassword] = useState(DEFAULT_ADMIN_PASSWORD);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
+      try { await ensureDefaultAdmin(); } catch {}
       const { data } = await supabase.auth.getSession();
       if (!data.session) return;
       const { data: role } = await supabase
@@ -38,6 +43,7 @@ function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    try { await ensureDefaultAdmin(); } catch {}
     const { data, error: signErr } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -47,6 +53,7 @@ function AdminLoginPage() {
       setError(signErr?.message ?? "Invalid credentials");
       return;
     }
+
     const { data: role } = await supabase
       .from("user_roles")
       .select("role")
