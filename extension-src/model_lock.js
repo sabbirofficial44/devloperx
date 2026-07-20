@@ -1,16 +1,13 @@
-/* Flow Model Lock (display remap) — v3.6
+/* Flow Model Lock (display remap) — v3.9
  *
- * Backend model stays "Veo 3.1 - Lite [Lower Priority]" (the only allowed one).
- * Visually we show:
- *   - "Veo 3.1 Pro"     (primary, overlays the real allowed option)
+ * Backend model = whichever real option Google currently exposes to this account
+ * (e.g. "Omni Flash", or legacy "Veo 3.1 - Lite [Lower Priority]").
+ * Visually we always show:
+ *   - "Veo 3.1 Pro"     (primary, overlays the real allowed option + trigger)
  *   - "Veo 3.1 - Lite"  (fake sibling, routes clicks to the real option)
  *
- * Strategy (survives React re-renders):
- *   - Instead of mutating React-owned text nodes, we OVERLAY a <span> on top
- *     of the real label with position:absolute + background, and hide the
- *     original text via CSS. React can re-render freely; overlay persists.
- *   - Fake sibling is tagged, deduped, and re-inserted if React removes it.
- *   - Trigger button gets same overlay treatment.
+ * Also: auto-click the real allowed option on first open so the trigger locks
+ * to Pro instead of leaving Omni Flash showing.
  */
 (function () {
   "use strict";
@@ -24,13 +21,20 @@
   function textOf(el) {
     try { return norm(el.innerText || el.textContent || ""); } catch (_) { return ""; }
   }
+  // Accept whatever Google currently ships as the allowed model.
+  // Historically: "Veo 3.1 - Lite [Lower Priority]".
+  // Currently:   "Omni Flash".
   function isAllowedReal(t) {
-    return !!t && t.indexOf("veo") !== -1 && /\blite\b/.test(t) && t.indexOf("lower priority") !== -1;
+    if (!t) return false;
+    if (/omni\s*flash/.test(t)) return true;
+    if (t.indexOf("veo") !== -1 && /\blite\b/.test(t) && t.indexOf("lower priority") !== -1) return true;
+    return false;
   }
   function looksLikeModelOption(t) {
     if (!t) return false;
-    return /\bveo\b/.test(t) || /omni\s*flash/.test(t) || /lower priority/.test(t) || /\bimagen\b/.test(t);
+    return /\bveo\b/.test(t) || /omni\s*flash/.test(t) || /lower priority/.test(t) || /\bimagen\b/.test(t) || /\bflash\b/.test(t);
   }
+
 
   // Inject once
   function injectCSS() {
@@ -195,6 +199,55 @@
     try { allowed.click(); } catch (_) {}
   }
 
+  // Auto-lock: if the trigger currently shows a non-allowed model (e.g. Omni
+  // Flash was selected but we want to force Pro path), open the picker and
+  // click the allowed real option once.
+  var _autoLockDone = false;
+  var _lastAutoLock = 0;
+  function autoLockToAllowed() {
+    if (_autoLockDone) return;
+    var now = Date.now();
+    if (now - _lastAutoLock < 4000) return;
+    var trigger = document.querySelector('[' + TAG + '="trigger"]');
+    if (!trigger) return;
+    // Only fire if trigger is not already tied to an allowed-real underlying label.
+    var origText = norm(trigger.getAttribute("data-fx-orig") || trigger.textContent || "");
+    // Store original underlying text once
+    if (!trigger.hasAttribute("data-fx-orig")) {
+      // read the hidden child text (first non-overlay child)
+      var kids = trigger.children;
+      var raw = "";
+      for (var k = 0; k < kids.length; k++) {
+        if (kids[k].classList && kids[k].classList.contains("fx-overlay-label")) continue;
+        raw += " " + (kids[k].innerText || kids[k].textContent || "");
+      }
+      origText = norm(raw || trigger.textContent);
+      trigger.setAttribute("data-fx-orig", origText);
+    }
+    if (isAllowedReal(origText)) { _autoLockDone = true; return; }
+    _lastAutoLock = now;
+    try {
+      trigger.click();
+      setTimeout(function () {
+        var opts = document.querySelectorAll(
+          '[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
+        );
+        for (var i = 0; i < opts.length; i++) {
+          if (opts[i].getAttribute(FAKE) === "1") continue;
+          if (isAllowedReal(textOf(opts[i]))) {
+            try { opts[i].click(); _autoLockDone = true; } catch (_) {}
+            // close menu
+            setTimeout(function () {
+              try { document.body.click(); } catch (_) {}
+            }, 80);
+            break;
+          }
+        }
+      }, 220);
+    } catch (_) {}
+  }
+
+
   var _pending = false;
   function tick() {
     if (_pending) return;
@@ -206,6 +259,7 @@
         scanOptions();
         relabelTrigger();
         reselectIfOpen();
+        autoLockToAllowed();
       } catch (_) {}
     });
   }
