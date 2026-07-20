@@ -241,7 +241,7 @@ function Dashboard() {
                   <strong>🚫 Credits exhausted</strong><br />
                   <small>Your free trial has ended. Purchase a credit pack to keep using the extension.</small>
                   <div style={{ marginTop: 10 }}>
-                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_blank" rel="noopener noreferrer">💳 Buy Credits</a>
+                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>💳 Buy Credits</a>
                   </div>
                 </div>
               );
@@ -252,7 +252,7 @@ function Dashboard() {
                   <strong>⚠️ Low on credits — {credits} min left</strong><br />
                   <small>Top up now to avoid interruption. Upgrade plans start with more credits and unlimited use.</small>
                   <div style={{ marginTop: 10 }}>
-                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_blank" rel="noopener noreferrer">⬆ Upgrade / Buy Credits</a>
+                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>⬆ Upgrade / Buy Credits</a>
                   </div>
                 </div>
               );
@@ -278,7 +278,7 @@ function Dashboard() {
             <div className="dx-pbar"><div className="dx-pbar-fill" style={{ width: `${pct}%` }} /></div>
             <div style={{ marginTop: 18, fontSize: 12, color: "var(--dx-muted-soft)" }}>{Math.round(pct)}% credits available</div>
             <div className="dx-btn-group" style={{ marginTop: 18 }}>
-              <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_blank" rel="noopener noreferrer">⬆ Upgrade Plan</a>
+              <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>⬆ Upgrade Plan</a>
               <button className="dx-btn dx-btn-outline" onClick={signOut}>Sign Out</button>
             </div>
           </section>
