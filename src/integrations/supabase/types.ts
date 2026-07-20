@@ -126,62 +126,56 @@ export type Database = {
         Row: {
           cookies: Json
           created_at: string
-          gmail: string | null
           id: string
           total_cookies: number
           updated_at: string
-          user_name: string | null
         }
         Insert: {
           cookies?: Json
           created_at?: string
-          gmail?: string | null
           id?: string
           total_cookies?: number
           updated_at?: string
-          user_name?: string | null
         }
         Update: {
           cookies?: Json
           created_at?: string
-          gmail?: string | null
           id?: string
           total_cookies?: number
           updated_at?: string
-          user_name?: string | null
         }
         Relationships: []
       }
       site_settings: {
         Row: {
-          bkash_number: string
-          contact_number: string
+          bkash_number: string | null
+          contact_number: string | null
           id: number
-          offer_text: string
+          offer_text: string | null
           plans: Json
-          telegram_url: string
+          telegram_url: string | null
           updated_at: string
-          whatsapp_number: string
+          whatsapp_number: string | null
         }
         Insert: {
-          bkash_number?: string
-          contact_number?: string
+          bkash_number?: string | null
+          contact_number?: string | null
           id?: number
-          offer_text?: string
+          offer_text?: string | null
           plans?: Json
-          telegram_url?: string
+          telegram_url?: string | null
           updated_at?: string
-          whatsapp_number?: string
+          whatsapp_number?: string | null
         }
         Update: {
-          bkash_number?: string
-          contact_number?: string
+          bkash_number?: string | null
+          contact_number?: string | null
           id?: number
-          offer_text?: string
+          offer_text?: string | null
           plans?: Json
-          telegram_url?: string
+          telegram_url?: string | null
           updated_at?: string
-          whatsapp_number?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
