@@ -777,26 +777,48 @@ body {
 .dx-tab:hover:not(.active) { color: #f1f5f9; }
 
 .dx-tab-header h1 {
-  animation: dxTabFade 0.4s ease;
+  animation: dxTabFade 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .dx-tab-header .dx-auth-sub {
-  animation: dxTabFade 0.5s ease;
+  animation: dxTabFade 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .dx-auth-form { display: grid; gap: 14px; margin-top: 4px; }
 .dx-form-fields {
   display: grid;
   gap: 14px;
-  animation: dxTabSlide 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.dx-field { display: block; }
+.dx-field {
+  display: block;
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+  animation: dxFieldIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.dx-form-fields .dx-field:nth-child(1) { animation-delay: 0.05s; }
+.dx-form-fields .dx-field:nth-child(2) { animation-delay: 0.13s; }
+.dx-form-fields .dx-field:nth-child(3) { animation-delay: 0.21s; }
+
+.dx-auth-card .dx-input {
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease,
+    transform 0.25s ease;
+}
+.dx-auth-card .dx-input:focus {
+  transform: translateY(-1px);
+}
+.dx-auth-card .dx-input:hover:not(:focus) {
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.08);
+}
 
 @keyframes dxTabFade {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes dxTabSlide {
-  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+  from { opacity: 0; transform: translateY(-6px); filter: blur(3px); }
   to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes dxFieldIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 
 .dx-label {

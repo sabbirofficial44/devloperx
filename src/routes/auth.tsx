@@ -94,7 +94,6 @@ function AuthPage() {
           <span className="dx-auth-brand-mark">D</span>
           <span>DeveloperX</span>
         </Link>
-        <Link to="/admin-login" className="dx-auth-topcta">Admin →</Link>
       </div>
       <div className="dx-auth-body">
         <div className="dx-auth-card">
