@@ -55,27 +55,29 @@ function SignupPage() {
         </Link>
         <Link to="/auth" className="dx-auth-topcta">Sign In →</Link>
       </div>
-      <div className="dx-auth-card">
-        <h1>Create Account</h1>
-        <div className="dx-auth-sub">Get started with DeveloperX</div>
-        <form onSubmit={onSubmit} style={{ display: "grid", gap: 14, marginTop: 12 }}>
-          <div>
-            <label className="dx-label">Email</label>
-            <input type="email" autoComplete="email" required value={email}
-              onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="dx-input" />
+      <div className="dx-auth-body">
+        <div className="dx-auth-card">
+          <h1>Create Account</h1>
+          <div className="dx-auth-sub">Get started with DeveloperX</div>
+          <form onSubmit={onSubmit} style={{ display: "grid", gap: 14, marginTop: 12 }}>
+            <div>
+              <label className="dx-label">Email</label>
+              <input type="email" autoComplete="email" required value={email}
+                onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="dx-input" />
+            </div>
+            <div>
+              <label className="dx-label">Password</label>
+              <input type="password" autoComplete="new-password" required minLength={6}
+                value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose a password" className="dx-input" />
+            </div>
+            {error && <div className="dx-msg-err">{error}</div>}
+            <button type="submit" disabled={loading} className="dx-btn dx-btn-purple" style={{ width: "100%", padding: 12 }}>
+              {loading ? "Creating…" : "Create Account"}
+            </button>
+          </form>
+          <div className="dx-links">
+            <Link to="/">← Back to Home</Link>
           </div>
-          <div>
-            <label className="dx-label">Password</label>
-            <input type="password" autoComplete="new-password" required minLength={6}
-              value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose a password" className="dx-input" />
-          </div>
-          {error && <div className="dx-msg-err">{error}</div>}
-          <button type="submit" disabled={loading} className="dx-btn dx-btn-purple" style={{ width: "100%", padding: 12 }}>
-            {loading ? "Creating…" : "Create Account"}
-          </button>
-        </form>
-        <div className="dx-links">
-          <Link to="/">← Back to Home</Link>
         </div>
       </div>
     </div>

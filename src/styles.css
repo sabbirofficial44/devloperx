@@ -606,9 +606,7 @@ body {
   position: relative;
   color: var(--dx-text);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  flex-direction: column;
   overflow: hidden;
   background:
     radial-gradient(1200px 700px at 12% -10%, rgba(124, 92, 252, 0.35), transparent 60%),
@@ -645,16 +643,30 @@ body {
   50%      { transform: translate(30px, -20px) scale(1.08); }
 }
 
+.dx-auth-body {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px 40px;
+  position: relative;
+  z-index: 1;
+}
+
 .dx-auth-topbar {
-  position: absolute;
-  top: 22px; left: 22px; right: 22px;
+  position: relative;
+  width: 100%;
+  padding: 18px 28px;
   display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
   z-index: 5;
 }
 .dx-auth-brand {
   display: inline-flex; align-items: center; gap: 10px;
   color: #f1f5f9; text-decoration: none; font-weight: 800;
   font-size: 15px; letter-spacing: -0.2px;
+  white-space: nowrap;
 }
 .dx-auth-brand-mark {
   width: 32px; height: 32px; border-radius: 10px;
@@ -662,6 +674,7 @@ body {
   font-weight: 900; color: #0b0d14; font-size: 15px;
   background: conic-gradient(from 210deg, #7c5cfc, #22d3ee, #f472b6, #7c5cfc);
   box-shadow: 0 6px 22px rgba(124,92,252,.55), inset 0 0 0 1px rgba(255,255,255,.35);
+  flex-shrink: 0;
 }
 .dx-auth-topcta {
   display: inline-flex; align-items: center; gap: 6px;
@@ -672,11 +685,16 @@ body {
   backdrop-filter: blur(14px);
   box-shadow: 0 8px 24px -6px rgba(124,92,252,.55);
   transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+  white-space: nowrap;
 }
 .dx-auth-topcta:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 32px -6px rgba(124,92,252,.7);
   filter: brightness(1.08);
+}
+@media (max-width: 520px) {
+  .dx-auth-topbar { padding: 14px 16px; }
+  .dx-auth-topcta { padding: 8px 14px; font-size: 12px; }
 }
 
 
