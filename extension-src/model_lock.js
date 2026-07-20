@@ -1,220 +1,113 @@
-/* Flow Model Lock (display remap)
+/* Flow Model Lock (display remap) — hardened
  *
  * Backend model stays "Veo 3.1 - Lite [Lower Priority]" (the only allowed one).
- * Visually we relabel it as "Veo 3.1 Pro" and inject a second fake option
- * "Veo 3.1 - Lite" that, when clicked, actually selects the same underlying
- * Lower Priority option. All other real model options remain hidden.
+ * Visually we show two options:
+ *   - "Veo 3.1 Pro"   (primary, relabels the real allowed option)
+ *   - "Veo 3.1 - Lite" (fake sibling that routes clicks to the real option)
+ * All other real model options are hidden.
+ *
+ * Hardening vs previous version:
+ *   - Debounced tick (no runaway loops from our own DOM writes).
+ *   - MutationObserver ignores style/class churn we cause ourselves.
+ *   - Fake sibling deduped by data-attribute (survives React re-renders).
+ *   - Trigger relabel only touches elements that clearly are a model picker.
+ *   - No auto-click that could pop the dropdown open unexpectedly; we only
+ *     re-select the allowed option when the listbox is actually open.
  */
 (function () {
   "use strict";
 
   var PRIMARY_LABEL = "Veo 3.1 Pro";
   var SECONDARY_LABEL = "Veo 3.1 - Lite";
-  var TRIGGER_LABEL = PRIMARY_LABEL;
+  var FAKE_ATTR = "data-fx-fake";
+  var LABEL_ATTR = "data-fx-label";
 
-  function norm(s) {
-    return (s || "").replace(/\s+/g, " ").trim().toLowerCase();
-  }
-
+  function norm(s) { return (s || "").replace(/\s+/g, " ").trim().toLowerCase(); }
   function textOf(el) {
-    try {
-      return norm(el.innerText || el.textContent || "");
-    } catch (_e) {
-      return "";
-    }
+    try { return norm(el.innerText || el.textContent || ""); } catch (_e) { return ""; }
   }
 
   function isAllowedReal(t) {
     if (!t) return false;
-    return (
-      t.indexOf("veo") !== -1 &&
-      /\blite\b/.test(t) &&
-      t.indexOf("lower priority") !== -1
-    );
+    return t.indexOf("veo") !== -1 && /\blite\b/.test(t) && t.indexOf("lower priority") !== -1;
   }
-
   function looksLikeModelOption(t) {
     if (!t) return false;
-    return (
-      /\bveo\b/.test(t) ||
-      /omni\s*flash/.test(t) ||
-      /lower priority/.test(t) ||
-      /\bimagen\b/.test(t)
-    );
+    return /\bveo\b/.test(t) || /omni\s*flash/.test(t) || /lower priority/.test(t) || /\bimagen\b/.test(t);
   }
 
-  // Deeply rewrite every text node under `el` so the first non-empty text node
-  // shows `label`. Preserves the rest of the DOM (icons, badges, etc.).
+  // Rewrite the first non-empty text node to `label`; blank out follow-up
+  // badge nodes ("Lower Priority", "Fast", "Pro", "Lite").
   function setVisibleLabel(el, label) {
     try {
+      if (el.getAttribute(LABEL_ATTR) === label) {
+        // Quick verify first text node still matches; if not, re-apply.
+        var probe = (el.textContent || "").trim();
+        if (probe.indexOf(label) === 0) return;
+      }
       var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-      var first = true;
-      var node;
+      var first = true, node;
       while ((node = walker.nextNode())) {
         var raw = (node.nodeValue || "").trim();
         if (!raw) continue;
         if (first) {
           if (node.nodeValue !== label) node.nodeValue = label;
           first = false;
-        } else {
-          // Strip trailing badges like "[Lower Priority]", "Fast", etc.
-          if (/lower priority|lite|fast|pro/i.test(raw)) {
-            node.nodeValue = "";
-          }
+        } else if (/lower priority|lite|fast|\bpro\b/i.test(raw)) {
+          node.nodeValue = "";
         }
       }
-      if (first) {
-        // No text node existed — inject one.
-        el.appendChild(document.createTextNode(label));
-      }
+      if (first) el.appendChild(document.createTextNode(label));
+      el.setAttribute(LABEL_ATTR, label);
     } catch (_e) {}
-  }
-
-  function relabelAllowedOption(el) {
-    if (el.__fx_relabeled === PRIMARY_LABEL) return;
-    setVisibleLabel(el, PRIMARY_LABEL);
-    el.__fx_relabeled = PRIMARY_LABEL;
   }
 
   function ensureFakeSibling(realOpt) {
     try {
       var parent = realOpt.parentElement;
       if (!parent) return;
-      // Already injected?
-      var siblings = parent.children;
-      for (var i = 0; i < siblings.length; i++) {
-        if (siblings[i].__fx_fake === true) return;
-      }
+      // Dedup — check attribute, since expando props are lost on re-render.
+      var existing = parent.querySelector('[' + FAKE_ATTR + '="1"]');
+      if (existing && existing.parentElement === parent) return;
+
       var fake = realOpt.cloneNode(true);
-      fake.__fx_fake = true;
+      // Strip any inherited state / our own label marker from the clone.
+      fake.removeAttribute(LABEL_ATTR);
+      fake.setAttribute(FAKE_ATTR, "1");
       fake.style.display = "";
       fake.removeAttribute("aria-hidden");
       fake.setAttribute("aria-selected", "false");
       fake.setAttribute("aria-checked", "false");
-      // Force secondary label
+      // Remove ids from clone to avoid duplicate-id issues.
+      try {
+        fake.removeAttribute("id");
+        var withId = fake.querySelectorAll("[id]");
+        for (var k = 0; k < withId.length; k++) withId[k].removeAttribute("id");
+      } catch (_e2) {}
+
       setVisibleLabel(fake, SECONDARY_LABEL);
-      fake.__fx_relabeled = SECONDARY_LABEL;
-      // Route clicks to the real option
-      fake.addEventListener(
-        "click",
-        function (ev) {
-          ev.preventDefault();
-          ev.stopPropagation();
-          try {
-            realOpt.click();
-          } catch (_e) {}
-        },
-        true,
-      );
-      fake.addEventListener(
-        "mousedown",
-        function (ev) {
-          ev.stopPropagation();
-        },
-        true,
-      );
+
+      fake.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        try { realOpt.click(); } catch (_e) {}
+      }, true);
+      fake.addEventListener("mousedown", function (ev) { ev.stopPropagation(); }, true);
+
       parent.insertBefore(fake, realOpt.nextSibling);
     } catch (_e) {}
   }
 
-  function listboxContainers() {
-    var hosts = document.querySelectorAll(
-      '[role="listbox"],[role="menu"],[role="radiogroup"]'
-    );
-    var out = [];
-    for (var i = 0; i < hosts.length; i++) {
-      var host = hosts[i];
-      var opts = host.querySelectorAll(
-        '[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
-      );
-      var hit = false;
-      for (var j = 0; j < opts.length; j++) {
-        if (looksLikeModelOption(textOf(opts[j]))) {
-          hit = true;
-          break;
-        }
-      }
-      if (hit) out.push(host);
-    }
-    if (out.length === 0) out.push(document);
-    return out;
-  }
-
-  function processHost(host) {
-    var opts = host.querySelectorAll(
-      '[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
-    );
-    for (var i = 0; i < opts.length; i++) {
-      var el = opts[i];
-      if (el.__fx_fake) continue;
-      var t = textOf(el);
-      if (!looksLikeModelOption(t)) continue;
-      if (isAllowedReal(t)) {
-        el.style.display = "";
-        el.removeAttribute("aria-hidden");
-        relabelAllowedOption(el);
-        ensureFakeSibling(el);
-      } else if (el.style.display !== "none") {
-        el.style.setProperty("display", "none", "important");
-        el.setAttribute("aria-hidden", "true");
-      }
-    }
-  }
-
-  function isTriggerLike(el) {
-    try {
-      var cur = el;
-      for (var depth = 0; depth < 4 && cur; depth++) {
-        if (cur.getAttribute) {
-          if (
-            cur.getAttribute("aria-haspopup") ||
-            cur.getAttribute("aria-expanded") !== null ||
-            cur.getAttribute("role") === "combobox"
-          )
-            return true;
-        }
-        cur = cur.parentElement;
-      }
-    } catch (_e) {}
-    return false;
-  }
-
-  function isInsidePopup(el) {
-    try {
-      var cur = el.parentElement;
-      while (cur) {
-        if (cur.getAttribute) {
-          var r = cur.getAttribute("role");
-          if (r === "listbox" || r === "menu" || r === "dialog" || r === "radiogroup")
-            return true;
-          if (cur.getAttribute("aria-expanded") === "true") return true;
-        }
-        cur = cur.parentElement;
-      }
-    } catch (_e) {}
-    return false;
-  }
-
-  function hideOthersGlobal() {
-    var cands = document.querySelectorAll(
-      'li,[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
-    );
-    for (var i = 0; i < cands.length; i++) {
-      var el = cands[i];
-      if (el.__fx_fake) continue;
-      if (el.childElementCount > 6) continue;
-      if (isTriggerLike(el)) continue;
-      var role = el.getAttribute && el.getAttribute("role");
-      var isItem =
-        role === "option" ||
-        role === "menuitem" ||
-        role === "menuitemradio" ||
-        role === "radio";
-      if (!isItem && !isInsidePopup(el)) continue;
-      var t = textOf(el);
-      if (!t || t.length > 80) continue;
-      if (!looksLikeModelOption(t)) continue;
-      if (isAllowedReal(t)) continue;
+  function processOption(el) {
+    if (el.getAttribute(FAKE_ATTR) === "1") return;
+    var t = textOf(el);
+    if (!looksLikeModelOption(t)) return;
+    if (isAllowedReal(t)) {
+      if (el.style.display === "none") el.style.removeProperty("display");
+      el.removeAttribute("aria-hidden");
+      setVisibleLabel(el, PRIMARY_LABEL);
+      ensureFakeSibling(el);
+    } else {
       if (el.style.display !== "none") {
         el.style.setProperty("display", "none", "important");
         el.setAttribute("aria-hidden", "true");
@@ -222,89 +115,94 @@
     }
   }
 
-  function findAllowedOption() {
+  function scanOptions() {
     var opts = document.querySelectorAll(
       '[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
     );
-    for (var i = 0; i < opts.length; i++) {
-      if (opts[i].__fx_fake) continue;
-      if (isAllowedReal(textOf(opts[i]))) return opts[i];
-    }
-    return null;
+    for (var i = 0; i < opts.length; i++) processOption(opts[i]);
   }
 
-  var _switching = false;
-  var _attempted = false;
-  function ensureDefault() {
-    if (_switching) return;
-    try {
-      var allowed = findAllowedOption();
-      if (!allowed) {
-        _attempted = false;
-        return;
-      }
-      if (_attempted) return;
-      var sel =
-        allowed.getAttribute("aria-selected") === "true" ||
-        allowed.getAttribute("aria-checked") === "true";
-      if (sel) return;
-      _switching = true;
-      _attempted = true;
-      try {
-        allowed.click();
-      } catch (_e) {}
-      setTimeout(function () {
-        _switching = false;
-      }, 800);
-    } catch (_e) {
-      _switching = false;
-    }
-  }
-
-  // Relabel the closed trigger button too, so users see "Veo 3.1 Pro"
-  // even when the dropdown is not open.
+  // Only relabel a button/combobox if it actually looks like the model
+  // selector's closed state (its visible text names a Veo/omni model).
   function relabelTrigger() {
-    try {
-      var cands = document.querySelectorAll(
-        'button,[role="combobox"],[aria-haspopup="listbox"],[aria-haspopup="menu"]'
-      );
-      for (var i = 0; i < cands.length; i++) {
-        var t = textOf(cands[i]);
-        if (!t) continue;
-        if (isAllowedReal(t) || /\bveo\b.*\blite\b/.test(t) || /omni\s*flash/.test(t)) {
-          if (cands[i].__fx_trigger_label !== TRIGGER_LABEL) {
-            setVisibleLabel(cands[i], TRIGGER_LABEL);
-            cands[i].__fx_trigger_label = TRIGGER_LABEL;
-          }
-        }
-      }
-    } catch (_e) {}
+    var cands = document.querySelectorAll(
+      'button,[role="combobox"],[aria-haspopup="listbox"],[aria-haspopup="menu"]'
+    );
+    for (var i = 0; i < cands.length; i++) {
+      var el = cands[i];
+      if (el.getAttribute(FAKE_ATTR) === "1") continue;
+      // Skip anything inside an open listbox/menu (those are options, not triggers).
+      if (el.closest && el.closest('[role="listbox"],[role="menu"],[role="radiogroup"]')) continue;
+      var t = textOf(el);
+      if (!t || t.length > 60) continue;
+      var looksModelTrigger =
+        isAllowedReal(t) ||
+        /\bveo\b[^]*\blite\b/.test(t) ||
+        /omni\s*flash/.test(t) ||
+        t === norm(PRIMARY_LABEL);
+      if (!looksModelTrigger) continue;
+      setVisibleLabel(el, PRIMARY_LABEL);
+    }
   }
 
-  function tick() {
-    try {
-      var hosts = listboxContainers();
-      for (var i = 0; i < hosts.length; i++) processHost(hosts[i]);
-      hideOthersGlobal();
-      ensureDefault();
-      relabelTrigger();
-    } catch (_e) {}
+  // If the dropdown is currently open AND the allowed option isn't the
+  // selected one, click it once. Never opens the dropdown itself.
+  var _lastClickAt = 0;
+  function reselectIfOpen() {
+    var openListbox = document.querySelector(
+      '[role="listbox"]:not([aria-hidden="true"]),[role="menu"]:not([aria-hidden="true"]),[role="radiogroup"]:not([aria-hidden="true"])'
+    );
+    if (!openListbox) return;
+    var allowed = null;
+    var opts = openListbox.querySelectorAll(
+      '[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
+    );
+    for (var i = 0; i < opts.length; i++) {
+      if (opts[i].getAttribute(FAKE_ATTR) === "1") continue;
+      if (isAllowedReal(textOf(opts[i]))) { allowed = opts[i]; break; }
+    }
+    if (!allowed) return;
+    var sel = allowed.getAttribute("aria-selected") === "true" ||
+              allowed.getAttribute("aria-checked") === "true";
+    if (sel) return;
+    var now = Date.now();
+    if (now - _lastClickAt < 1500) return;
+    _lastClickAt = now;
+    try { allowed.click(); } catch (_e) {}
+  }
+
+  var _pending = false;
+  function scheduleTick() {
+    if (_pending) return;
+    _pending = true;
+    (window.requestAnimationFrame || function (fn) { setTimeout(fn, 16); })(function () {
+      _pending = false;
+      try {
+        scanOptions();
+        relabelTrigger();
+        reselectIfOpen();
+      } catch (_e) {}
+    });
   }
 
   function start() {
+    scheduleTick();
     try {
-      tick();
-      new MutationObserver(function () {
-        tick();
-      }).observe(document.documentElement, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ["aria-selected", "aria-checked", "aria-expanded", "class", "style"],
-      });
-      setInterval(tick, 1500);
-      window.addEventListener("focus", tick);
+      // Observe structural changes only. Attribute churn from our own writes
+      // (style/class/aria) would cause loops, so we don't listen to those.
+      new MutationObserver(function (muts) {
+        // If every mutation targets a node we already own, ignore.
+        for (var i = 0; i < muts.length; i++) {
+          var t = muts[i].target;
+          if (t && t.nodeType === 1 && t.getAttribute && t.getAttribute(FAKE_ATTR) === "1") continue;
+          scheduleTick();
+          return;
+        }
+      }).observe(document.documentElement, { childList: true, subtree: true });
     } catch (_e) {}
+    setInterval(scheduleTick, 2000);
+    window.addEventListener("focus", scheduleTick);
+    document.addEventListener("click", function () { setTimeout(scheduleTick, 80); }, true);
   }
 
   if (document.readyState === "loading") {
