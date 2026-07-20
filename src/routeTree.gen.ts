@@ -9,38 +9,276 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminLoginRouteImport } from './routes/admin-login'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiVerifyRouteImport } from './routes/api/verify'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ApiPublicCreditsRouteImport } from './routes/api/public/credits'
+import { Route as ApiPublicUserCookiesRouteImport } from './routes/api/public/user/cookies'
+import { Route as ApiPublicExtensionVerifyRouteImport } from './routes/api/public/extension/verify'
+import { Route as ApiPublicExtensionIdentityRouteImport } from './routes/api/public/extension/identity'
+import { Route as ApiPublicExtensionGenerateRouteImport } from './routes/api/public/extension/generate'
+import { Route as ApiPublicExtensionDeductRouteImport } from './routes/api/public/extension/deduct'
+import { Route as ApiPublicExtensionCookieVersionRouteImport } from './routes/api/public/extension/cookie-version'
+import { Route as ApiPublicAuthRefreshRouteImport } from './routes/api/public/auth/refresh'
+import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth/login'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin-login',
+  path: '/admin-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVerifyRoute = ApiVerifyRouteImport.update({
+  id: '/api/verify',
+  path: '/api/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicCreditsRoute = ApiPublicCreditsRouteImport.update({
+  id: '/api/public/credits',
+  path: '/api/public/credits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicUserCookiesRoute = ApiPublicUserCookiesRouteImport.update({
+  id: '/api/public/user/cookies',
+  path: '/api/public/user/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicExtensionVerifyRoute =
+  ApiPublicExtensionVerifyRouteImport.update({
+    id: '/api/public/extension/verify',
+    path: '/api/public/extension/verify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicExtensionIdentityRoute =
+  ApiPublicExtensionIdentityRouteImport.update({
+    id: '/api/public/extension/identity',
+    path: '/api/public/extension/identity',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicExtensionGenerateRoute =
+  ApiPublicExtensionGenerateRouteImport.update({
+    id: '/api/public/extension/generate',
+    path: '/api/public/extension/generate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicExtensionDeductRoute =
+  ApiPublicExtensionDeductRouteImport.update({
+    id: '/api/public/extension/deduct',
+    path: '/api/public/extension/deduct',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicExtensionCookieVersionRoute =
+  ApiPublicExtensionCookieVersionRouteImport.update({
+    id: '/api/public/extension/cookie-version',
+    path: '/api/public/extension/cookie-version',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAuthRefreshRoute = ApiPublicAuthRefreshRouteImport.update({
+  id: '/api/public/auth/refresh',
+  path: '/api/public/auth/refresh',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuthLoginRoute = ApiPublicAuthLoginRouteImport.update({
+  id: '/api/public/auth/login',
+  path: '/api/public/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-login': typeof AdminLoginRoute
+  '/auth': typeof AuthRoute
+  '/signup': typeof SignupRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/verify': typeof ApiVerifyRoute
+  '/api/public/credits': typeof ApiPublicCreditsRoute
+  '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
+  '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
+  '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
+  '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
+  '/api/public/extension/identity': typeof ApiPublicExtensionIdentityRoute
+  '/api/public/extension/verify': typeof ApiPublicExtensionVerifyRoute
+  '/api/public/user/cookies': typeof ApiPublicUserCookiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-login': typeof AdminLoginRoute
+  '/auth': typeof AuthRoute
+  '/signup': typeof SignupRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/verify': typeof ApiVerifyRoute
+  '/api/public/credits': typeof ApiPublicCreditsRoute
+  '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
+  '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
+  '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
+  '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
+  '/api/public/extension/identity': typeof ApiPublicExtensionIdentityRoute
+  '/api/public/extension/verify': typeof ApiPublicExtensionVerifyRoute
+  '/api/public/user/cookies': typeof ApiPublicUserCookiesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin-login': typeof AdminLoginRoute
+  '/auth': typeof AuthRoute
+  '/signup': typeof SignupRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/verify': typeof ApiVerifyRoute
+  '/api/public/credits': typeof ApiPublicCreditsRoute
+  '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
+  '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
+  '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
+  '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
+  '/api/public/extension/identity': typeof ApiPublicExtensionIdentityRoute
+  '/api/public/extension/verify': typeof ApiPublicExtensionVerifyRoute
+  '/api/public/user/cookies': typeof ApiPublicUserCookiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin-login'
+    | '/auth'
+    | '/signup'
+    | '/admin'
+    | '/dashboard'
+    | '/api/verify'
+    | '/api/public/credits'
+    | '/api/public/auth/login'
+    | '/api/public/auth/refresh'
+    | '/api/public/extension/cookie-version'
+    | '/api/public/extension/deduct'
+    | '/api/public/extension/generate'
+    | '/api/public/extension/identity'
+    | '/api/public/extension/verify'
+    | '/api/public/user/cookies'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin-login'
+    | '/auth'
+    | '/signup'
+    | '/admin'
+    | '/dashboard'
+    | '/api/verify'
+    | '/api/public/credits'
+    | '/api/public/auth/login'
+    | '/api/public/auth/refresh'
+    | '/api/public/extension/cookie-version'
+    | '/api/public/extension/deduct'
+    | '/api/public/extension/generate'
+    | '/api/public/extension/identity'
+    | '/api/public/extension/verify'
+    | '/api/public/user/cookies'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/admin-login'
+    | '/auth'
+    | '/signup'
+    | '/_authenticated/admin'
+    | '/_authenticated/dashboard'
+    | '/api/verify'
+    | '/api/public/credits'
+    | '/api/public/auth/login'
+    | '/api/public/auth/refresh'
+    | '/api/public/extension/cookie-version'
+    | '/api/public/extension/deduct'
+    | '/api/public/extension/generate'
+    | '/api/public/extension/identity'
+    | '/api/public/extension/verify'
+    | '/api/public/user/cookies'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminLoginRoute: typeof AdminLoginRoute
+  AuthRoute: typeof AuthRoute
+  SignupRoute: typeof SignupRoute
+  ApiVerifyRoute: typeof ApiVerifyRoute
+  ApiPublicCreditsRoute: typeof ApiPublicCreditsRoute
+  ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
+  ApiPublicAuthRefreshRoute: typeof ApiPublicAuthRefreshRoute
+  ApiPublicExtensionCookieVersionRoute: typeof ApiPublicExtensionCookieVersionRoute
+  ApiPublicExtensionDeductRoute: typeof ApiPublicExtensionDeductRoute
+  ApiPublicExtensionGenerateRoute: typeof ApiPublicExtensionGenerateRoute
+  ApiPublicExtensionIdentityRoute: typeof ApiPublicExtensionIdentityRoute
+  ApiPublicExtensionVerifyRoute: typeof ApiPublicExtensionVerifyRoute
+  ApiPublicUserCookiesRoute: typeof ApiPublicUserCookiesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-login': {
+      id: '/admin-login'
+      path: '/admin-login'
+      fullPath: '/admin-login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +286,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/verify': {
+      id: '/api/verify'
+      path: '/api/verify'
+      fullPath: '/api/verify'
+      preLoaderRoute: typeof ApiVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/credits': {
+      id: '/api/public/credits'
+      path: '/api/public/credits'
+      fullPath: '/api/public/credits'
+      preLoaderRoute: typeof ApiPublicCreditsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/user/cookies': {
+      id: '/api/public/user/cookies'
+      path: '/api/public/user/cookies'
+      fullPath: '/api/public/user/cookies'
+      preLoaderRoute: typeof ApiPublicUserCookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/verify': {
+      id: '/api/public/extension/verify'
+      path: '/api/public/extension/verify'
+      fullPath: '/api/public/extension/verify'
+      preLoaderRoute: typeof ApiPublicExtensionVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/identity': {
+      id: '/api/public/extension/identity'
+      path: '/api/public/extension/identity'
+      fullPath: '/api/public/extension/identity'
+      preLoaderRoute: typeof ApiPublicExtensionIdentityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/generate': {
+      id: '/api/public/extension/generate'
+      path: '/api/public/extension/generate'
+      fullPath: '/api/public/extension/generate'
+      preLoaderRoute: typeof ApiPublicExtensionGenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/deduct': {
+      id: '/api/public/extension/deduct'
+      path: '/api/public/extension/deduct'
+      fullPath: '/api/public/extension/deduct'
+      preLoaderRoute: typeof ApiPublicExtensionDeductRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/cookie-version': {
+      id: '/api/public/extension/cookie-version'
+      path: '/api/public/extension/cookie-version'
+      fullPath: '/api/public/extension/cookie-version'
+      preLoaderRoute: typeof ApiPublicExtensionCookieVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/auth/refresh': {
+      id: '/api/public/auth/refresh'
+      path: '/api/public/auth/refresh'
+      fullPath: '/api/public/auth/refresh'
+      preLoaderRoute: typeof ApiPublicAuthRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/auth/login': {
+      id: '/api/public/auth/login'
+      path: '/api/public/auth/login'
+      fullPath: '/api/public/auth/login'
+      preLoaderRoute: typeof ApiPublicAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminLoginRoute: AdminLoginRoute,
+  AuthRoute: AuthRoute,
+  SignupRoute: SignupRoute,
+  ApiVerifyRoute: ApiVerifyRoute,
+  ApiPublicCreditsRoute: ApiPublicCreditsRoute,
+  ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
+  ApiPublicAuthRefreshRoute: ApiPublicAuthRefreshRoute,
+  ApiPublicExtensionCookieVersionRoute: ApiPublicExtensionCookieVersionRoute,
+  ApiPublicExtensionDeductRoute: ApiPublicExtensionDeductRoute,
+  ApiPublicExtensionGenerateRoute: ApiPublicExtensionGenerateRoute,
+  ApiPublicExtensionIdentityRoute: ApiPublicExtensionIdentityRoute,
+  ApiPublicExtensionVerifyRoute: ApiPublicExtensionVerifyRoute,
+  ApiPublicUserCookiesRoute: ApiPublicUserCookiesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

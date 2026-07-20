@@ -1,0 +1,3 @@
+CREATE POLICY "Admins can insert created users" ON public.admin_created_users FOR INSERT TO authenticated WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+CREATE POLICY "Admins can update created users" ON public.admin_created_users FOR UPDATE TO authenticated USING (has_role(auth.uid(), 'admin'::app_role)) WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+CREATE POLICY "Admins can delete created users" ON public.admin_created_users FOR DELETE TO authenticated USING (has_role(auth.uid(), 'admin'::app_role));

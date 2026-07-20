@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>DeveloperX — Veu Unlimited</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    width: 360px;
+    font-family: 'Outfit', -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(120% 90% at 0% 0%, rgba(124,92,252,.28), transparent 55%),
+                radial-gradient(120% 90% at 100% 100%, rgba(34,211,238,.22), transparent 55%),
+                #08090d;
+    color: #f5f6fa;
+    overflow: hidden;
+  }
+  .wrap { padding: 18px 18px 20px; position: relative; }
+  .wrap::before{
+    content:""; position:absolute; inset:-40% -20% auto auto; width:260px; height:260px;
+    background: radial-gradient(circle, rgba(124,92,252,.35), transparent 60%);
+    filter: blur(20px); pointer-events:none; animation: float 8s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(20px)} }
+
+  .brand { display:flex; align-items:center; gap:12px; margin-bottom:16px; position:relative; }
+  .brand .logo {
+    width:40px; height:40px; border-radius:12px;
+    background: conic-gradient(from 210deg, #7c5cfc, #22d3ee, #f472b6, #7c5cfc);
+    display:grid; place-items:center; font-weight:900; color:#08090d; font-size:18px;
+    box-shadow: 0 8px 24px rgba(124,92,252,.45);
+  }
+  .brand h1 { font-size: 15px; margin: 0; font-weight: 800; letter-spacing:-.2px; }
+  .brand small { color: #9ba3b4; font-size: 11px; font-weight:500; }
+
+  .card {
+    background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 16px;
+    padding: 16px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    position:relative;
+  }
+  label { display:block; font-size:10px; color:#9ba3b4; margin:10px 0 5px; text-transform:uppercase; letter-spacing:.8px; font-weight:700; }
+  input {
+    width:100%; padding:11px 13px; font-size:13px;
+    background: rgba(0,0,0,.4); color:#f5f6fa;
+    border:1px solid rgba(255,255,255,.1); border-radius:10px; outline:none;
+    transition: border .2s, box-shadow .2s;
+  }
+  input:focus { border-color:#7c5cfc; box-shadow:0 0 0 3px rgba(124,92,252,.2); }
+
+  button.primary {
+    width:100%; margin-top:12px; padding:12px;
+    background: linear-gradient(135deg,#7c5cfc,#5a3fe0);
+    color:#fff; border:0; border-radius:10px; font-weight:800; cursor:pointer;
+    font-size:13px; letter-spacing:.3px; font-family:inherit;
+    box-shadow: 0 8px 22px rgba(124,92,252,.35);
+    transition: transform .15s, box-shadow .2s;
+  }
+  button.primary:hover:not(:disabled){ transform: translateY(-1px); box-shadow:0 10px 26px rgba(124,92,252,.5); }
+  button.primary:disabled { opacity:.5; cursor:not-allowed; }
+
+  button.inject {
+    background: linear-gradient(135deg,#22d3ee,#0891b2);
+    box-shadow: 0 8px 22px rgba(34,211,238,.35);
+  }
+  button.inject:hover:not(:disabled){ box-shadow:0 10px 26px rgba(34,211,238,.5); }
+
+  button.ghost {
+    width:100%; margin-top:8px; padding:11px;
+    background: rgba(255,255,255,.04); color:#e4e7ee;
+    border:1px solid rgba(255,255,255,.12); border-radius:10px; cursor:pointer; font-size:12px;
+    font-weight:700; font-family:inherit;
+    transition: background .15s;
+  }
+  button.ghost:hover { background: rgba(255,255,255,.08); }
+
+  .err { color:#f87171; font-size:12px; margin-top:8px; min-height:14px; }
+
+  .row { display:flex; justify-content:space-between; align-items:center; margin:9px 0; font-size:13px; }
+  .row .k { color:#9ba3b4; font-size:11px; text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+  .row .v { font-weight:800; font-size:14px; }
+
+  .badge {
+    display:inline-block; padding:4px 10px; font-size:10px; border-radius:999px;
+    background: rgba(124,92,252,.18); color:#a78bfa;
+    text-transform:uppercase; font-weight:800; letter-spacing:.6px;
+  }
+  .badge.warn { background:rgba(240,185,11,.18); color:#fbbf24; }
+  .badge.danger { background:rgba(239,68,68,.22); color:#f87171; }
+  .badge.ok { background:rgba(34,211,153,.18); color:#34d399; }
+
+  .kpi {
+    display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;
+  }
+  .kpi > div {
+    padding:11px; border-radius:12px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.07);
+  }
+  .kpi .t { font-size:10px; color:#9ba3b4; text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
+  .kpi .v { font-size:18px; font-weight:800; margin-top:2px; letter-spacing:-.4px; }
+
+  .pbar { width:100%; height:6px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; margin-top:12px; }
+  .pbar > i { display:block; height:100%; background:linear-gradient(90deg,#7c5cfc,#22d3ee); transition:width .5s; }
+
+  .cta {
+    display:block; margin-top:12px; padding:11px;
+    background: linear-gradient(135deg,#f0b90b,#ea8b0b);
+    color:#08090d; border-radius:10px; text-align:center; font-weight:800;
+    text-decoration:none; font-size:12px;
+  }
+  .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+  .actions button.primary { margin-top:0; padding:12px 6px; font-size:12px; }
+
+  .hidden { display:none !important; }
+  .status-note { font-size:11px; color:#9ba3b4; margin-top:8px; min-height:14px; text-align:center; }
+  .u { color:#7c8497; font-size:11px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">D</div>
+      <div>
+        <h1>DeveloperX — Veu Unlimited</h1>
+        <small>Google Flow · Managed Access</small>
+      </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="view-login" class="card">
+      <label>Email</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="username" />
+      <label>Password</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      <button id="login-btn" class="primary">Sign in</button>
+      <div id="login-err" class="err"></div>
+      <input id="api-base" type="hidden" />
+    </div>
+
+    <!-- STATUS -->
+    <div id="view-status" class="card hidden">
+      <div class="row">
+        <div>
+          <div id="s-name" style="font-weight:800;font-size:14px">—</div>
+          <div id="s-email" class="u">—</div>
+        </div>
+        <span id="s-plan" class="badge">basic</span>
+      </div>
+
+      <div class="kpi">
+        <div>
+          <div class="t">Credits left</div>
+          <div class="v" id="s-credits">—</div>
+        </div>
+        <div>
+          <div class="t">Time remaining</div>
+          <div class="v" id="s-time">—</div>
+        </div>
+      </div>
+      <div class="pbar"><i id="s-bar" style="width:0%"></i></div>
+
+      <div id="s-alert" class="err" style="color:#fbbf24"></div>
+
+      <a id="s-upgrade" class="cta hidden" href="https://wa.me/8801410014442" target="_blank">💳 Buy more credits (WhatsApp)</a>
+
+      <div class="actions">
+        <button id="inject-flow" class="primary inject">🚀 Inject Flow</button>
+        <button id="open-flow" class="primary">🌐 Open Flow</button>
+      </div>
+      <div id="inject-status" class="status-note"></div>
+      <button id="logout-btn" class="ghost">Sign out</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
