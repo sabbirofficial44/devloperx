@@ -146,6 +146,39 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          bkash_number: string | null
+          contact_number: string | null
+          id: number
+          offer_text: string | null
+          plans: Json
+          telegram_url: string | null
+          updated_at: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          bkash_number?: string | null
+          contact_number?: string | null
+          id?: number
+          offer_text?: string | null
+          plans?: Json
+          telegram_url?: string | null
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          bkash_number?: string | null
+          contact_number?: string | null
+          id?: number
+          offer_text?: string | null
+          plans?: Json
+          telegram_url?: string | null
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
