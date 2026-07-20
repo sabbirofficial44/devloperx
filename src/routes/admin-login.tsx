@@ -70,47 +70,36 @@ function AdminLoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, position: "relative", background: "var(--dx-dashboard-bg, #08090d)" }}>
-      <div className="dx-ambient" aria-hidden />
-      <div className="dx-auth-card" style={{ maxWidth: 440, width: "100%" }}>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 12, letterSpacing: 2, color: "#22d3ee", fontWeight: 700 }}>RESTRICTED</div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, marginTop: 8 }}>Admin Console</h1>
-          <p style={{ color: "#94a3b8", marginTop: 6, fontSize: 14 }}>
-            Sign in with your admin credentials.
-          </p>
+    <div className="dx-auth-shell">
+      <div className="dx-auth-card">
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: 2, color: "#67e8f9", fontWeight: 700, padding: "4px 12px", background: "rgba(34,211,238,0.1)", border: "1px solid rgba(34,211,238,0.3)", borderRadius: 999 }}>
+            🔒 RESTRICTED
+          </div>
         </div>
-        <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-          <input
-            type="email"
-            required
-            placeholder="admin@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="ax-input"
-          />
-          <input
-            type="password"
-            required
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="ax-input"
-          />
-          {error && <div style={{ color: "#f87171", fontSize: 13 }}>{error}</div>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="dx-btn-premium"
-            style={{ marginTop: 4 }}
-          >
+        <h1>Admin Console</h1>
+        <div className="dx-auth-sub">Sign in with your admin credentials</div>
+        <form onSubmit={onSubmit} style={{ display: "grid", gap: 14, marginTop: 12 }}>
+          <div>
+            <label className="dx-label">Email</label>
+            <input type="email" required placeholder="admin@example.com" value={email}
+              onChange={(e) => setEmail(e.target.value)} className="dx-input" />
+          </div>
+          <div>
+            <label className="dx-label">Password</label>
+            <input type="password" required placeholder="Password" value={password}
+              onChange={(e) => setPassword(e.target.value)} className="dx-input" />
+          </div>
+          {error && <div className="dx-msg-err">{error}</div>}
+          <button type="submit" disabled={loading} className="dx-btn dx-btn-purple" style={{ width: "100%", padding: 12, marginTop: 4 }}>
             {loading ? "Signing in…" : "Enter Admin Console"}
           </button>
         </form>
-        <div style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "#64748b" }}>
-          Regular user? <a href="/auth" style={{ color: "#22d3ee" }}>User login</a>
+        <div className="dx-links">
+          Regular user? <a href="/auth">User login</a>
         </div>
       </div>
     </div>
   );
 }
+
