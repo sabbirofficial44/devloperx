@@ -30,9 +30,26 @@ const UNLIMITED_PLANS = new Set(["unlimited", "ultra", "lifetime"]);
 
 function normalizeWa(raw: string) {
   const digits = (raw || "").replace(/[^0-9]/g, "");
-  if (!digits) return "https://wa.me/8801410014442";
-  if (digits.startsWith("880")) return `https://wa.me/${digits}`;
-  return `https://wa.me/880${digits.replace(/^0/, "")}`;
+  const num = !digits
+    ? "8801410014442"
+    : digits.startsWith("880")
+      ? digits
+      : `880${digits.replace(/^0/, "")}`;
+  // Use wa.me with explicit text so it opens the chat directly and avoids api.whatsapp.com iframe block
+  return `https://wa.me/${num}?text=${encodeURIComponent("Hi, I want to upgrade my DeveloperX plan.")}`;
+}
+
+function openWhatsApp(url: string) {
+  try {
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w) {
+      // Popup blocked or inside iframe — break out to top
+      if (window.top) window.top.location.href = url;
+      else window.location.href = url;
+    }
+  } catch {
+    window.location.href = url;
+  }
 }
 
 function Dashboard() {
@@ -224,7 +241,7 @@ function Dashboard() {
                   <strong>🚫 Credits exhausted</strong><br />
                   <small>Your free trial has ended. Purchase a credit pack to keep using the extension.</small>
                   <div style={{ marginTop: 10 }}>
-                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_blank" rel="noopener noreferrer">💳 Buy Credits</a>
+                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>💳 Buy Credits</a>
                   </div>
                 </div>
               );
@@ -235,7 +252,7 @@ function Dashboard() {
                   <strong>⚠️ Low on credits — {credits} min left</strong><br />
                   <small>Top up now to avoid interruption. Upgrade plans start with more credits and unlimited use.</small>
                   <div style={{ marginTop: 10 }}>
-                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_blank" rel="noopener noreferrer">⬆ Upgrade / Buy Credits</a>
+                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>⬆ Upgrade / Buy Credits</a>
                   </div>
                 </div>
               );
@@ -261,7 +278,7 @@ function Dashboard() {
             <div className="dx-pbar"><div className="dx-pbar-fill" style={{ width: `${pct}%` }} /></div>
             <div style={{ marginTop: 18, fontSize: 12, color: "var(--dx-muted-soft)" }}>{Math.round(pct)}% credits available</div>
             <div className="dx-btn-group" style={{ marginTop: 18 }}>
-              <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_blank" rel="noopener noreferrer">⬆ Upgrade Plan</a>
+              <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>⬆ Upgrade Plan</a>
               <button className="dx-btn dx-btn-outline" onClick={signOut}>Sign Out</button>
             </div>
           </section>
