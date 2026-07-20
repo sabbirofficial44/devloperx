@@ -26,9 +26,24 @@ const FALLBACK_PLANS = [
 
 function normalizeWa(raw: string) {
   const digits = (raw || "").replace(/[^0-9]/g, "");
-  if (!digits) return "https://wa.me/8801410014442";
-  if (digits.startsWith("880")) return `https://wa.me/${digits}`;
-  return `https://wa.me/880${digits.replace(/^0/, "")}`;
+  const num = !digits
+    ? "8801410014442"
+    : digits.startsWith("880")
+      ? digits
+      : `880${digits.replace(/^0/, "")}`;
+  return `https://wa.me/${num}?text=${encodeURIComponent("Hi, I want to upgrade my DeveloperX plan.")}`;
+}
+
+function openWa(url: string) {
+  try {
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w) {
+      if (window.top) window.top.location.href = url;
+      else window.location.href = url;
+    }
+  } catch {
+    window.location.href = url;
+  }
 }
 
 function Index() {
