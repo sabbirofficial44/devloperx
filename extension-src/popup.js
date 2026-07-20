@@ -231,49 +231,62 @@ function setStatus(msg, color) {
   el.style.color = color || "#a2acc0";
 }
 
-async function clearGoogleCookies(incomingNames) {
-  // Selective clear: only remove labs.google cookies that the new injection
-  // will replace. Keeping unrelated cookies preserves session trust signals
-  // and reduces Google's "unusual activity" flags.
-  const keep = new Set(incomingNames || []);
-  try {
-    const all = await chrome.cookies.getAll({ domain: "labs.google" });
-    for (const c of all) {
-      if (!keep.has(c.name)) continue;
-      const proto = c.secure ? "https://" : "http://";
-      const host = c.domain.replace(/^\./, "");
-      try {
-        await chrome.cookies.remove({ url: `${proto}${host}${c.path}`, name: c.name, storeId: c.storeId });
-      } catch {}
-    }
-  } catch {}
-}
+// NOTE: We intentionally do NOT clear existing cookies before injecting.
+// chrome.cookies.set overwrites same-name cookies in place; touching
+// unrelated cookies (Google identity/trust) is what triggers the
+// "unusual activity" flow. Keep everything else intact.
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
+function normalizeSameSite(v, secure) {
+  const s = String(v || "").toLowerCase();
+  if (s === "no_restriction" || s === "none") return "no_restriction";
+  if (s === "lax") return "lax";
+  if (s === "strict") return "strict";
+  return secure ? "no_restriction" : "lax";
+}
+
 async function setCookie(c) {
+  const rawName = String(c.name || "");
+  if (!rawName) return false;
+  const isHost = rawName.startsWith("__Host-");
+  const isSecurePrefix = rawName.startsWith("__Secure-") || isHost;
+  const secure = isSecurePrefix ? true : c.secure !== false;
+
   const domain = c.domain || ".google.com";
+  const path = isHost ? "/" : (c.path || "/");
   const host = domain.replace(/^\./, "");
-  const path = c.path || "/";
   const url = `https://${host}${path}`;
+
   const details = {
-    url, name: c.name, value: String(c.value ?? ""), path,
-    secure: c.secure !== false, httpOnly: !!c.httpOnly,
+    url,
+    name: rawName,
+    value: String(c.value ?? ""),
+    path,
+    secure,
+    httpOnly: !!c.httpOnly,
+    sameSite: normalizeSameSite(c.sameSite, secure),
   };
-  if (domain.startsWith(".")) details.domain = domain;
-  if (c.sameSite) {
-    const s = String(c.sameSite).toLowerCase();
-    details.sameSite = s === "no_restriction" || s === "none" ? "no_restriction"
-      : s === "lax" ? "lax" : s === "strict" ? "strict" : "unspecified";
-  }
-  // Force long-lived cookies so the session survives browser restarts and Google's session ticks.
+  // __Host- cookies MUST NOT carry a domain attribute.
+  if (!isHost && domain.startsWith(".")) details.domain = domain;
+
+  // Force long-lived; ignore short server expiries so the session sticks.
   const farFuture = Math.floor(Date.now() / 1000) + ONE_YEAR;
-  if (c.expirationDate && !c.session) {
-    details.expirationDate = Math.max(Number(c.expirationDate), farFuture);
-  } else {
-    details.expirationDate = farFuture;
+  details.expirationDate = Math.max(Number(c.expirationDate || 0), farFuture);
+
+  try {
+    await chrome.cookies.set(details);
+    return true;
+  } catch {
+    try {
+      const retry = { ...details };
+      delete retry.domain;
+      await chrome.cookies.set(retry);
+      return true;
+    } catch {
+      return false;
+    }
   }
-  try { await chrome.cookies.set(details); return true; } catch { return false; }
 }
 
 async function getActiveTab() {
@@ -311,17 +324,20 @@ async function injectAndOpenFlow() {
       return;
     }
 
-    setStatus("Syncing session…");
-    // Only wipe the cookies we're about to replace — keep everything else so
-    // Google's identity/trust cookies survive.
-    await clearGoogleCookies(data.cookies.map((c) => c.name));
-
     setStatus(`Injecting ${data.cookies.length} cookies…`);
+    // No pre-clear — overwrite same-name cookies in place; leave the rest.
     let ok = 0;
     for (const c of data.cookies) {
       if (await setCookie(c)) ok++;
-      // Small stagger — helps Chrome commit cookies before the reload fires.
-      await new Promise((r) => setTimeout(r, 15));
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    // Second pass — re-apply high-priority auth cookies last so they win.
+    const AUTH_RE = /^(SID|HSID|SSID|APISID|SAPISID|SIDCC|LSID|OSID|ACCOUNT_CHOOSER|__Secure-|__Host-)/i;
+    for (const c of data.cookies) {
+      if (AUTH_RE.test(c.name || "")) {
+        await setCookie(c);
+        await new Promise((r) => setTimeout(r, 5));
+      }
     }
 
     await chrome.storage.local.set({ creditsLeft: data.user?.creditsLeft, userPlan: data.user?.plan });
