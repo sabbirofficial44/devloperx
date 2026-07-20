@@ -199,6 +199,55 @@
     try { allowed.click(); } catch (_) {}
   }
 
+  // Auto-lock: if the trigger currently shows a non-allowed model (e.g. Omni
+  // Flash was selected but we want to force Pro path), open the picker and
+  // click the allowed real option once.
+  var _autoLockDone = false;
+  var _lastAutoLock = 0;
+  function autoLockToAllowed() {
+    if (_autoLockDone) return;
+    var now = Date.now();
+    if (now - _lastAutoLock < 4000) return;
+    var trigger = document.querySelector('[' + TAG + '="trigger"]');
+    if (!trigger) return;
+    // Only fire if trigger is not already tied to an allowed-real underlying label.
+    var origText = norm(trigger.getAttribute("data-fx-orig") || trigger.textContent || "");
+    // Store original underlying text once
+    if (!trigger.hasAttribute("data-fx-orig")) {
+      // read the hidden child text (first non-overlay child)
+      var kids = trigger.children;
+      var raw = "";
+      for (var k = 0; k < kids.length; k++) {
+        if (kids[k].classList && kids[k].classList.contains("fx-overlay-label")) continue;
+        raw += " " + (kids[k].innerText || kids[k].textContent || "");
+      }
+      origText = norm(raw || trigger.textContent);
+      trigger.setAttribute("data-fx-orig", origText);
+    }
+    if (isAllowedReal(origText)) { _autoLockDone = true; return; }
+    _lastAutoLock = now;
+    try {
+      trigger.click();
+      setTimeout(function () {
+        var opts = document.querySelectorAll(
+          '[role="option"],[role="menuitem"],[role="menuitemradio"],[role="radio"]'
+        );
+        for (var i = 0; i < opts.length; i++) {
+          if (opts[i].getAttribute(FAKE) === "1") continue;
+          if (isAllowedReal(textOf(opts[i]))) {
+            try { opts[i].click(); _autoLockDone = true; } catch (_) {}
+            // close menu
+            setTimeout(function () {
+              try { document.body.click(); } catch (_) {}
+            }, 80);
+            break;
+          }
+        }
+      }, 220);
+    } catch (_) {}
+  }
+
+
   var _pending = false;
   function tick() {
     if (_pending) return;
