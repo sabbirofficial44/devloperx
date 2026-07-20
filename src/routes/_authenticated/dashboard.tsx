@@ -183,7 +183,7 @@ function Dashboard() {
                   </div>
                   <button
                     onClick={() => {
-                      fetch("/flow-extension.zip")
+                      fetch(`/flow-extension.zip?v=${Date.now()}`, { cache: "no-store" })
                         .then((res) => {
                           if (!res.ok) throw new Error(`Download failed: ${res.status}`);
                           return res.blob();
