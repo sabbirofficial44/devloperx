@@ -1,4 +1,4 @@
-/* DeveloperX — Veu Unlimited popup */
+/* DeveloperX — Veo Unlimited popup */
 const DEFAULT_API = "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app";
 const FLOW_URL = "https://labs.google/fx/tools/flow";
 const FLOW_MATCH = /^https:\/\/labs\.google\/fx\/tools\/flow/i;
