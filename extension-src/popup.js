@@ -1,4 +1,4 @@
-/* DeveloperX — Veu Unlimited popup */
+/* DeveloperX — Veo Unlimited popup */
 const DEFAULT_API = "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app";
 const FLOW_URL = "https://labs.google/fx/tools/flow";
 const FLOW_MATCH = /^https:\/\/labs\.google\/fx\/tools\/flow/i;
@@ -232,7 +232,9 @@ function setStatus(msg, color) {
 }
 
 async function clearGoogleCookies() {
-  const domains = ["google.com", "youtube.com", "labs.google", "accounts.google.com"];
+  // Only clear the labs.google session — never touch google.com / accounts.google.com / youtube.com.
+  // Wiping those breaks the Google identity chain and Flow silently signs the user out.
+  const domains = ["labs.google"];
   for (const d of domains) {
     try {
       const all = await chrome.cookies.getAll({ domain: d });
@@ -244,6 +246,8 @@ async function clearGoogleCookies() {
     } catch (e) { /* ignore */ }
   }
 }
+
+const ONE_YEAR = 60 * 60 * 24 * 365;
 
 async function setCookie(c) {
   const domain = c.domain || ".google.com";
@@ -260,7 +264,13 @@ async function setCookie(c) {
     details.sameSite = s === "no_restriction" || s === "none" ? "no_restriction"
       : s === "lax" ? "lax" : s === "strict" ? "strict" : "unspecified";
   }
-  if (c.expirationDate && !c.session) details.expirationDate = Number(c.expirationDate);
+  // Force long-lived cookies so the session survives browser restarts and Google's session ticks.
+  const farFuture = Math.floor(Date.now() / 1000) + ONE_YEAR;
+  if (c.expirationDate && !c.session) {
+    details.expirationDate = Math.max(Number(c.expirationDate), farFuture);
+  } else {
+    details.expirationDate = farFuture;
+  }
   try { await chrome.cookies.set(details); return true; } catch { return false; }
 }
 

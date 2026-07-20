@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "DeveloperX \u2014 Veu Unlimited",
-  "version": "3.3.0",
-  "description": "Managed Google Flow access with live credit tracking, session isolation, and a floating usage overlay.",
+  "name": "DeveloperX \u2014 Veo Unlimited",
+  "version": "3.4.0",
+  "description": "Managed Google Flow (Veo) access with live credit tracking, sticky session, and a floating usage overlay.",
   "permissions": [
     "cookies",
     "tabs",

@@ -129,7 +129,7 @@
       <div class="box">
         <div class="lock">🔒</div>
         <h2>Credits Exhausted</h2>
-        <p>Your Veu Unlimited credits have run out. Buy more credits to keep using Google Flow.</p>
+        <p>Your Veo Unlimited credits have run out. Buy more credits to keep using Google Flow.</p>
         <a href="https://wa.me/8801410014442" target="_blank">💳 Buy Credits · WhatsApp</a>
       </div>
     `;
