@@ -731,6 +731,74 @@ body {
   margin-bottom: 24px;
 }
 
+/* Segmented Sign In / Sign Up tab switch */
+.dx-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 5px;
+  margin-bottom: 22px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+.dx-tabs-indicator {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc(50% - 5px);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(167,139,250,0.85), rgba(103,232,249,0.75));
+  box-shadow:
+    0 8px 24px -8px rgba(124,92,252,0.55),
+    0 0 0 1px rgba(255,255,255,0.15) inset;
+  transition: transform 0.42s cubic-bezier(0.65, 0.05, 0.25, 1);
+  transform: translateX(0%);
+  z-index: 0;
+}
+.dx-tabs-indicator.right { transform: translateX(100%); }
+.dx-tab {
+  position: relative;
+  z-index: 1;
+  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  color: rgba(226,232,240,0.65);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.dx-tab.active { color: #0b1020; }
+.dx-tab:hover:not(.active) { color: #f1f5f9; }
+
+.dx-tab-header h1 {
+  animation: dxTabFade 0.4s ease;
+}
+.dx-tab-header .dx-auth-sub {
+  animation: dxTabFade 0.5s ease;
+}
+.dx-auth-form { display: grid; gap: 14px; margin-top: 4px; }
+.dx-form-fields {
+  display: grid;
+  gap: 14px;
+  animation: dxTabSlide 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dx-field { display: block; }
+
+@keyframes dxTabFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dxTabSlide {
+  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
 .dx-label {
   display: block;
   font-size: 12px;
