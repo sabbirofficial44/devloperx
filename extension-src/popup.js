@@ -231,20 +231,22 @@ function setStatus(msg, color) {
   el.style.color = color || "#a2acc0";
 }
 
-async function clearGoogleCookies() {
-  // Only clear the labs.google session — never touch google.com / accounts.google.com / youtube.com.
-  // Wiping those breaks the Google identity chain and Flow silently signs the user out.
-  const domains = ["labs.google"];
-  for (const d of domains) {
-    try {
-      const all = await chrome.cookies.getAll({ domain: d });
-      for (const c of all) {
-        const proto = c.secure ? "https://" : "http://";
-        const host = c.domain.replace(/^\./, "");
+async function clearGoogleCookies(incomingNames) {
+  // Selective clear: only remove labs.google cookies that the new injection
+  // will replace. Keeping unrelated cookies preserves session trust signals
+  // and reduces Google's "unusual activity" flags.
+  const keep = new Set(incomingNames || []);
+  try {
+    const all = await chrome.cookies.getAll({ domain: "labs.google" });
+    for (const c of all) {
+      if (!keep.has(c.name)) continue;
+      const proto = c.secure ? "https://" : "http://";
+      const host = c.domain.replace(/^\./, "");
+      try {
         await chrome.cookies.remove({ url: `${proto}${host}${c.path}`, name: c.name, storeId: c.storeId });
-      }
-    } catch (e) { /* ignore */ }
-  }
+      } catch {}
+    }
+  } catch {}
 }
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -309,12 +311,18 @@ async function injectAndOpenFlow() {
       return;
     }
 
-    setStatus("Clearing old session…");
-    await clearGoogleCookies();
+    setStatus("Syncing session…");
+    // Only wipe the cookies we're about to replace — keep everything else so
+    // Google's identity/trust cookies survive.
+    await clearGoogleCookies(data.cookies.map((c) => c.name));
 
     setStatus(`Injecting ${data.cookies.length} cookies…`);
     let ok = 0;
-    for (const c of data.cookies) if (await setCookie(c)) ok++;
+    for (const c of data.cookies) {
+      if (await setCookie(c)) ok++;
+      // Small stagger — helps Chrome commit cookies before the reload fires.
+      await new Promise((r) => setTimeout(r, 15));
+    }
 
     await chrome.storage.local.set({ creditsLeft: data.user?.creditsLeft, userPlan: data.user?.plan });
     renderStatus(data.user);
