@@ -191,7 +191,7 @@
     const credits = Number(user.creditsLeft ?? 0);
     const total = Number(user.creditsTotal || credits || 1);
 
-    document.getElementById("dx-time").textContent = isUnlimited ? "∞" : fmtTime(credits);
+    document.getElementById("dx-time").textContent = isUnlimited ? "∞" : fmtHMS(credits);
     document.getElementById("dx-credits").textContent = isUnlimited ? "Unlimited" : credits.toLocaleString();
     document.getElementById("dx-bar").style.width = isUnlimited ? "100%" :
       Math.max(0, Math.min(100, (credits / Math.max(total, credits, 1)) * 100)) + "%";
@@ -212,7 +212,7 @@
       killSession();
     } else if (credits <= 60) {
       badge.classList.add("warn");
-      msg.textContent = `⚠ Low: only ${fmtTime(credits)} remaining.`;
+      msg.textContent = `⚠ Low: only ${fmtHMS(credits)} remaining.`;
       buy.style.display = "";
       removeBlocker();
     } else {
@@ -233,7 +233,7 @@
     ensureRoot();
     tick();
     if (timer) clearInterval(timer);
-    timer = setInterval(tick, 5000);
+    timer = setInterval(tick, 1000);
   }
 
   // React to storage updates from popup
