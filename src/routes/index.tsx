@@ -82,7 +82,7 @@ function Index() {
         <div className="dx-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, flexWrap: "wrap", fontSize: 13, fontWeight: 600 }}>
           <span className="dx-shimmer-text" style={{ fontWeight: 800 }}>🔥 LAUNCH OFFER</span>
           <span style={{ color: "#e2e8f0" }}>{OFFER_TEXT}</span>
-          <a href={WA_LINK} target="_blank" rel="noreferrer" style={{ color: "#f0b90b", textDecoration: "underline" }}>Talk to us →</a>
+          <a href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }} style={{ color: "#f0b90b", textDecoration: "underline" }}>Talk to us →</a>
         </div>
       </div>
 
@@ -133,7 +133,7 @@ function Index() {
               </div>
               <div className="dx-rise-4" style={{ marginTop: 26, fontSize: 13, color: "var(--dx-muted-soft,#94a3b8)" }}>
                 💳 Payment via <strong style={{ color: "#e2136e" }}>bKash</strong> {BKASH_NUMBER} ·
-                Contact: <a href={WA_LINK} target="_blank" rel="noreferrer" style={{ color: "#f0b90b", fontWeight: 700 }}>{CONTACT_NUMBER}</a>
+                Contact: <a href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }} style={{ color: "#f0b90b", fontWeight: 700 }}>{CONTACT_NUMBER}</a>
               </div>
 
             </div>
@@ -189,7 +189,7 @@ function Index() {
             <h2 className="dx-section-title" style={{ marginTop: 14 }}>Simple, Affordable Pricing</h2>
             <p className="dx-section-subtitle">
               Start with a <strong style={{ color: "#4ade80" }}>12-hour daily free trial</strong>. To unlock daily / weekly / monthly plans,
-              bKash <strong style={{ color: "#e2136e" }}>{BKASH_NUMBER}</strong> এ payment করে contact করুন <a href={WA_LINK} target="_blank" rel="noreferrer" style={{ color: "#f0b90b", fontWeight: 700 }}>{CONTACT_NUMBER}</a>
+              bKash <strong style={{ color: "#e2136e" }}>{BKASH_NUMBER}</strong> এ payment করে contact করুন <a href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }} style={{ color: "#f0b90b", fontWeight: 700 }}>{CONTACT_NUMBER}</a>
             </p>
 
 
@@ -245,13 +245,13 @@ function Index() {
                 Free trial-এর পর daily / weekly / monthly plan নিতে চাইলে bKash payment করে আমাদের সাথে যোগাযোগ করুন। Instant activation।
               </p>
               <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-                <a className="dx-bkash-btn" href={WA_LINK} target="_blank" rel="noreferrer">
+                <a className="dx-bkash-btn" href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }}>
                   📱 bKash: {BKASH_NUMBER}
                 </a>
-                <a className="dx-btn dx-btn-outline" href={WA_LINK} target="_blank" rel="noreferrer" style={{ padding: "14px 28px", fontSize: 15 }}>
+                <a className="dx-btn dx-btn-outline" href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }} style={{ padding: "14px 28px", fontSize: 15 }}>
                   💬 WhatsApp {CONTACT_NUMBER}
                 </a>
-                <a className="dx-btn dx-btn-outline" href={TELEGRAM_URL} target="_blank" rel="noreferrer" style={{ padding: "14px 28px", fontSize: 15 }}>
+                <a className="dx-btn dx-btn-outline" href={TELEGRAM_URL} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(TELEGRAM_URL); }} style={{ padding: "14px 28px", fontSize: 15 }}>
                   ✈ Telegram
                 </a>
               </div>
@@ -371,8 +371,8 @@ function Index() {
           <p>DeveloperX © 2026. All rights reserved.</p>
           <p style={{ marginTop: 6 }}>
             💳 bKash: <strong style={{ color: "#e2136e" }}>{BKASH_NUMBER}</strong> ·
-            💬 WhatsApp: <a href={WA_LINK} target="_blank" rel="noreferrer" style={{ color: "#f0b90b" }}>{CONTACT_NUMBER}</a> ·
-            ✈ Telegram: <a href={TELEGRAM_URL} target="_blank" rel="noreferrer" style={{ color: "#f0b90b" }}>Join channel</a>
+            💬 WhatsApp: <a href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }} style={{ color: "#f0b90b" }}>{CONTACT_NUMBER}</a> ·
+            ✈ Telegram: <a href={TELEGRAM_URL} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(TELEGRAM_URL); }} style={{ color: "#f0b90b" }}>Join channel</a>
           </p>
 
         </footer>
