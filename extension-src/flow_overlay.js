@@ -5,7 +5,7 @@
   if (window.__DX_FLOW_OVERLAY__) return;
   window.__DX_FLOW_OVERLAY__ = true;
 
-  const DEFAULT_API = "https://project--419703e7-8466-4d48-adf9-ae7a596f3a61-dev.lovable.app";
+  const DEFAULT_API = "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app";
   const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
   const UPGRADE_URL = "https://t.me/DeveloperX";
 
