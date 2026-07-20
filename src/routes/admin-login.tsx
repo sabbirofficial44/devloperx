@@ -71,6 +71,13 @@ function AdminLoginPage() {
 
   return (
     <div className="dx-auth-shell">
+      <div className="dx-auth-topbar">
+        <a href="/" className="dx-auth-brand">
+          <span className="dx-auth-brand-mark">D</span>
+          <span>DeveloperX</span>
+        </a>
+        <a href="/auth" className="dx-auth-topcta">User Login →</a>
+      </div>
       <div className="dx-auth-card">
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: 2, color: "#67e8f9", fontWeight: 700, padding: "4px 12px", background: "rgba(34,211,238,0.1)", border: "1px solid rgba(34,211,238,0.3)", borderRadius: 999 }}>
