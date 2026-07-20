@@ -267,7 +267,13 @@ function AdminPage() {
 
   return (
     <div className="ax-shell">
+      <div className="ax-orbs" aria-hidden>
+        <span className="ax-orb ax-orb-a" />
+        <span className="ax-orb ax-orb-b" />
+        <span className="ax-orb ax-orb-c" />
+      </div>
       <aside className="ax-sidebar">
+
         <div className="ax-brand">
           <div className="ax-brand-mark">DX</div>
           <div>
