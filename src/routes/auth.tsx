@@ -61,9 +61,32 @@ function AuthPage() {
       return;
     }
 
-    // signup
+    // signup — hard validation (only enforced on public signup, not admin-created)
+    const em = email.trim().toLowerCase();
+    if (!em.endsWith("@gmail.com")) {
+      setLoading(false);
+      setError("Only @gmail.com addresses are allowed.");
+      return;
+    }
+    const local = em.slice(0, em.indexOf("@"));
+    if (!local || local.includes(".") || local.includes("+")) {
+      setLoading(false);
+      setError("Gmail address cannot contain dots (.) or plus (+).");
+      return;
+    }
+    if (!/^[a-z0-9_-]{3,}$/i.test(local)) {
+      setLoading(false);
+      setError("Gmail username must be at least 3 letters/numbers, no special chars.");
+      return;
+    }
+    if (password.length < 6) {
+      setLoading(false);
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     const { data, error: sErr } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: em,
       password,
       options: {
         emailRedirectTo: window.location.origin,
