@@ -45,6 +45,12 @@ function AuthPage() {
     return () => clearInterval(t);
   }, [cooldown]);
 
+  useEffect(() => {
+    if (forgotCooldown <= 0) return;
+    const t = setInterval(() => setForgotCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [forgotCooldown]);
+
   const switchTab = (t: Tab) => {
     setTab(t);
     setError("");
@@ -81,6 +87,34 @@ function AuthPage() {
     setLoading(true);
     setError("");
     setInfo("");
+
+    if (tab === "forgot") {
+      const em = email.trim().toLowerCase();
+      if (!em || !em.includes("@")) {
+        setLoading(false);
+        setError("Enter a valid email.");
+        return;
+      }
+      try {
+        const res = await fetch("/api/public/auth/reset-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: em }),
+        });
+        const j = await res.json().catch(() => ({}));
+        setLoading(false);
+        if (!res.ok) {
+          setError(j.message || "Could not send reset link. Try again.");
+          return;
+        }
+        setInfo(`✉️ If an account exists for ${em}, a reset link has been sent. Check your Gmail (Inbox + Spam). Link expires in 1 hour.`);
+        setForgotCooldown(60);
+      } catch {
+        setLoading(false);
+        setError("Network error. Try again.");
+      }
+      return;
+    }
 
     if (tab === "signin") {
       const { data, error: siErr } = await supabase.auth.signInWithPassword({
