@@ -6,6 +6,9 @@ const API_ENDPOINTS = [
   "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f.lovable.app",
 ];
 const DEFAULT_API = API_ENDPOINTS[0];
+const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?lovable\.(app|dev)$/i;
+const AUTH_API_BASE = "https://bbyenyctnzuiujpydcxt.supabase.co";
+const AUTH_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieWVueWN0bnp1aXVqcHlkY3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NjEwMDMsImV4cCI6MjEwMDEzNzAwM30.CghONV6AVnW8-UxwdbYNcTCW0ZdNU68986uZp1nSeMM";
 const FLOW_URL = "https://labs.google/fx/tools/flow";
 const FLOW_MATCH = /^https:\/\/labs\.google\/fx\/tools\/flow/i;
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
@@ -16,15 +19,16 @@ const $ = (id) => document.getElementById(id);
 async function getApiBase() {
   const { apiBase } = await chrome.storage.local.get("apiBase");
   const clean = (apiBase && apiBase.trim().replace(/\/$/, "")) || "";
-  // Reject stale/unknown bases and force default.
-  if (!clean || !API_ENDPOINTS.includes(clean)) {
+  // Accept the dashboard origin pushed by site_bridge, otherwise fall back.
+  if (!clean || (!API_ENDPOINTS.includes(clean) && !TRUSTED_APP_ORIGIN.test(clean))) {
     await chrome.storage.local.set({ apiBase: DEFAULT_API });
     return DEFAULT_API;
   }
   return clean;
 }
 async function setApiBase(v) {
-  await chrome.storage.local.set({ apiBase: (v || "").trim().replace(/\/$/, "") || DEFAULT_API });
+  const clean = (v || "").trim().replace(/\/$/, "") || DEFAULT_API;
+  await chrome.storage.local.set({ apiBase: clean });
 }
 
 
@@ -76,7 +80,7 @@ async function login(email, password) {
       if (res.status === 401) {
         const message = data.message || "Invalid email or password";
         if (/confirm|verified|verification/i.test(message)) unconfirmedErr = new Error(message);
-        else credentialErr = new Error(`${message}. If it works on website, update/reload the extension and try again.`);
+        else credentialErr = new Error(message);
         continue;
       }
       lastErr = new Error(data.message || `Login failed (${res.status})`);
@@ -85,9 +89,74 @@ async function login(email, password) {
       lastErr = new Error(`${e.message || "Network error"}. Check extension update / internet.`);
     }
   }
+
+  // Final fallback: authenticate against the same backend auth service used by the website.
+  // This avoids stale app endpoints showing "invalid password" when the real account is valid.
+  try {
+    return await directAuthLogin(email, password);
+  } catch (e) {
+    const msg = String(e?.message || "");
+    if (/confirm|verified|verification/i.test(msg)) unconfirmedErr = new Error(msg);
+    else if (/invalid|credential|password|email/i.test(msg)) credentialErr = new Error("Invalid email or password");
+    else lastErr = e;
+  }
+
   if (unconfirmedErr) throw unconfirmedErr;
   if (credentialErr) throw credentialErr;
   throw lastErr || new Error(`Cannot reach server (${failures.join(" | ")})`);
+}
+
+function normalizeExtensionEmail(raw) {
+  const trimmed = String(raw || "").trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed.toLowerCase();
+  const slug = trimmed.toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^-+|-+$/g, "") || "user";
+  return `${slug}@dx.local`;
+}
+
+function directLoginCandidates(raw) {
+  const trimmed = String(raw || "").trim();
+  return Array.from(new Set([trimmed, trimmed.toLowerCase(), normalizeExtensionEmail(trimmed)].filter(Boolean)));
+}
+
+async function directAuthLogin(email, password) {
+  let last = null;
+  for (const candidate of directLoginCandidates(email)) {
+    const res = await fetch(`${AUTH_API_BASE}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "apikey": AUTH_API_KEY,
+        "Authorization": `Bearer ${AUTH_API_KEY}`,
+      },
+      cache: "no-store",
+      body: JSON.stringify({ email: candidate, password }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      last = new Error(data.error_description || data.msg || data.message || "Invalid email or password");
+      continue;
+    }
+
+    const user = data.user || {};
+    const userId = user.id || decodeJwtPayload(data.access_token)?.sub;
+    if (!userId || !data.access_token) throw new Error("Login response missing session.");
+
+    const status = await fetchStatusForToken(userId, data.access_token);
+    const profileUser = status.data?.user || null;
+    return normalizeLoginPayload({
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token || "",
+      user: profileUser || {
+        id: userId,
+        email: user.email || candidate || email,
+        name: user.user_metadata?.display_name || user.user_metadata?.full_name || user.email || email,
+        plan: "basic",
+        creditsLeft: 0,
+      },
+    }, email);
+  }
+  throw last || new Error("Invalid email or password");
 }
 
 function decodeJwtPayload(token) {
@@ -136,18 +205,37 @@ function normalizeLoginPayload(payload, typedEmail) {
 }
 
 
+async function fetchStatusForToken(userId, accessToken) {
+  const preferred = await getApiBase();
+  const tryOrder = [preferred, ...API_ENDPOINTS.filter((u) => u !== preferred)];
+  let last = { status: 0, data: { valid: false, message: "Cannot reach server" } };
+  for (const base of tryOrder) {
+    try {
+      const headers = { "Content-Type": "application/json", "Accept": "application/json" };
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+      const res = await fetch(`${base}/api/public/extension/verify`, {
+        method: "POST",
+        headers,
+        cache: "no-store",
+        body: JSON.stringify({ userId, accessToken }),
+      });
+      const type = (res.headers.get("content-type") || "").toLowerCase();
+      const data = type.includes("application/json") ? await res.json().catch(() => ({})) : { message: "Server returned app page instead of API" };
+      last = { status: res.status, data };
+      if (type.includes("application/json") && (res.ok || res.status === 402 || res.status === 401)) {
+        await setApiBase(base);
+        return last;
+      }
+    } catch (e) {
+      last = { status: 0, data: { valid: false, message: e.message || "Network error" } };
+    }
+  }
+  return last;
+}
+
 async function fetchStatus(userId) {
-  const base = await getApiBase();
   const { accessToken } = await chrome.storage.local.get("accessToken");
-  const headers = { "Content-Type": "application/json" };
-  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-  const res = await fetch(`${base}/api/public/extension/verify`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ userId, accessToken }),
-  });
-  const data = await res.json().catch(() => ({}));
-  return { status: res.status, data };
+  return fetchStatusForToken(userId, accessToken);
 }
 
 async function saveSession(payload) {
