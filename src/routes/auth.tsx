@@ -24,6 +24,9 @@ function AuthPage() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string>("");
+  const [cooldown, setCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -35,10 +38,40 @@ function AuthPage() {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
+
   const switchTab = (t: Tab) => {
     setTab(t);
     setError("");
     setInfo("");
+  };
+
+  const resendVerification = async () => {
+    if (!pendingEmail || cooldown > 0 || resending) return;
+    setResending(true);
+    setError("");
+    const { error: rErr } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+    if (rErr) {
+      const m = rErr.message?.toLowerCase() ?? "";
+      if (m.includes("rate") || m.includes("seconds")) {
+        setError("Too many requests. Please wait a moment before trying again.");
+        setCooldown(60);
+      } else {
+        setError(rErr.message);
+      }
+      return;
+    }
+    setInfo(`✉️ Verification link re-sent to ${pendingEmail}. Check your Gmail (including Spam).`);
+    setCooldown(60);
   };
 
   const onSubmit = async (e: React.FormEvent) => {
