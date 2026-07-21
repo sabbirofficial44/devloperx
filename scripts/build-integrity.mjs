@@ -75,11 +75,9 @@ if (!bridge.includes(GUARD_FILE)) {
 const MAN = join(SRC, "manifest.json");
 const man = JSON.parse(readFileSync(MAN, "utf8"));
 man.permissions = Array.from(new Set([...(man.permissions || []), "alarms"]));
-// Bump patch to force reload.
-const parts = String(man.version).split(".").map((n) => parseInt(n, 10) || 0);
-while (parts.length < 3) parts.push(0);
-parts[parts.length - 1] += 1;
-man.version = parts.join(".");
+// Keep the public/site-facing extension version stable. Changing it after the
+// guard is generated can create a false tamper mismatch on normal unzip/load.
+man.version = "1.0.0";
 writeFileSync(MAN, JSON.stringify(man, null, 2));
 
 // 5. Re-hash bridge_background.js + manifest.json + guard AFTER edits so
