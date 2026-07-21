@@ -89,7 +89,10 @@ function Index() {
 
       <div className="dx-container">
         <nav className="dx-nav">
-          <div className="dx-logo dx-rise">DeveloperX</div>
+          <div className="dx-logo dx-rise" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src="/developerx-logo.png" alt="DeveloperX" width={36} height={36} style={{ borderRadius: 10, boxShadow: "0 4px 16px rgba(240,185,11,0.4)" }} />
+            <span>DeveloperX</span>
+          </div>
           <div className="dx-nav-links">
             <a className="dx-nav-link" href="#pricing">Pricing</a>
             <a className="dx-nav-link" href="#features">Features</a>
