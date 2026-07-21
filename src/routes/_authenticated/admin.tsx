@@ -384,30 +384,24 @@ function AdminPage() {
                 </div>
                 {usersQuery.isLoading && <div className="ax-empty">Loading…</div>}
                 {usersQuery.data && (
-                  <div className="ax-table-wrap">
-                    <table className="ax-table">
-                      <thead>
-                        <tr><th>Email</th><th>Name</th><th>Credits / Left</th><th>Used 24h</th><th>Last active</th><th>Plan</th><th style={{textAlign:"right"}}>Actions</th></tr>
-                      </thead>
-
-                      <tbody>
-                        {usersQuery.data.map((u) => (
-                          <UserRow
-                            key={u.userId}
-                            user={u}
-                            isSelf={u.userId === meQuery.data?.userId}
-                            rotating={rotateMut.isPending && rotateMut.variables === u.userId}
-                            onSave={(p) => updateMut.mutate({ userId: u.userId, ...p })}
-                            onRotate={() => rotateMut.mutate(u.userId)}
-                            onDelete={() => { if (confirm(`Delete ${u.email}?`)) deleteMut.mutate(u.userId); }}
-                          />
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="ax-user-list">
+                    {usersQuery.data.map((u) => (
+                      <UserRow
+                        key={u.userId}
+                        user={u}
+                        isSelf={u.userId === meQuery.data?.userId}
+                        rotating={rotateMut.isPending && rotateMut.variables === u.userId}
+                        onSave={(p) => updateMut.mutate({ userId: u.userId, ...p })}
+                        onRotate={() => rotateMut.mutate(u.userId)}
+                        onDelete={() => { if (confirm(`Delete ${u.email}?`)) deleteMut.mutate(u.userId); }}
+                      />
+                    ))}
+                    {usersQuery.data.length === 0 && <div className="ax-empty">No users yet.</div>}
                   </div>
                 )}
                 {msg && <div className="ax-msg">{msg}</div>}
               </section>
+
             </>
           )}
 
