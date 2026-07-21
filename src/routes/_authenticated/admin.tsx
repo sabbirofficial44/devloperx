@@ -716,12 +716,14 @@ function UserRow({
   }, [user.credits]);
   useEffect(() => { setPlan((prev) => (prev === user.plan ? prev : user.plan)); }, [user.plan]);
 
+  useLiveTick(1000);
   const dirty = credits !== String(user.credits) || plan !== user.plan;
   const currentCredits = Number(credits) || 0;
   const isUnlimited = UNLIMITED_PLAN_SET.has(plan.toLowerCase());
   const exhausted = !isUnlimited && currentCredits <= 0;
   const options = PLAN_OPTIONS.includes(plan) ? PLAN_OPTIONS : [plan, ...PLAN_OPTIONS];
   const used24h = user.usedLast24h ?? 0;
+  const online = isOnline(user.lastTickAt);
 
   const topUp = (amount: number) => {
     const next = currentCredits + amount;
@@ -732,6 +734,15 @@ function UserRow({
   return (
     <tr>
       <td>
+        <span
+          title={online ? "Online now" : "Offline"}
+          style={{
+            display: "inline-block", width: 8, height: 8, borderRadius: 999, marginRight: 8,
+            background: online ? "#22c55e" : "#475569",
+            boxShadow: online ? "0 0 8px #22c55e" : "none",
+            verticalAlign: "middle",
+          }}
+        />
         <span className="ax-mono">{user.email}</span>
         {user.isAdmin && <span className="ax-pill" style={{ marginLeft: 8 }}>admin</span>}
         {exhausted && <span className="ax-pill" style={{ marginLeft: 8, background: "#7f1d1d", color: "#fecaca" }}>exhausted</span>}
@@ -752,8 +763,8 @@ function UserRow({
         </div>
       </td>
       <td style={{ whiteSpace: "nowrap" }}>
-        <div style={{ color: user.lastUsedAt ? "#e2e8f0" : "#64748b", fontSize: 12 }}>
-          {relativeTime(user.lastUsedAt ?? null)}
+        <div style={{ color: online ? "#22c55e" : user.lastUsedAt ? "#e2e8f0" : "#64748b", fontSize: 12, fontWeight: online ? 600 : 400 }}>
+          {online ? "● online" : relativeTime(user.lastUsedAt ?? null)}
         </div>
         <div style={{ color: "#475569", fontSize: 10 }}>
           seen {relativeTime(user.lastTickAt ?? null)}
