@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DeveloperX \u2014 Veo Unlimited",
-  "version": "4.1.0",
-  "description": "Managed Google Flow (Veo) access with live credit tracking, sticky session, and a floating usage overlay.",
+  "version": "4.2.0",
+  "description": "Managed Google Flow (Veo) access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
   "permissions": [
     "cookies",
     "tabs",
@@ -69,7 +69,8 @@
         "https://labs.google/fx/tools/flow*"
       ],
       "js": [
-        "flow_overlay.js"
+        "flow_overlay.js",
+        "model_lock.js"
       ],
       "run_at": "document_idle"
     },
