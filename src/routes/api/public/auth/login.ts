@@ -73,11 +73,13 @@ export const Route = createFileRoute("/api/public/auth/login")({
           return json({ message: "Enter a valid email and password" }, 400);
         }
 
+        const loginEmail = normalizeLoginEmail(body.email);
         const authClient = createPublicClient();
         const { data: auth, error: authError } = await authClient.auth.signInWithPassword({
-          email: body.email,
+          email: loginEmail,
           password: body.password,
         });
+
 
         if (authError || !auth.user || !auth.session) {
           return json({ message: "Invalid email or password" }, 401);
