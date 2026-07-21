@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
       { title: "DeveloperX — Unlimited AI Video Generation" },
       { name: "description", content: "Get unlimited Google Flow (Veo 3, Omni, Flash) access. 12-hour free trial daily, then daily / weekly / monthly plans starting from ৳50." },
       { property: "og:title", content: "DeveloperX — Unlimited AI Video Generation" },
-      { property: "og:description", content: "12-hour daily free trial, then affordable daily/weekly/monthly plans." },
+      { property: "og:description", content: "Get unlimited Google Flow (Veo 3, Omni, Flash) access. 12-hour free trial daily, then daily / weekly / monthly plans starting from ৳50." },
     ],
   }),
   component: Index,

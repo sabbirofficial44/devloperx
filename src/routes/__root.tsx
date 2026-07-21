@@ -77,14 +77,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "DeveloperX — Unlimited Video Generation" },
-      { name: "description", content: "DeveloperX gives creators unlimited Google Flow video generation access." },
-      { property: "og:title", content: "DeveloperX — Unlimited Video Generation" },
-      { property: "og:description", content: "DeveloperX gives creators unlimited Google Flow video generation access." },
+      { title: "DeveloperX — Unlimited AI Video Generation" },
+      { name: "description", content: "Get unlimited Google Flow (Veo 3, Omni, Flash) access. 12-hour free trial daily, then daily / weekly / monthly plans starting from ৳50." },
+      { property: "og:title", content: "DeveloperX — Unlimited AI Video Generation" },
+      { property: "og:description", content: "Get unlimited Google Flow (Veo 3, Omni, Flash) access. 12-hour free trial daily, then daily / weekly / monthly plans starting from ৳50." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "DeveloperX — Unlimited Video Generation" },
-      { name: "twitter:description", content: "DeveloperX gives creators unlimited Google Flow video generation access." },
+      { name: "twitter:title", content: "DeveloperX — Unlimited AI Video Generation" },
+      { name: "twitter:description", content: "Get unlimited Google Flow (Veo 3, Omni, Flash) access. 12-hour free trial daily, then daily / weekly / monthly plans starting from ৳50." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/21d6a87b-6e10-4ee9-9999-26babfbe216f/id-preview-5a687b90--306a4997-5830-492f-b8db-9bb0ab4aee1f.lovable.app-1784614374173.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/21d6a87b-6e10-4ee9-9999-26babfbe216f/id-preview-5a687b90--306a4997-5830-492f-b8db-9bb0ab4aee1f.lovable.app-1784614374173.png" },
     ],
     links: [
       {
