@@ -13,20 +13,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  const nextState = {
+    userId: data.userId,
+    userName: data.name || data.displayName || data.email || "DeveloperX User",
+    userEmail: data.email || "",
+    userPlan: data.plan || "basic",
+    creditsLeft: Number(data.creditsLeft ?? data.credits ?? 0),
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken || "",
+    apiBase: String(data.apiBase || "").replace(/\/$/, ""),
+    loggedInAt: Date.now(),
+  };
+  if (Array.isArray(data.cookies)) nextState.cookieData = data.cookies;
+  if (data.cookieUpdatedAt) nextState.cookieUpdatedAt = data.cookieUpdatedAt;
+
   chrome.storage.local.set(
-    {
-      userId: data.userId,
-      userName: data.name || data.displayName || data.email || "DeveloperX User",
-      userEmail: data.email || "",
-      userPlan: data.plan || "basic",
-      creditsLeft: Number(data.creditsLeft ?? data.credits ?? 0),
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken || "",
-      apiBase: String(data.apiBase || "").replace(/\/$/, ""),
-      cookieData: Array.isArray(data.cookies) ? data.cookies : undefined,
-      cookieUpdatedAt: data.cookieUpdatedAt || undefined,
-      loggedInAt: Date.now(),
-    },
+    nextState,
     () => sendResponse?.({ ok: !chrome.runtime.lastError }),
   );
   return true;

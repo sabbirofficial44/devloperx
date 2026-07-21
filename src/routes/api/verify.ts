@@ -143,10 +143,10 @@ export const Route = createFileRoute("/api/verify")({
             balance_after: newBalance,
           });
           const updatedProfile = { ...ctx.profile, credits: newBalance };
-          return json({ valid: true, cookies: ctx.cookies, user: buildUser(updatedProfile) });
+          return json({ valid: true, cookies: ctx.cookies, cookieUpdatedAt: ctx.cookieUpdatedAt, user: buildUser(updatedProfile) });
         }
 
-        return json({ valid: true, cookies: ctx.cookies, user: buildUser(ctx.profile) });
+        return json({ valid: true, cookies: ctx.cookies, cookieUpdatedAt: ctx.cookieUpdatedAt, user: buildUser(ctx.profile) });
       },
     },
   },
