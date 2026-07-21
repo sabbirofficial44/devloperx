@@ -1,18 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Max-Age": "86400",
-};
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
-  });
-}
+import { corsHeaders, json, requireAuthUserId } from "./_auth";
 
 function getUserIdFromUrl(request: Request): string | null {
   const url = new URL(request.url);
@@ -25,13 +12,14 @@ export const Route = createFileRoute("/api/public/credits")({
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
 
       GET: async ({ request }) => {
-        const userId = getUserIdFromUrl(request);
-        if (!userId) return json({ credits: 0 });
+        const claimed = getUserIdFromUrl(request);
+        const auth = await requireAuthUserId(request, claimed);
+        if ("response" in auth) return auth.response;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabaseAdmin
           .from("profiles")
           .select("credits")
-          .eq("user_id", userId)
+          .eq("user_id", auth.userId)
           .maybeSingle();
         if (error) return json({ error: error.message }, 500);
         return json({ credits: Number(data?.credits ?? 0) });
@@ -44,19 +32,13 @@ export const Route = createFileRoute("/api/public/credits")({
         } catch {
           return json({ error: "Invalid JSON" }, 400);
         }
-        const userId = body.userId ?? body.user_id ?? getUserIdFromUrl(request);
-        const credits = body.credits;
-        if (typeof credits !== "number" || credits < 0) {
-          return json({ error: "Invalid credits" }, 400);
-        }
-        if (!userId) return json({ error: "Missing userId" }, 400);
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error } = await supabaseAdmin
-          .from("profiles")
-          .update({ credits })
-          .eq("user_id", userId);
-        if (error) return json({ error: error.message }, 500);
-        return json({ success: true, credits });
+        const claimed = body.userId ?? body.user_id ?? getUserIdFromUrl(request);
+        const auth = await requireAuthUserId(request, claimed);
+        if ("response" in auth) return auth.response;
+        // Users are not allowed to set their own credits from a public endpoint.
+        // Only admins may adjust credits — that flow uses the authenticated
+        // server function `flow-admin.functions.ts`.
+        return json({ error: "Forbidden" }, 403);
       },
     },
   },
