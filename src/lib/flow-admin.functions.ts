@@ -68,13 +68,28 @@ export const listUsers = createServerFn({ method: "GET" })
   });
 
 
+// Admin-created accounts bypass end-user validation rules — admin can create
+// literally anything (e.g. email="x", password="x"). Only public signups on
+// /auth enforce the strict @gmail.com + 6-char rules.
 const createUserSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6).max(200),
+  email: z.string().trim().min(1).max(255),
+  password: z.string().min(1).max(200),
   displayName: z.string().trim().max(100).optional(),
   credits: z.number().int().nonnegative().max(1_000_000_000).optional(),
   plan: z.string().trim().max(50).optional(),
 });
+
+// Supabase Auth requires a syntactically valid email. If the admin types a
+// bare username like "x" we synthesize a stable placeholder address so the
+// admin can still log the user in with that exact string on the extension.
+function normalizeAdminEmail(raw: string): { email: string; loginAlias: string } {
+  const trimmed = raw.trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    return { email: trimmed.toLowerCase(), loginAlias: trimmed.toLowerCase() };
+  }
+  const slug = trimmed.toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^-+|-+$/g, "") || "user";
+  return { email: `${slug}@dx.local`, loginAlias: trimmed };
+}
 
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -82,13 +97,17 @@ export const createUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { email, loginAlias } = normalizeAdminEmail(data.email);
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
+      email,
       password: data.password,
       email_confirm: true,
-      user_metadata: data.displayName ? { display_name: data.displayName } : undefined,
+      user_metadata: data.displayName
+        ? { display_name: data.displayName, login_alias: loginAlias }
+        : { login_alias: loginAlias },
     });
     if (error) throw new Error(error.message);
+
     const userId = created.user?.id;
     if (!userId) throw new Error("User creation failed");
 

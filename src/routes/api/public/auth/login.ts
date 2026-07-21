@@ -11,10 +11,20 @@ const corsHeaders = {
 };
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().min(1).max(255),
   password: z.string().min(1).max(500),
   version: z.string().optional(),
 });
+
+// Mirror the admin normalizer in flow-admin.functions.ts so a user created
+// with a bare "x" username can sign in with "x" on the extension.
+function normalizeLoginEmail(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed.toLowerCase();
+  const slug = trimmed.toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^-+|-+$/g, "") || "user";
+  return `${slug}@dx.local`;
+}
+
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -63,11 +73,13 @@ export const Route = createFileRoute("/api/public/auth/login")({
           return json({ message: "Enter a valid email and password" }, 400);
         }
 
+        const loginEmail = normalizeLoginEmail(body.email);
         const authClient = createPublicClient();
         const { data: auth, error: authError } = await authClient.auth.signInWithPassword({
-          email: body.email,
+          email: loginEmail,
           password: body.password,
         });
+
 
         if (authError || !auth.user || !auth.session) {
           return json({ message: "Invalid email or password" }, 401);
