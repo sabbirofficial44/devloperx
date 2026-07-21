@@ -74,6 +74,9 @@ export const Route = createFileRoute("/api/public/auth/login")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // Start trial countdown on first extension login (idempotent).
+        await supabaseAdmin.rpc("start_trial_if_needed", { _user_id: auth.user.id });
+        await supabaseAdmin.rpc("tick_trial_credits", { _user_id: auth.user.id });
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("display_name, email, credits, user_plan")
