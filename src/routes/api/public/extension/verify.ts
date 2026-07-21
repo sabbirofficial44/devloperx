@@ -60,7 +60,7 @@ function creditBlock(profile: { credits: number | null; user_plan: string | null
 
 async function verifyFromRequest(request: Request) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  let userId: string | null = null;
+  let claimedUserId: string | null = null;
   let accessToken: string | null = null;
 
   const auth = request.headers.get("authorization") ?? request.headers.get("Authorization");
@@ -75,24 +75,22 @@ async function verifyFromRequest(request: Request) {
         user_id?: string;
       };
       accessToken = accessToken ?? body.accessToken ?? body.access_token ?? null;
-      userId = body.userId ?? body.user_id ?? null;
+      claimedUserId = body.userId ?? body.user_id ?? null;
     }
   } catch {
     // ignore
   }
 
   const url = new URL(request.url);
-  userId = userId ?? url.searchParams.get("userId") ?? url.searchParams.get("user_id");
+  claimedUserId = claimedUserId ?? url.searchParams.get("userId") ?? url.searchParams.get("user_id");
   accessToken = accessToken ?? url.searchParams.get("accessToken");
 
-  if (accessToken) {
-    const { data } = await supabaseAdmin.auth.getUser(accessToken);
-    const tokenUserId = data.user?.id ?? null;
-    if (userId && tokenUserId && userId !== tokenUserId) return invalid();
-    userId = tokenUserId ?? userId;
-  }
-
+  // Bearer token is required — client-supplied userId alone is not proof of ownership.
+  if (!accessToken) return invalid();
+  const { data: tokenData } = await supabaseAdmin.auth.getUser(accessToken);
+  const userId = tokenData.user?.id ?? null;
   if (!userId) return invalid();
+  if (claimedUserId && claimedUserId !== userId) return invalid();
 
   // Start the trial timer on first extension login (idempotent).
   await supabaseAdmin.rpc("start_trial_if_needed", { _user_id: userId });

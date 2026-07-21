@@ -1,10 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureDefaultAdmin } from "@/lib/ensure-admin.functions";
-
-const DEFAULT_ADMIN_EMAIL = "admin@gmail.com";
-const DEFAULT_ADMIN_PASSWORD = "admin1122";
 
 export const Route = createFileRoute("/admin-login")({
   ssr: false,
@@ -19,14 +15,13 @@ export const Route = createFileRoute("/admin-login")({
 
 function AdminLoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState(DEFAULT_ADMIN_EMAIL);
-  const [password, setPassword] = useState(DEFAULT_ADMIN_PASSWORD);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
-      try { await ensureDefaultAdmin(); } catch {}
       const { data } = await supabase.auth.getSession();
       if (!data.session) return;
       const { data: role } = await supabase
@@ -43,7 +38,6 @@ function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    try { await ensureDefaultAdmin(); } catch {}
     const { data, error: signErr } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -91,12 +85,12 @@ function AdminLoginPage() {
             <div>
               <label className="dx-label">Email</label>
               <input type="email" required placeholder="admin@example.com" value={email}
-                onChange={(e) => setEmail(e.target.value)} className="dx-input" />
+                onChange={(e) => setEmail(e.target.value)} className="dx-input" autoComplete="email" />
             </div>
             <div>
               <label className="dx-label">Password</label>
               <input type="password" required placeholder="Password" value={password}
-                onChange={(e) => setPassword(e.target.value)} className="dx-input" />
+                onChange={(e) => setPassword(e.target.value)} className="dx-input" autoComplete="current-password" />
             </div>
             {error && <div className="dx-msg-err">{error}</div>}
             <button type="submit" disabled={loading} className="dx-btn dx-btn-purple" style={{ width: "100%", padding: 12, marginTop: 4 }}>
@@ -111,4 +105,3 @@ function AdminLoginPage() {
     </div>
   );
 }
-

@@ -1,24 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { corsHeaders, json, requireAuthUserId } from "../_auth";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Max-Age": "86400",
-};
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
-  });
-}
+// Session cookie pool. GET requires an authenticated user (extension callers).
+// POST (upload) requires an admin.
 
 export const Route = createFileRoute("/api/public/user/cookies")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
-      GET: async () => {
+      GET: async ({ request }) => {
+        const auth = await requireAuthUserId(request);
+        if ("response" in auth) return auth.response;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { data } = await supabaseAdmin
@@ -37,22 +29,21 @@ export const Route = createFileRoute("/api/public/user/cookies")({
             veoSettings: { veoFastEnabled: true, veoLowerEnabled: true },
           });
         } catch (error) {
-          return json({
-            cookies: [],
-            encryptedCookies: null,
-            disabled: false,
-            totalCookies: 0,
-            lastUpdated: null,
-            veoSettings: { veoFastEnabled: true, veoLowerEnabled: true },
-            error: (error as Error).message,
-          });
+          return json({ error: (error as Error).message }, 500);
         }
       },
       POST: async ({ request }) => {
+        const auth = await requireAuthUserId(request);
+        if ("response" in auth) return auth.response;
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+          _user_id: auth.userId,
+          _role: "admin",
+        });
+        if (!isAdmin) return json({ error: "Forbidden" }, 403);
         try {
           const body = (await request.json()) as { cookies?: unknown };
           const cookies = Array.isArray(body?.cookies) ? body.cookies : [];
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { error } = await supabaseAdmin.from("session_cookies").insert({
             cookies,
             total_cookies: cookies.length,

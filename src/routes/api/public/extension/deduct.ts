@@ -1,18 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Max-Age": "86400",
-};
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
-  });
-}
+import { corsHeaders, json, requireAuthUserId } from "../_auth";
 
 export const Route = createFileRoute("/api/public/extension/deduct")({
   server: {
@@ -32,13 +19,15 @@ export const Route = createFileRoute("/api/public/extension/deduct")({
         } catch {
           return json({ error: "Invalid JSON" }, 400);
         }
-        const userId = body.userId ?? body.user_id;
+        const claimed = body.userId ?? body.user_id;
+        const auth = await requireAuthUserId(request, claimed);
+        if ("response" in auth) return auth.response;
+        const userId = auth.userId;
         const amount = Math.max(1, Math.floor(Number(body.amount ?? 1)));
         const reason = (body.reason ?? "generation").toString().slice(0, 200);
         const source = (body.source ?? "extension").toString().slice(0, 60);
         const metadata: Record<string, unknown> =
           body.metadata && typeof body.metadata === "object" ? body.metadata : {};
-        if (!userId) return json({ error: "Missing userId" }, 400);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: profile, error: readErr } = await supabaseAdmin

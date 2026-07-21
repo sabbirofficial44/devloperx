@@ -1,18 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Max-Age": "86400",
-};
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
-  });
-}
+import { corsHeaders, json, requireAuthUserId } from "../_auth";
 
 export const Route = createFileRoute("/api/public/extension/identity")({
   server: {
@@ -20,15 +7,15 @@ export const Route = createFileRoute("/api/public/extension/identity")({
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const userId = url.searchParams.get("userId") ?? "";
-
-        if (!userId) return json({ ok: false }, 400);
+        const claimed = url.searchParams.get("userId");
+        const auth = await requireAuthUserId(request, claimed);
+        if ("response" in auth) return auth.response;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("email, display_name")
-          .eq("user_id", userId)
+          .eq("user_id", auth.userId)
           .maybeSingle();
 
         if (!profile) return json({ ok: false }, 404);
