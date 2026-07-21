@@ -22,6 +22,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -37,12 +38,14 @@ function AuthPage() {
   const switchTab = (t: Tab) => {
     setTab(t);
     setError("");
+    setInfo("");
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setInfo("");
 
     if (tab === "signin") {
       const { data, error: siErr } = await supabase.auth.signInWithPassword({
@@ -51,7 +54,12 @@ function AuthPage() {
       });
       if (siErr || !data.user) {
         setLoading(false);
-        setError("Invalid email or password.");
+        const msg = siErr?.message?.toLowerCase() ?? "";
+        if (msg.includes("not confirmed") || msg.includes("confirm")) {
+          setError("Please confirm your email first. Check your Gmail inbox for the verification link.");
+        } else {
+          setError("Invalid email or password.");
+        }
         return;
       }
       const { data: role } = await supabase
@@ -98,16 +106,13 @@ function AuthPage() {
       setError(sErr?.message ?? "Signup failed");
       return;
     }
-    if (!data.session) {
-      const { error: siErr } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (siErr) {
-        setLoading(false);
-        setError("Account created. Please sign in.");
-        setTab("signin");
-        return;
-      }
-    }
-    navigate({ to: "/dashboard", replace: true });
+    // Email verification required — do NOT auto sign-in
+    setLoading(false);
+    setError("");
+    setInfo(`✉️ A confirmation link has been sent to ${em}. Please open your Gmail and click the link to activate your account, then sign in below.`);
+    setTab("signin");
+    setPassword("");
+    return;
   };
 
   return (
@@ -192,6 +197,7 @@ function AuthPage() {
             </div>
 
             {error && <div className="dx-msg-err">{error}</div>}
+            {info && <div className="dx-msg-err" style={{ background: "rgba(34,197,94,.12)", borderColor: "rgba(34,197,94,.35)", color: "#86efac" }}>{info}</div>}
 
             <button
               type="submit"
