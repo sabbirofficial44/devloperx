@@ -1632,7 +1632,7 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   .dx-btn { padding: 12px 20px; font-size: 14px; }
 
   /* Pricing — single column, tighter cards */
-  .dx-pricing-grid { grid-template-columns: 1fr !important; gap: 14px; }
+  .dx-pricing-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
   .dx-price-card-premium { padding: 22px 20px; border-radius: 16px; }
   .dx-plan-credits { font-size: 34px !important; }
   .dx-plan-price { font-size: 26px !important; margin: 12px 0 4px !important; }
@@ -1690,6 +1690,38 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   .dx-nav-link.dx-btn,
   .dx-nav-links .dx-btn { padding: 10px 14px; font-size: 13px; }
   .dx-badge { font-size: 11px; padding: 5px 10px; }
+}
+
+/* ===== Dashboard nav — keep on single row across devices ===== */
+.dx-nav-dash {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  gap: 10px;
+  min-width: 0;
+}
+.dx-nav-dash .dx-nav-brand { min-width: 0; flex-shrink: 1; overflow: hidden; }
+.dx-nav-dash .dx-nav-brand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dx-nav-dash .dx-nav-actions {
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.dx-nav-dash .dx-nav-avatar {
+  width: 38px; height: 38px; padding: 0; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .dx-nav-dash .dx-nav-actions { gap: 6px; }
+  .dx-nav-dash .dx-nav-text { font-size: 12.5px; padding: 8px 8px; min-height: 40px; }
+  .dx-nav-dash .dx-nav-avatar { width: 36px; height: 36px; font-size: 13px; }
+  .dx-nav-dash .dx-nav-brand span { font-size: 15px; }
+  .dx-nav-dash .dx-nav-brand img { width: 28px !important; height: 28px !important; }
+  .dx-dropdown { right: 0; min-width: 240px; max-width: calc(100vw - 24px); }
+}
+@media (max-width: 380px) {
+  .dx-nav-dash .dx-nav-text { padding: 8px 6px; font-size: 12px; }
 }
 
 /* ===== Admin console — mobile ===== */

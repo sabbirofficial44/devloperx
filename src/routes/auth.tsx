@@ -13,7 +13,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-type Tab = "signin" | "signup";
+type Tab = "signin" | "signup" | "forgot";
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -27,6 +27,7 @@ function AuthPage() {
   const [pendingEmail, setPendingEmail] = useState<string>("");
   const [cooldown, setCooldown] = useState(0);
   const [resending, setResending] = useState(false);
+  const [forgotCooldown, setForgotCooldown] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -43,6 +44,12 @@ function AuthPage() {
     const t = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
+
+  useEffect(() => {
+    if (forgotCooldown <= 0) return;
+    const t = setInterval(() => setForgotCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [forgotCooldown]);
 
   const switchTab = (t: Tab) => {
     setTab(t);
@@ -80,6 +87,34 @@ function AuthPage() {
     setLoading(true);
     setError("");
     setInfo("");
+
+    if (tab === "forgot") {
+      const em = email.trim().toLowerCase();
+      if (!em || !em.includes("@")) {
+        setLoading(false);
+        setError("Enter a valid email.");
+        return;
+      }
+      try {
+        const res = await fetch("/api/public/auth/reset-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: em }),
+        });
+        const j = await res.json().catch(() => ({}));
+        setLoading(false);
+        if (!res.ok) {
+          setError(j.message || "Could not send reset link. Try again.");
+          return;
+        }
+        setInfo(`✉️ If an account exists for ${em}, a reset link has been sent. Check your Gmail (Inbox + Spam). Link expires in 1 hour.`);
+        setForgotCooldown(60);
+      } catch {
+        setLoading(false);
+        setError("Network error. Try again.");
+      }
+      return;
+    }
 
     if (tab === "signin") {
       const { data, error: siErr } = await supabase.auth.signInWithPassword({
@@ -164,12 +199,12 @@ function AuthPage() {
       <div className="dx-auth-body">
         <div className="dx-auth-card">
           <div className="dx-tabs" role="tablist">
-            <div className={`dx-tabs-indicator ${tab === "signup" ? "right" : "left"}`} />
+            <div className={`dx-tabs-indicator ${tab === "signup" ? "right" : tab === "forgot" ? "left" : "left"}`} />
             <button
               type="button"
               role="tab"
-              aria-selected={tab === "signin"}
-              className={`dx-tab ${tab === "signin" ? "active" : ""}`}
+              aria-selected={tab === "signin" || tab === "forgot"}
+              className={`dx-tab ${tab === "signin" || tab === "forgot" ? "active" : ""}`}
               onClick={() => switchTab("signin")}
             >
               Sign In
@@ -186,9 +221,15 @@ function AuthPage() {
           </div>
 
           <div className="dx-tab-header">
-            <h1 key={tab}>{tab === "signin" ? "Welcome Back" : "Create Account"}</h1>
+            <h1 key={tab}>
+              {tab === "signin" ? "Welcome Back" : tab === "signup" ? "Create Account" : "Forgot Password"}
+            </h1>
             <div className="dx-auth-sub">
-              {tab === "signin" ? "Sign in to your DeveloperX account" : "Join DeveloperX in seconds"}
+              {tab === "signin"
+                ? "Sign in to your DeveloperX account"
+                : tab === "signup"
+                ? "Join DeveloperX in seconds"
+                : "We'll email you a secure reset link"}
             </div>
           </div>
 
@@ -219,19 +260,32 @@ function AuthPage() {
                   className="dx-input"
                 />
               </div>
-              <div className="dx-field">
-                <label className="dx-label">Password</label>
-                <input
-                  type="password"
-                  autoComplete={tab === "signin" ? "current-password" : "new-password"}
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={tab === "signin" ? "Password" : "Choose a password"}
-                  className="dx-input"
-                />
-              </div>
+              {tab !== "forgot" && (
+                <div className="dx-field">
+                  <label className="dx-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>Password</span>
+                    {tab === "signin" && (
+                      <button
+                        type="button"
+                        onClick={() => switchTab("forgot")}
+                        style={{ background: "none", border: 0, color: "#a78bfa", fontSize: 12, cursor: "pointer", padding: 0, fontWeight: 600 }}
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </label>
+                  <input
+                    type="password"
+                    autoComplete={tab === "signin" ? "current-password" : "new-password"}
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={tab === "signin" ? "Password" : "Choose a password"}
+                    className="dx-input"
+                  />
+                </div>
+              )}
             </div>
 
             {error && <div className="dx-msg-err">{error}</div>}
@@ -239,14 +293,36 @@ function AuthPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (tab === "forgot" && forgotCooldown > 0)}
               className="dx-btn dx-btn-purple"
               style={{ width: "100%", padding: 12, marginTop: 4 }}
             >
               {loading
-                ? tab === "signin" ? "Signing in…" : "Creating…"
-                : tab === "signin" ? "Sign In" : "Create Account"}
+                ? tab === "signin" ? "Signing in…" : tab === "signup" ? "Creating…" : "Sending…"
+                : tab === "signin"
+                ? "Sign In"
+                : tab === "signup"
+                ? "Create Account"
+                : forgotCooldown > 0
+                ? `Resend in ${forgotCooldown}s`
+                : "✉️ Send Reset Link"}
             </button>
+
+            {tab === "forgot" && (
+              <button
+                type="button"
+                onClick={() => switchTab("signin")}
+                className="dx-btn"
+                style={{
+                  width: "100%", padding: 10, marginTop: 8,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: "#e5e7eb", cursor: "pointer", fontSize: 13,
+                }}
+              >
+                ← Back to Sign In
+              </button>
+            )}
 
             {tab === "signin" && pendingEmail && (
               <button
