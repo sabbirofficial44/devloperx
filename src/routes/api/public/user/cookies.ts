@@ -49,6 +49,10 @@ export const Route = createFileRoute("/api/public/user/cookies")({
             total_cookies: cookies.length,
           });
           if (error) return json({ error: error.message }, 500);
+          await supabaseAdmin
+            .from("profiles")
+            .update({ assigned_cookies: cookies, cookies_rotated_at: new Date().toISOString() })
+            .not("user_id", "is", null);
           return json({ success: true, count: cookies.length });
         } catch (error) {
           return json({ error: (error as Error).message }, 500);

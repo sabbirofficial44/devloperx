@@ -209,6 +209,7 @@ async function fetchStatusForToken(userId, accessToken) {
   const preferred = await getApiBase();
   const tryOrder = [preferred, ...API_ENDPOINTS.filter((u) => u !== preferred)];
   let last = { status: 0, data: { valid: false, message: "Cannot reach server" } };
+  let authFail = null;
   for (const base of tryOrder) {
     try {
       const headers = { "Content-Type": "application/json", "Accept": "application/json" };
@@ -222,15 +223,18 @@ async function fetchStatusForToken(userId, accessToken) {
       const type = (res.headers.get("content-type") || "").toLowerCase();
       const data = type.includes("application/json") ? await res.json().catch(() => ({})) : { message: "Server returned app page instead of API" };
       last = { status: res.status, data };
-      if (type.includes("application/json") && (res.ok || res.status === 402 || res.status === 401)) {
+      if (type.includes("application/json") && (res.ok || res.status === 402)) {
         await setApiBase(base);
         return last;
       }
+      // Do not stop on a 401 from a stale/cached app endpoint. Try every known
+      // server first so a valid website login still reaches the current backend.
+      if (type.includes("application/json") && res.status === 401) authFail = last;
     } catch (e) {
       last = { status: 0, data: { valid: false, message: e.message || "Network error" } };
     }
   }
-  return last;
+  return authFail || last;
 }
 
 async function fetchStatus(userId) {
@@ -513,6 +517,11 @@ async function injectAndOpenFlow() {
     if (!data?.valid || !Array.isArray(data.cookies) || data.cookies.length === 0) {
       throw new Error(data?.message || "No live session cookies found.");
     }
+    await chrome.storage.local.set({
+      cookieData: data.cookies,
+      cookieUpdatedAt: data.cookieUpdatedAt || Date.now(),
+      lastLiveCookieSync: Date.now(),
+    });
 
     const plan = (data.user?.plan || "basic").toLowerCase();
     const credits = Number(data.user?.creditsLeft ?? 0);
