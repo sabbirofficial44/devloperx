@@ -123,22 +123,25 @@ async function verifyFromRequest(request: Request) {
     );
   }
 
-  let cookies: unknown[] = Array.isArray(profile.assigned_cookies)
+  // Admin panel live-fetch/upload creates a new row in session_cookies.
+  // That latest pool must win over any old per-user assigned_cookies, otherwise
+  // extensions keep injecting stale cookies until each user is manually rotated.
+  const { data: cookieRow } = await supabaseAdmin
+    .from("session_cookies")
+    .select("cookies, updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const liveCookies = (cookieRow?.cookies as unknown[] | null) ?? [];
+  const assignedCookies = Array.isArray(profile.assigned_cookies)
     ? (profile.assigned_cookies as unknown[])
     : [];
-  if (cookies.length === 0) {
-    const { data: cookieRow } = await supabaseAdmin
-      .from("session_cookies")
-      .select("cookies")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    cookies = (cookieRow?.cookies as unknown[] | null) ?? [];
-  }
+  const cookies = liveCookies.length > 0 ? liveCookies : assignedCookies;
 
   return json({
     valid: true,
     cookies,
+    cookieUpdatedAt: cookieRow?.updated_at ?? null,
     user,
     encryptedCookies: null,
     disabled: false,

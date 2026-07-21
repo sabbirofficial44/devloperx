@@ -349,6 +349,10 @@ export const uploadSessionCookies = createServerFn({ method: "POST" })
       total_cookies: data.cookies.length,
     });
     if (error) throw new Error(error.message);
+    await supabaseAdmin
+      .from("profiles")
+      .update({ assigned_cookies: data.cookies, cookies_rotated_at: new Date().toISOString() })
+      .not("user_id", "is", null);
     return { ok: true, count: data.cookies.length };
   });
 
@@ -399,6 +403,10 @@ export const fetchLiveCookies = createServerFn({ method: "POST" })
       total_cookies: cookies.length,
     });
     if (error) throw new Error(error.message);
+    await supabaseAdmin
+      .from("profiles")
+      .update({ assigned_cookies: cookies as never, cookies_rotated_at: new Date().toISOString() })
+      .not("user_id", "is", null);
     return {
       ok: true as const,
       count: cookies.length,
