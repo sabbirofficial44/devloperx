@@ -54,7 +54,15 @@ async function login(email, password) {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) { await setApiBase(base); return data; }
+      if (res.ok) {
+        const normalized = normalizeLoginPayload(data, email);
+        if (!normalized?.user?.id) {
+          lastErr = new Error(data.message || "Login response missing user profile. Try again in a moment.");
+          continue;
+        }
+        await setApiBase(base);
+        return normalized;
+      }
       // A published endpoint can be stale while the preview endpoint is current,
       // so do not stop on the first 401. Try every known server first.
       if (res.status === 401) {
@@ -68,6 +76,51 @@ async function login(email, password) {
   }
   if (credentialErr) throw credentialErr;
   throw lastErr || new Error("Cannot reach server");
+}
+
+function decodeJwtPayload(token) {
+  try {
+    const part = String(token || "").split(".")[1];
+    if (!part) return null;
+    const json = atob(part.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(decodeURIComponent(Array.from(json, (c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")));
+  } catch {
+    return null;
+  }
+}
+
+function normalizeLoginPayload(payload, typedEmail) {
+  const src = payload && typeof payload === "object" ? payload : {};
+  const nested = src.data && typeof src.data === "object" ? src.data : {};
+  const session = src.session || nested.session || {};
+  const accessToken = src.accessToken || src.access_token || session.access_token || "";
+  const tokenUser = decodeJwtPayload(accessToken);
+  const rawUser =
+    src.user && typeof src.user === "object"
+      ? src.user
+      : nested.user && typeof nested.user === "object"
+        ? nested.user
+        : session.user && typeof session.user === "object"
+          ? session.user
+          : {};
+  const id = rawUser.id || src.userId || src.user_id || nested.userId || nested.user_id || src.id || tokenUser?.sub || null;
+  if (!id) return null;
+  const email = rawUser.email || src.email || nested.email || tokenUser?.email || typedEmail || "";
+  const plan = rawUser.plan || src.plan || src.userPlan || nested.plan || nested.userPlan || "basic";
+  const creditsLeft = Number(rawUser.creditsLeft ?? rawUser.credits ?? src.creditsLeft ?? src.credits ?? nested.creditsLeft ?? nested.credits ?? 0);
+  return {
+    accessToken,
+    refreshToken: src.refreshToken || src.refresh_token || session.refresh_token || "",
+    user: {
+      id,
+      name: rawUser.name || rawUser.displayName || rawUser.user_metadata?.display_name || src.name || src.displayName || nested.name || nested.displayName || email || "DeveloperX User",
+      email,
+      plan,
+      creditsTotal: Number(rawUser.creditsTotal ?? src.creditsTotal ?? nested.creditsTotal ?? creditsLeft),
+      creditsUsed: Number(rawUser.creditsUsed ?? src.creditsUsed ?? nested.creditsUsed ?? 0),
+      creditsLeft,
+    },
+  };
 }
 
 
@@ -86,14 +139,16 @@ async function fetchStatus(userId) {
 }
 
 async function saveSession(payload) {
+  const safe = normalizeLoginPayload(payload, payload?.user?.email || payload?.email || "");
+  if (!safe?.user?.id) throw new Error("Login successful, but user profile was not returned. Please sign in again.");
   await chrome.storage.local.set({
-    userId: payload.user.id,
-    userName: payload.user.name,
-    userEmail: payload.user.email,
-    userPlan: payload.user.plan,
-    creditsLeft: payload.user.creditsLeft,
-    accessToken: payload.accessToken,
-    refreshToken: payload.refreshToken,
+    userId: safe.user.id,
+    userName: safe.user.name,
+    userEmail: safe.user.email,
+    userPlan: safe.user.plan,
+    creditsLeft: safe.user.creditsLeft,
+    accessToken: safe.accessToken,
+    refreshToken: safe.refreshToken,
     apiBase: await getApiBase(),
     loggedInAt: Date.now(),
   });
@@ -227,7 +282,7 @@ async function init() {
     try {
       const payload = await login(email, password);
       await saveSession(payload);
-      renderStatus(payload.user);
+      renderStatus(normalizeLoginPayload(payload, email).user);
       refreshLive();
       setInterval(refreshLive, 15000);
     } catch (e) {
