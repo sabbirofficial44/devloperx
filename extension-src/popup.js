@@ -45,15 +45,19 @@ async function login(email, password) {
   const tryOrder = [preferred, ...API_ENDPOINTS.filter((u) => u !== preferred)];
   let lastErr = null;
   let credentialErr = null;
+  let unconfirmedErr = null;
+  const failures = [];
   for (const base of tryOrder) {
     try {
       const res = await fetch(`${base}/api/public/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json", "Cache-Control": "no-store" },
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({ email: email.trim(), password, version: chrome.runtime?.getManifest?.().version || "popup" }),
       });
       const type = (res.headers.get("content-type") || "").toLowerCase();
       const data = type.includes("application/json") ? await res.json().catch(() => ({})) : {};
+      failures.push(`${base.replace(/^https:\/\//, "")}: ${res.status}`);
       if (!type.includes("application/json")) {
         lastErr = new Error("Server returned app page instead of login API");
         continue;
@@ -70,16 +74,20 @@ async function login(email, password) {
       // A published endpoint can be stale while the preview endpoint is current,
       // so do not stop on the first 401. Try every known server first.
       if (res.status === 401) {
-        credentialErr = new Error(data.message || "Invalid email or password");
+        const message = data.message || "Invalid email or password";
+        if (/confirm|verified|verification/i.test(message)) unconfirmedErr = new Error(message);
+        else credentialErr = new Error(`${message}. If it works on website, update/reload the extension and try again.`);
         continue;
       }
       lastErr = new Error(data.message || `Login failed (${res.status})`);
     } catch (e) {
-      lastErr = e;
+      failures.push(`${base.replace(/^https:\/\//, "")}: network`);
+      lastErr = new Error(`${e.message || "Network error"}. Check extension update / internet.`);
     }
   }
+  if (unconfirmedErr) throw unconfirmedErr;
   if (credentialErr) throw credentialErr;
-  throw lastErr || new Error("Cannot reach server");
+  throw lastErr || new Error(`Cannot reach server (${failures.join(" | ")})`);
 }
 
 function decodeJwtPayload(token) {

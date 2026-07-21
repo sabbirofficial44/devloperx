@@ -6,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, Cache-Control",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -115,6 +115,10 @@ export const Route = createFileRoute("/api/public/auth/login")({
 
 
         if (authError || !auth.user || !auth.session) {
+          const msg = authError?.message?.toLowerCase() ?? "";
+          if (msg.includes("confirm") || msg.includes("verified")) {
+            return json({ message: "Please confirm your email first, then sign in." }, 401);
+          }
           return json({ message: "Invalid email or password" }, 401);
         }
 
