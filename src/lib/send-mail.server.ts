@@ -1,5 +1,5 @@
-// Server-only Gmail SMTP sender via worker-mailer (Cloudflare Workers TCP sockets).
-import { WorkerMailer } from "worker-mailer";
+// Server-only Gmail SMTP sender via nodemailer.
+import nodemailer from "nodemailer";
 
 export async function sendGmail(opts: {
   to: string;
@@ -12,17 +12,16 @@ export async function sendGmail(opts: {
   const fromName = process.env.GMAIL_FROM_NAME || "DeveloperX";
   if (!user || !pass) throw new Error("Gmail SMTP not configured");
 
-  const mailer = await WorkerMailer.connect({
-    credentials: { username: user, password: pass },
-    authType: "login",
+  const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
+    auth: { user, pass },
   });
 
-  await mailer.send({
-    from: { name: fromName, email: user },
-    to: { email: opts.to },
+  await transporter.sendMail({
+    from: `"${fromName}" <${user}>`,
+    to: opts.to,
     subject: opts.subject,
     html: opts.html,
     text: opts.text ?? opts.html.replace(/<[^>]+>/g, ""),
