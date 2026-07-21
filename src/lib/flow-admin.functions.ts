@@ -205,6 +205,16 @@ export const updateUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Fetch current state so we can compute delta + log ledger entry.
+    const { data: before } = await supabaseAdmin
+      .from("profiles")
+      .select("credits, user_plan")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    const prevCredits = Number(before?.credits ?? 0);
+    const prevPlan = String(before?.user_plan ?? "");
+
     const patch: { credits?: number; user_plan?: string; display_name?: string; last_tick_at?: string } = {};
     if (data.credits !== undefined) patch.credits = data.credits;
     if (data.plan) patch.user_plan = data.plan;
@@ -214,6 +224,38 @@ export const updateUser = createServerFn({ method: "POST" })
     if (Object.keys(patch).length === 0) return { ok: true };
     const { error } = await supabaseAdmin.from("profiles").update(patch).eq("user_id", data.userId);
     if (error) throw new Error(error.message);
+
+    // Audit trail: log admin adjustments into credit_ledger so history is preserved.
+    const entries: Array<{
+      user_id: string; amount: number; reason: string; source: string; balance_after: number | null;
+      metadata: Record<string, unknown>;
+    }> = [];
+    if (data.credits !== undefined && data.credits !== prevCredits) {
+      const delta = data.credits - prevCredits;
+      entries.push({
+        user_id: data.userId,
+        amount: delta,
+        reason: delta > 0
+          ? `Admin top-up (+${delta})`
+          : `Admin deduction (${delta})`,
+        source: "admin",
+        balance_after: data.credits,
+        metadata: { admin_id: context.userId, before: prevCredits, after: data.credits },
+      });
+    }
+    if (data.plan && data.plan !== prevPlan) {
+      entries.push({
+        user_id: data.userId,
+        amount: 0,
+        reason: `Plan changed: ${prevPlan || "—"} → ${data.plan}`,
+        source: "admin",
+        balance_after: data.credits ?? prevCredits,
+        metadata: { admin_id: context.userId, before_plan: prevPlan, after_plan: data.plan },
+      });
+    }
+    if (entries.length > 0) {
+      await supabaseAdmin.from("credit_ledger").insert(entries);
+    }
     return { ok: true };
   });
 
