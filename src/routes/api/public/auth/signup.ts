@@ -82,16 +82,17 @@ export const Route = createFileRoute("/api/public/auth/signup")({
         // Check duplicate
         const { data: existing } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
         const dup = existing.users.find((u) => (u.email ?? "").toLowerCase() === email);
+        const origin = publicOrigin(request);
+        const logoUrl = `${origin}/developerx-logo.png`;
+
         if (dup) {
           if (dup.email_confirmed_at) return json({ ok: false, message: "Account already exists. Sign in instead." }, 409);
-          // Resend verification for unconfirmed user
           const token = randomToken();
           await supabaseAdmin.from("email_verifications").insert({ user_id: dup.id, email, token });
-          const origin = new URL(request.url).origin;
           const link = `${origin}/api/public/auth/confirm?token=${token}`;
           try {
             const { sendGmail } = await import("@/lib/send-mail.server");
-            await sendGmail({ to: email, subject: "Confirm your DeveloperX account", html: buildEmailHtml(link, name) });
+            await sendGmail({ to: email, subject: "Confirm your DeveloperX account", html: buildEmailHtml(link, name, logoUrl) });
           } catch (e) {
             console.error("[signup] SMTP resend error:", e);
             return json({ ok: false, message: "Could not send confirmation email" }, 500);
@@ -110,8 +111,6 @@ export const Route = createFileRoute("/api/public/auth/signup")({
 
         const token = randomToken();
         await supabaseAdmin.from("email_verifications").insert({ user_id: created.user.id, email, token });
-
-        const origin = new URL(request.url).origin;
         const link = `${origin}/api/public/auth/confirm?token=${token}`;
 
         try {
@@ -119,7 +118,7 @@ export const Route = createFileRoute("/api/public/auth/signup")({
           await sendGmail({
             to: email,
             subject: "Confirm your DeveloperX account",
-            html: buildEmailHtml(link, name),
+            html: buildEmailHtml(link, name, logoUrl),
           });
         } catch (e) {
           console.error("[signup] SMTP error:", e);
