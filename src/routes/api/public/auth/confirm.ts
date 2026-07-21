@@ -33,8 +33,10 @@ export const Route = createFileRoute("/api/public/auth/confirm")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        const origin = publicOrigin(request);
+        const logoUrl = `${origin}/developerx-logo.png`;
         const token = new URL(request.url).searchParams.get("token");
-        if (!token) return page("Invalid link", "This confirmation link is missing a token.", false);
+        if (!token) return page("Invalid link", "This confirmation link is missing a token.", false, logoUrl);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: row } = await supabaseAdmin
@@ -43,23 +45,22 @@ export const Route = createFileRoute("/api/public/auth/confirm")({
           .eq("token", token)
           .maybeSingle();
 
-        if (!row) return page("Invalid link", "This confirmation link is invalid or has already been used.", false);
-        if (row.used_at) return page("Already confirmed", "Your email is already verified. You can sign in now.", true);
+        if (!row) return page("Invalid link", "This confirmation link is invalid or has already been used.", false, logoUrl);
+        if (row.used_at) return page("Already confirmed", "Your email is already verified. You can sign in now.", true, logoUrl);
         if (new Date(row.expires_at).getTime() < Date.now())
-          return page("Link expired", "This confirmation link has expired. Please request a new one from the sign-in page.", false);
+          return page("Link expired", "This confirmation link has expired. Please request a new one from the sign-in page.", false, logoUrl);
 
-        // Confirm the user
         const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(row.user_id, {
           email_confirm: true,
         });
-        if (updErr) return page("Something went wrong", updErr.message, false);
+        if (updErr) return page("Something went wrong", updErr.message, false, logoUrl);
 
         await supabaseAdmin
           .from("email_verifications")
           .update({ used_at: new Date().toISOString() })
           .eq("id", row.id);
 
-        return page("Email confirmed ✓", "Your DeveloperX account is now active. You can sign in.", true);
+        return page("Email confirmed ✓", "Your DeveloperX account is now active. You can sign in.", true, logoUrl);
       },
     },
   },
