@@ -6,20 +6,22 @@
 <style>
   *,*::before,*::after { box-sizing: border-box; }
   html,body { margin:0; padding:0; }
+  html { background:#050611; }
   body {
-    width: 280px;
+    width: 272px;
     font-family: -apple-system, "Inter", "Segoe UI", Roboto, sans-serif;
     color: #eef1f8;
-    background: transparent;
+    background:#050611;
     -webkit-font-smoothing: antialiased;
     position: relative;
+    overflow:hidden;
   }
 
 
-  .wrap { padding: 10px; position: relative; z-index:2; }
+  .wrap { padding: 0; position: relative; z-index:2; }
 
   /* animated orbs */
-  .orb { position:absolute; border-radius:50%; filter: blur(42px); pointer-events:none; z-index:1; }
+  .orb { display:none; position:absolute; border-radius:50%; filter: blur(42px); pointer-events:none; z-index:1; }
   .orb.a { width:220px; height:220px; top:-100px; right:-80px; background:#7c5cfc; opacity:.55; animation: drift1 12s ease-in-out infinite; }
   .orb.b { width:200px; height:200px; bottom:-110px; left:-80px; background:#22d3ee; opacity:.5; animation: drift2 14s ease-in-out infinite; }
   .orb.c { width:140px; height:140px; top:38%; left:38%; background:#f472b6; opacity:.28; animation: drift1 20s ease-in-out infinite reverse; }
@@ -27,7 +29,7 @@
   @keyframes drift2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(24px,-22px) scale(1.12)} }
 
   /* header */
-  .brand { display:flex; align-items:center; gap:11px; margin-bottom:14px; position:relative; z-index:2; }
+  .brand { display:flex; align-items:center; gap:10px; padding:10px 10px 8px; margin:0; position:relative; z-index:2; }
   .brand .logo {
     width:44px; height:44px; border-radius:13px;
     padding:2px;
@@ -52,15 +54,15 @@
   .card {
     position:relative;
     background: linear-gradient(180deg, rgba(20,15,40,.9), rgba(10,8,20,.92));
-    border-radius: 18px;
-    padding: 14px;
+    border-radius: 18px 18px 0 0;
+    padding: 13px 14px 14px;
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     box-shadow: 0 20px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
     z-index:1;
   }
   .card::before {
-    content:""; position:absolute; inset:-2px; border-radius:20px; padding:2px;
+    content:""; position:absolute; inset:-2px -2px 0 -2px; border-radius:20px 20px 0 0; padding:2px;
     background: conic-gradient(from var(--dx-angle,0deg),
       #7c5cfc,#22d3ee,#34d399,#fbbf24,#f472b6,#7c5cfc);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);

@@ -25,6 +25,12 @@ function normalizeLoginEmail(raw: string): string {
   return `${slug}@dx.local`;
 }
 
+function loginCandidates(raw: string): string[] {
+  const trimmed = raw.trim();
+  const normalized = normalizeLoginEmail(trimmed);
+  return Array.from(new Set([trimmed, trimmed.toLowerCase(), normalized]));
+}
+
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -75,10 +81,37 @@ export const Route = createFileRoute("/api/public/auth/login")({
 
         const loginEmail = normalizeLoginEmail(body.email);
         const authClient = createPublicClient();
-        const { data: auth, error: authError } = await authClient.auth.signInWithPassword({
+        let { data: auth, error: authError } = await authClient.auth.signInWithPassword({
           email: loginEmail,
           password: body.password,
         });
+
+        // If an admin-created account's stored password and auth password drift,
+        // resync it only when the submitted password exactly matches the admin record.
+        if (authError || !auth.user || !auth.session) {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const candidates = loginCandidates(body.email);
+          const { data: createdRows } = await supabaseAdmin
+            .from("admin_created_users")
+            .select("user_id, email, password")
+            .in("email", candidates)
+            .order("created_at", { ascending: false })
+            .limit(5);
+
+          const matched = (createdRows ?? []).find((row) => row.password === body.password);
+          if (matched?.user_id) {
+            await supabaseAdmin.auth.admin.updateUserById(matched.user_id, {
+              password: body.password,
+              email_confirm: true,
+            });
+            const retry = await authClient.auth.signInWithPassword({
+              email: normalizeLoginEmail(matched.email ?? body.email),
+              password: body.password,
+            });
+            auth = retry.data;
+            authError = retry.error;
+          }
+        }
 
 
         if (authError || !auth.user || !auth.session) {
