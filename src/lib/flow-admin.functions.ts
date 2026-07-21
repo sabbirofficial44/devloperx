@@ -19,6 +19,16 @@ export const listUsers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await requireAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Drain all trial users' credits based on elapsed time before reading.
+    const { data: trialUsers } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id")
+      .not("trial_started_at", "is", null);
+    await Promise.all(
+      (trialUsers ?? []).map((u) =>
+        supabaseAdmin.rpc("tick_trial_credits", { _user_id: u.user_id }),
+      ),
+    );
     const { data: profiles, error } = await supabaseAdmin
       .from("profiles")
       .select("user_id, email, display_name, credits, user_plan, created_at, last_tick_at")
