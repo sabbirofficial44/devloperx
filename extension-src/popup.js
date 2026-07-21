@@ -1,6 +1,7 @@
 /* DeveloperX — Veo Unlimited popup */
 // Try these endpoints in order. Extension will auto-pick the one that responds.
 const API_ENDPOINTS = [
+  "https://id-preview--306a4997-5830-492f-b8db-9bb0ab4aee1f.lovable.app",
   "https://devloperx.lovable.app",
   "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f.lovable.app",
   "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app",
@@ -44,6 +45,7 @@ async function login(email, password) {
   const preferred = await getApiBase();
   const tryOrder = [preferred, ...API_ENDPOINTS.filter((u) => u !== preferred)];
   let lastErr = null;
+  let credentialErr = null;
   for (const base of tryOrder) {
     try {
       const res = await fetch(`${base}/api/public/auth/login`, {
@@ -53,14 +55,18 @@ async function login(email, password) {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) { await setApiBase(base); return data; }
-      // 401 = valid endpoint but bad creds → surface immediately.
-      if (res.status === 401) throw new Error(data.message || "Invalid email or password");
+      // A published endpoint can be stale while the preview endpoint is current,
+      // so do not stop on the first 401. Try every known server first.
+      if (res.status === 401) {
+        credentialErr = new Error(data.message || "Invalid email or password");
+        continue;
+      }
       lastErr = new Error(data.message || `Login failed (${res.status})`);
     } catch (e) {
       lastErr = e;
-      if (e && /Invalid email or password/i.test(String(e.message))) throw e;
     }
   }
+  if (credentialErr) throw credentialErr;
   throw lastErr || new Error("Cannot reach server");
 }
 
