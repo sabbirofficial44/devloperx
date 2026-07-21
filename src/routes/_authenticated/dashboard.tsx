@@ -170,20 +170,19 @@ function Dashboard() {
     <div className="dx-page-premium">
       <div className="dx-ambient" />
       <div className="dx-container-premium">
-        <nav className="dx-nav-premium">
-          <div className="dx-logo dx-logo-premium" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src="/developerx-logo.png" alt="DeveloperX" width={36} height={36} style={{ borderRadius: 10, boxShadow: "0 4px 16px rgba(240,185,11,0.4)" }} />
+        <nav className="dx-nav-premium dx-nav-dash">
+          <Link to="/" className="dx-logo dx-logo-premium dx-nav-brand" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <img src="/developerx-logo.png" alt="DeveloperX" width={34} height={34} style={{ borderRadius: 10, boxShadow: "0 4px 16px rgba(240,185,11,0.4)" }} />
             <span>DeveloperX</span>
-          </div>
-          <div className="dx-nav-links" style={{ fontSize: 13 }}>
-            <Link className="dx-nav-link" to="/">Home</Link>
-            {data?.isAdmin && <Link className="dx-nav-link" to="/admin">Admin</Link>}
-            <button onClick={signOut} className="dx-nav-link" style={{ background: "none", border: 0, cursor: "pointer" }}>Logout</button>
-            <div className="relative" ref={menuRef}>
+          </Link>
+          <div className="dx-nav-actions">
+            <Link className="dx-nav-link dx-nav-text" to="/">Home</Link>
+            {data?.isAdmin && <Link className="dx-nav-link dx-nav-text" to="/admin">Admin</Link>}
+            <button onClick={signOut} className="dx-nav-link dx-nav-text" style={{ background: "none", border: 0, cursor: "pointer" }}>Logout</button>
+            <div className="relative dx-nav-avatar-wrap" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="dx-btn dx-btn-premium"
-                style={{ width: 38, height: 38, padding: 0, borderRadius: 999 }}
+                className="dx-btn dx-btn-premium dx-nav-avatar"
                 aria-label="Account menu"
               >
                 {initial}
@@ -191,8 +190,8 @@ function Dashboard() {
               {menuOpen && (
                 <div className="dx-dropdown">
                   <div style={{ padding: "18px 20px 14px" }}>
-                    <div style={{ fontWeight: 700, fontSize: 18 }}>{displayName}</div>
-                    <div style={{ color: "var(--dx-muted-soft)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis" }}>{data?.email}</div>
+                    <div style={{ fontWeight: 700, fontSize: 16 }}>{displayName}</div>
+                    <div style={{ color: "var(--dx-muted-soft)", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis" }}>{data?.email}</div>
                   </div>
                   <div style={{ borderTop: "1px solid var(--dx-border)", padding: "14px 20px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13 }}>
@@ -201,6 +200,9 @@ function Dashboard() {
                     </div>
                     <div className="dx-pbar"><div className="dx-pbar-fill" style={{ width: `${pct}%` }} /></div>
                   </div>
+                  <Link to="/" style={{ display: "block", width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-text-soft)", background: "transparent", borderTop: "1px solid var(--dx-border)", textDecoration: "none" }}>
+                    🏠 Home
+                  </Link>
                   <button
                     onClick={() => {
                       fetch(`/flow-extension.zip?v=${Date.now()}`, { cache: "no-store" })
