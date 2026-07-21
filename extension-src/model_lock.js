@@ -204,13 +204,11 @@
 
   let selecting = false;
   let lastAttempt = 0;
-  let locked = false;
 
-  async function forceSelectLite(force) {
+  async function forceSelectLite() {
     if (selecting) return;
-    if (locked && !force) return;
     const now = Date.now();
-    if (!force && now - lastAttempt < 400) return;
+    if (now - lastAttempt < 650) return;
     lastAttempt = now;
 
     const trigger = findModelTrigger();
@@ -218,18 +216,19 @@
     markLabel(trigger, "trigger");
 
     if (isTargetText(textOf(trigger))) {
-      locked = true;
       lockVisibleLabels();
       return;
     }
 
     selecting = true;
     try {
-      // Open dropdown, then retry option lookup up to 6x (some UIs render lazy).
       clickLikeUser(trigger);
-      let option = null;
-      for (let i = 0; i < 6 && !option; i++) {
-        await wait(140);
+      await wait(180);
+      lockVisibleLabels();
+
+      let option = findTargetOption(trigger);
+      if (!option) {
+        await wait(220);
         lockVisibleLabels();
         option = findTargetOption(trigger);
       }
@@ -237,12 +236,8 @@
       if (option) {
         markLabel(option, "option");
         clickLikeUser(option);
-        await wait(160);
+        await wait(180);
         lockVisibleLabels();
-        if (isTargetText(textOf(findModelTrigger() || trigger))) locked = true;
-      } else {
-        // Close the dropdown if we couldn't find the target this pass.
-        try { document.body.click(); } catch {}
       }
     } finally {
       selecting = false;
@@ -266,10 +261,7 @@
     ensureStyle();
     schedule();
 
-    // Aggressive initial burst — bypass cooldown so first select actually fires.
-    [60, 200, 500, 900, 1500, 2500, 4000, 6000].forEach((ms) =>
-      setTimeout(() => forceSelectLite(true), ms),
-    );
+    [80, 180, 400, 800, 1300, 2200, 3500].forEach((ms) => setTimeout(forceSelectLite, ms));
 
     new MutationObserver(schedule).observe(document.documentElement, {
       childList: true,
@@ -283,11 +275,8 @@
       ensureStyle();
       lockVisibleLabels();
       const trigger = findModelTrigger();
-      if (trigger && !isTargetText(textOf(trigger))) {
-        locked = false;
-        forceSelectLite(true);
-      }
-    }, 1200);
+      if (trigger && !isTargetText(textOf(trigger))) forceSelectLite();
+    }, 900);
   }
 
   if (document.readyState === "loading") {
