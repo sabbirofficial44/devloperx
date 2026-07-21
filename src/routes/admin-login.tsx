@@ -73,7 +73,7 @@ function AdminLoginPage() {
     <div className="dx-auth-shell">
       <div className="dx-auth-topbar">
         <a href="/" className="dx-auth-brand">
-          <span className="dx-auth-brand-mark">D</span>
+          <img src="/developerx-logo.png" alt="DeveloperX" width={36} height={36} style={{ borderRadius: 10, boxShadow: "0 4px 16px rgba(240,185,11,0.4)" }} />
           <span>DeveloperX</span>
         </a>
         <a href="/auth" className="dx-auth-topcta">User Login →</a>
