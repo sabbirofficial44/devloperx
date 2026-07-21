@@ -73,7 +73,8 @@
       "js": [
         "flow_overlay.js",
         "model_lock.js",
-        "prompt_clear.js"
+        "prompt_clear.js",
+        "auto_retry.js"
       ],
       "run_at": "document_idle"
     },
