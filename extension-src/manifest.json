@@ -8,10 +8,7 @@
     "tabs",
     "storage",
     "activeTab",
-    "scripting",
-    "management",
-    "browsingData",
-    "alarms"
+    "scripting"
   ],
   "host_permissions": [
     "https://labs.google/*",

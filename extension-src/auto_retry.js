@@ -32,11 +32,14 @@
   var FAIL_PATTERNS = [
     /generation\s+failed/i,
     /failed\s+to\s+generate/i,
+    /failed\s*:/i,
     /couldn.?t\s+generate/i,
     /couldn.?t\s+create/i,
     /something\s+went\s+wrong/i,
     /video\s+failed/i,
     /an\s+error\s+occurred/i,
+    /unusual\s+activity/i,
+    /please\s+visit\s+the\s+help\s+center/i,
     /try\s+again/i,
     /retry/i,
   ];
@@ -79,6 +82,43 @@
     );
     if (iconBtn) return iconBtn;
 
+    // 4) Fallback for Google Flow cards where the retry button is only an
+    // unlabeled icon in the bottom-right corner. Prefer small clickable icon
+    // buttons near the lower-right area of the failed card.
+    var rect;
+    try {
+      rect = container.getBoundingClientRect();
+    } catch (_e) {
+      rect = null;
+    }
+    if (rect) {
+      var clickables = container.querySelectorAll('button, [role="button"], [tabindex="0"]');
+      var best = null;
+      var bestScore = -Infinity;
+      for (var j = 0; j < clickables.length; j++) {
+        var el = clickables[j];
+        if (el.disabled || el.getAttribute("aria-disabled") === "true") continue;
+        var r;
+        try {
+          r = el.getBoundingClientRect();
+        } catch (_err) {
+          continue;
+        }
+        if (!r || r.width < 18 || r.height < 18 || r.width > 70 || r.height > 70) continue;
+        var hasIcon = !!el.querySelector('svg, [class*="icon" i], [class*="refresh" i], [class*="replay" i]');
+        var text = (el.textContent || "").trim();
+        if (text && text.length > 20 && !hasIcon) continue;
+        var xRatio = (r.left + r.width / 2 - rect.left) / Math.max(rect.width, 1);
+        var yRatio = (r.top + r.height / 2 - rect.top) / Math.max(rect.height, 1);
+        var score = xRatio * 2 + yRatio + (hasIcon ? 2 : 0);
+        if (xRatio > 0.45 && yRatio > 0.45 && score > bestScore) {
+          best = el;
+          bestScore = score;
+        }
+      }
+      if (best) return best;
+    }
+
     return null;
   }
 
@@ -109,6 +149,18 @@
       var el = nodes[i];
       var text = (el.textContent || "").slice(0, 400);
       if (looksLikeFailure(text)) candidates.push(el);
+    }
+
+    // If the failure text is inside deeply nested generated markup, climb to a
+    // useful parent card and include that as the retry target.
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    var textNode;
+    while ((textNode = walker.nextNode())) {
+      var value = (textNode.nodeValue || "").slice(0, 220);
+      if (!looksLikeFailure(value)) continue;
+      var parent = textNode.parentElement;
+      var card = parent && parent.closest('[data-testid*="clip" i], [data-testid*="video" i], [class*="clip" i], [class*="video" i], article, li, div');
+      if (card && candidates.indexOf(card) === -1) candidates.push(card);
     }
     return candidates;
   }
