@@ -204,11 +204,13 @@
 
   let selecting = false;
   let lastAttempt = 0;
+  let locked = false;
 
-  async function forceSelectLite() {
+  async function forceSelectLite(force) {
     if (selecting) return;
+    if (locked && !force) return;
     const now = Date.now();
-    if (now - lastAttempt < 650) return;
+    if (!force && now - lastAttempt < 400) return;
     lastAttempt = now;
 
     const trigger = findModelTrigger();
@@ -216,19 +218,18 @@
     markLabel(trigger, "trigger");
 
     if (isTargetText(textOf(trigger))) {
+      locked = true;
       lockVisibleLabels();
       return;
     }
 
     selecting = true;
     try {
+      // Open dropdown, then retry option lookup up to 6x (some UIs render lazy).
       clickLikeUser(trigger);
-      await wait(180);
-      lockVisibleLabels();
-
-      let option = findTargetOption(trigger);
-      if (!option) {
-        await wait(220);
+      let option = null;
+      for (let i = 0; i < 6 && !option; i++) {
+        await wait(140);
         lockVisibleLabels();
         option = findTargetOption(trigger);
       }
@@ -236,8 +237,12 @@
       if (option) {
         markLabel(option, "option");
         clickLikeUser(option);
-        await wait(180);
+        await wait(160);
         lockVisibleLabels();
+        if (isTargetText(textOf(findModelTrigger() || trigger))) locked = true;
+      } else {
+        // Close the dropdown if we couldn't find the target this pass.
+        try { document.body.click(); } catch {}
       }
     } finally {
       selecting = false;
