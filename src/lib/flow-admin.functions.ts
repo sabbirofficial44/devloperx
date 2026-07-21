@@ -228,7 +228,7 @@ export const updateUser = createServerFn({ method: "POST" })
     // Audit trail: log admin adjustments into credit_ledger so history is preserved.
     const entries: Array<{
       user_id: string; amount: number; reason: string; source: string; balance_after: number | null;
-      metadata: Record<string, unknown>;
+      metadata: Record<string, string | number | boolean | null>;
     }> = [];
     if (data.credits !== undefined && data.credits !== prevCredits) {
       const delta = data.credits - prevCredits;
