@@ -24,8 +24,11 @@ import { Route as ApiPublicExtensionIdentityRouteImport } from './routes/api/pub
 import { Route as ApiPublicExtensionGenerateRouteImport } from './routes/api/public/extension/generate'
 import { Route as ApiPublicExtensionDeductRouteImport } from './routes/api/public/extension/deduct'
 import { Route as ApiPublicExtensionCookieVersionRouteImport } from './routes/api/public/extension/cookie-version'
+import { Route as ApiPublicAuthSignupRouteImport } from './routes/api/public/auth/signup'
+import { Route as ApiPublicAuthSendVerificationRouteImport } from './routes/api/public/auth/send-verification'
 import { Route as ApiPublicAuthRefreshRouteImport } from './routes/api/public/auth/refresh'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth/login'
+import { Route as ApiPublicAuthConfirmRouteImport } from './routes/api/public/auth/confirm'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -106,6 +109,17 @@ const ApiPublicExtensionCookieVersionRoute =
     path: '/api/public/extension/cookie-version',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAuthSignupRoute = ApiPublicAuthSignupRouteImport.update({
+  id: '/api/public/auth/signup',
+  path: '/api/public/auth/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuthSendVerificationRoute =
+  ApiPublicAuthSendVerificationRouteImport.update({
+    id: '/api/public/auth/send-verification',
+    path: '/api/public/auth/send-verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAuthRefreshRoute = ApiPublicAuthRefreshRouteImport.update({
   id: '/api/public/auth/refresh',
   path: '/api/public/auth/refresh',
@@ -114,6 +128,11 @@ const ApiPublicAuthRefreshRoute = ApiPublicAuthRefreshRouteImport.update({
 const ApiPublicAuthLoginRoute = ApiPublicAuthLoginRouteImport.update({
   id: '/api/public/auth/login',
   path: '/api/public/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuthConfirmRoute = ApiPublicAuthConfirmRouteImport.update({
+  id: '/api/public/auth/confirm',
+  path: '/api/public/auth/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -126,8 +145,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/verify': typeof ApiVerifyRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
+  '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
+  '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
   '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
   '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
@@ -144,8 +166,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/verify': typeof ApiVerifyRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
+  '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
+  '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
   '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
   '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
@@ -164,8 +189,11 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/api/verify': typeof ApiVerifyRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
+  '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
+  '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
   '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
   '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
@@ -184,8 +212,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/verify'
     | '/api/public/credits'
+    | '/api/public/auth/confirm'
     | '/api/public/auth/login'
     | '/api/public/auth/refresh'
+    | '/api/public/auth/send-verification'
+    | '/api/public/auth/signup'
     | '/api/public/extension/cookie-version'
     | '/api/public/extension/deduct'
     | '/api/public/extension/generate'
@@ -202,8 +233,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/verify'
     | '/api/public/credits'
+    | '/api/public/auth/confirm'
     | '/api/public/auth/login'
     | '/api/public/auth/refresh'
+    | '/api/public/auth/send-verification'
+    | '/api/public/auth/signup'
     | '/api/public/extension/cookie-version'
     | '/api/public/extension/deduct'
     | '/api/public/extension/generate'
@@ -221,8 +255,11 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/api/verify'
     | '/api/public/credits'
+    | '/api/public/auth/confirm'
     | '/api/public/auth/login'
     | '/api/public/auth/refresh'
+    | '/api/public/auth/send-verification'
+    | '/api/public/auth/signup'
     | '/api/public/extension/cookie-version'
     | '/api/public/extension/deduct'
     | '/api/public/extension/generate'
@@ -239,8 +276,11 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ApiVerifyRoute: typeof ApiVerifyRoute
   ApiPublicCreditsRoute: typeof ApiPublicCreditsRoute
+  ApiPublicAuthConfirmRoute: typeof ApiPublicAuthConfirmRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthRefreshRoute: typeof ApiPublicAuthRefreshRoute
+  ApiPublicAuthSendVerificationRoute: typeof ApiPublicAuthSendVerificationRoute
+  ApiPublicAuthSignupRoute: typeof ApiPublicAuthSignupRoute
   ApiPublicExtensionCookieVersionRoute: typeof ApiPublicExtensionCookieVersionRoute
   ApiPublicExtensionDeductRoute: typeof ApiPublicExtensionDeductRoute
   ApiPublicExtensionGenerateRoute: typeof ApiPublicExtensionGenerateRoute
@@ -356,6 +396,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicExtensionCookieVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/auth/signup': {
+      id: '/api/public/auth/signup'
+      path: '/api/public/auth/signup'
+      fullPath: '/api/public/auth/signup'
+      preLoaderRoute: typeof ApiPublicAuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/auth/send-verification': {
+      id: '/api/public/auth/send-verification'
+      path: '/api/public/auth/send-verification'
+      fullPath: '/api/public/auth/send-verification'
+      preLoaderRoute: typeof ApiPublicAuthSendVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/auth/refresh': {
       id: '/api/public/auth/refresh'
       path: '/api/public/auth/refresh'
@@ -368,6 +422,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/auth/login'
       fullPath: '/api/public/auth/login'
       preLoaderRoute: typeof ApiPublicAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/auth/confirm': {
+      id: '/api/public/auth/confirm'
+      path: '/api/public/auth/confirm'
+      fullPath: '/api/public/auth/confirm'
+      preLoaderRoute: typeof ApiPublicAuthConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -394,8 +455,11 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ApiVerifyRoute: ApiVerifyRoute,
   ApiPublicCreditsRoute: ApiPublicCreditsRoute,
+  ApiPublicAuthConfirmRoute: ApiPublicAuthConfirmRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthRefreshRoute: ApiPublicAuthRefreshRoute,
+  ApiPublicAuthSendVerificationRoute: ApiPublicAuthSendVerificationRoute,
+  ApiPublicAuthSignupRoute: ApiPublicAuthSignupRoute,
   ApiPublicExtensionCookieVersionRoute: ApiPublicExtensionCookieVersionRoute,
   ApiPublicExtensionDeductRoute: ApiPublicExtensionDeductRoute,
   ApiPublicExtensionGenerateRoute: ApiPublicExtensionGenerateRoute,
