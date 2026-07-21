@@ -74,7 +74,7 @@ export const Route = createFileRoute("/api/public/auth/reset-request")({
           const origin = publicOrigin(request);
           const logoUrl = `${origin}/developerx-logo.png`;
           const token = randomToken();
-          await supabaseAdmin.from("password_resets").insert({ user_id: user.id, email, token });
+          await (supabaseAdmin as any).from("password_resets").insert({ user_id: user.id, email, token });
           const link = `${origin}/api/public/auth/reset?token=${token}`;
           const name =
             (user.user_metadata?.display_name as string) ||

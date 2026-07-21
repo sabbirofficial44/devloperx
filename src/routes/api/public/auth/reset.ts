@@ -61,14 +61,15 @@ function formPage(token: string, logoUrl: string, error?: string) {
   );
 }
 
+type ResetRow = { id: string; user_id: string; email: string; expires_at: string; used_at: string | null };
 async function loadToken(token: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: row } = await supabaseAdmin
+  const { data } = await (supabaseAdmin as any)
     .from("password_resets")
     .select("id, user_id, email, expires_at, used_at")
     .eq("token", token)
     .maybeSingle();
-  return { row, supabaseAdmin };
+  return { row: (data as ResetRow | null), supabaseAdmin };
 }
 
 export const Route = createFileRoute("/api/public/auth/reset")({
@@ -109,7 +110,7 @@ export const Route = createFileRoute("/api/public/auth/reset")({
         const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(row.user_id, { password });
         if (updErr) return statusPage("Something went wrong", updErr.message, false, logoUrl);
 
-        await supabaseAdmin
+        await (supabaseAdmin as any)
           .from("password_resets")
           .update({ used_at: new Date().toISOString() })
           .eq("id", row.id);
