@@ -726,70 +726,80 @@ function UserRow({
   };
 
   return (
-    <tr>
-      <td>
-        <span
-          title={online ? "Online now" : "Offline"}
-          style={{
-            display: "inline-block", width: 8, height: 8, borderRadius: 999, marginRight: 8,
-            background: online ? "#22c55e" : "#475569",
-            boxShadow: online ? "0 0 8px #22c55e" : "none",
-            verticalAlign: "middle",
-          }}
-        />
-        <span className="ax-mono">{user.email}</span>
-        {user.isAdmin && <span className="ax-pill" style={{ marginLeft: 8 }}>admin</span>}
-        {exhausted && <span className="ax-pill" style={{ marginLeft: 8, background: "#7f1d1d", color: "#fecaca" }}>exhausted</span>}
-      </td>
-      <td>{user.displayName ?? "—"}</td>
-      <td>
-        <input type="number" value={credits} onChange={(e) => setCredits(e.target.value)} className="ax-input" style={{ width: 110, padding: "6px 8px" }} />
-        <div style={{ color: "#64748b", fontSize: 10, marginTop: 2 }}>
-          {isUnlimited ? "unlimited" : `≈ ${minutesToLabel(currentCredits)} left`}
+    <div className="ax-user-card" data-online={online ? "true" : "false"}>
+      <div className="ax-user-head">
+        <div className="ax-user-ident">
+          <span
+            className="ax-user-dot"
+            title={online ? "Online now" : "Offline"}
+            style={{ background: online ? "#22c55e" : "#475569", boxShadow: online ? "0 0 10px #22c55e" : "none" }}
+          />
+          <div className="ax-user-ident-text">
+            <div className="ax-user-email ax-mono">{user.email}</div>
+            <div className="ax-user-name">{user.displayName ?? "no name"}</div>
+          </div>
         </div>
-      </td>
-      <td>
-        <div className="ax-mono" style={{ color: used24h > 0 ? "#f59e0b" : "#64748b" }}>
-          {used24h > 0 ? `-${used24h}` : "0"}
+        <div className="ax-user-tags">
+          {user.isAdmin && <span className="ax-pill">admin</span>}
+          {exhausted && <span className="ax-pill" style={{ background: "#7f1d1d", color: "#fecaca", borderColor: "rgba(239,68,68,.35)" }}>exhausted</span>}
+          <span className="ax-pill" style={{ background: "rgba(148,163,184,.12)", color: "#cbd5e1", borderColor: "rgba(148,163,184,.2)" }}>
+            {online ? "● online" : relativeTime(user.lastUsedAt ?? null)}
+          </span>
         </div>
-        <div style={{ color: "#64748b", fontSize: 10 }}>
-          {used24h > 0 ? `${minutesToLabel(used24h)}` : "idle"}
+      </div>
+
+      <div className="ax-user-grid">
+        <label className="ax-user-cell">
+          <span className="ax-user-cell-label">Credits</span>
+          <input
+            type="number"
+            value={credits}
+            onChange={(e) => setCredits(e.target.value)}
+            className="ax-input ax-user-input"
+          />
+          <span className="ax-user-cell-sub">{isUnlimited ? "unlimited" : `≈ ${minutesToLabel(currentCredits)} left`}</span>
+        </label>
+
+        <label className="ax-user-cell">
+          <span className="ax-user-cell-label">Plan</span>
+          <select value={plan} onChange={(e) => setPlan(e.target.value)} className="ax-input ax-user-input">
+            {options.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <span className="ax-user-cell-sub">last seen {relativeTime(user.lastTickAt ?? null)}</span>
+        </label>
+
+        <div className="ax-user-cell">
+          <span className="ax-user-cell-label">Used 24h</span>
+          <div className="ax-user-usage" style={{ color: used24h > 0 ? "#f59e0b" : "#94a3b8" }}>
+            {used24h > 0 ? `-${used24h}` : "0"}
+          </div>
+          <span className="ax-user-cell-sub">{used24h > 0 ? minutesToLabel(used24h) : "idle"}</span>
         </div>
-      </td>
-      <td style={{ whiteSpace: "nowrap" }}>
-        <div style={{ color: online ? "#22c55e" : user.lastUsedAt ? "#e2e8f0" : "#64748b", fontSize: 12, fontWeight: online ? 600 : 400 }}>
-          {online ? "● online" : relativeTime(user.lastUsedAt ?? null)}
-        </div>
-        <div style={{ color: "#475569", fontSize: 10 }}>
-          seen {relativeTime(user.lastTickAt ?? null)}
-        </div>
-      </td>
-      <td>
-        <select value={plan} onChange={(e) => setPlan(e.target.value)} className="ax-input" style={{ width: 120, padding: "6px 8px" }}>
-          {options.map((p) => <option key={p} value={p}>{p}</option>)}
-        </select>
-      </td>
-      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-        <div style={{ display: "inline-flex", gap: 4, marginRight: 8 }}>
+      </div>
+
+      <div className="ax-user-actions">
+        <div className="ax-user-topups">
           {QUICK_TOPUPS.map((n) => (
             <button
               key={n}
               onClick={() => topUp(n)}
               title={`Add ${n} credits (${minutesToLabel(n)})`}
-              className="ax-btn ax-btn-ghost"
-              style={{ padding: "4px 6px", fontSize: 10 }}
+              className="ax-btn ax-btn-ghost ax-user-topup"
             >+{n >= 1000 ? `${n / 1000}k` : n}</button>
           ))}
         </div>
-        <button disabled={!dirty} onClick={() => onSave({ credits: currentCredits, plan })} className="ax-btn ax-btn-primary" style={{ padding: "5px 10px", fontSize: 11, marginRight: 6 }}>Save</button>
-        <button disabled={rotating} onClick={onRotate} className="ax-btn ax-btn-ghost" style={{ padding: "5px 10px", fontSize: 11, marginRight: 6, color: "#34d399" }}>{rotating ? "…" : "Rotate"}</button>
-        {!isSelf && (
-          <button onClick={onDelete} className="ax-btn ax-btn-danger" style={{ padding: "5px 10px", fontSize: 11 }}>Delete</button>
-        )}
-      </td>
-    </tr>
+        <div className="ax-user-cta">
+          <button disabled={!dirty} onClick={() => onSave({ credits: currentCredits, plan })} className="ax-btn ax-btn-primary ax-user-btn">Save</button>
+          <button disabled={rotating} onClick={onRotate} className="ax-btn ax-btn-ghost ax-user-btn" style={{ color: "#34d399" }}>{rotating ? "…" : "Rotate"}</button>
+          {!isSelf && (
+            <button onClick={onDelete} className="ax-btn ax-btn-danger ax-user-btn">Delete</button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
+
 
 
 function AdminCredentialsPanel({ currentEmail }: { currentEmail: string }) {
