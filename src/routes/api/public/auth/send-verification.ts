@@ -92,12 +92,15 @@ export const Route = createFileRoute("/api/public/auth/send-verification")({
         const origin = new URL(request.url).origin;
         const link = `${origin}/api/public/auth/confirm?token=${token}`;
 
+        const origin = publicOrigin(request);
+        const logoUrl = `${origin}/developerx-logo.png`;
+        const link2 = `${origin}/api/public/auth/confirm?token=${token}`;
         try {
           const { sendGmail } = await import("@/lib/send-mail.server");
           await sendGmail({
             to: email,
             subject: "Confirm your DeveloperX account",
-            html: buildEmailHtml(link),
+            html: buildEmailHtml(link2, logoUrl),
           });
         } catch (e) {
           console.error("[send-verification] SMTP error:", e);
