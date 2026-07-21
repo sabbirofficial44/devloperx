@@ -1,5 +1,6 @@
-/* DeveloperX Flow overlay — floating badge on labs.google/fx/tools/flow
- * Shows plan, remaining credits and time. Live-updates from this project's server.
+/* DeveloperX Flow overlay — floating logo badge on labs.google/fx/tools/flow
+ * Collapsed: small round logo with rotating conic border.
+ * Expanded (on click): compact card with live HH:MM:SS timer, credits & buy CTA.
  */
 (function () {
   if (window.__DX_FLOW_OVERLAY__) return;
@@ -7,7 +8,9 @@
 
   const DEFAULT_API = "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app";
   const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
-  const UPGRADE_URL = "https://t.me/DeveloperX";
+  const UPGRADE_URL = "https://wa.me/8801410014442";
+  const LOGO_URL = (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL)
+    ? chrome.runtime.getURL("logo.png") : "";
 
   function fmtHMS(mins) {
     if (mins == null || isNaN(mins)) return "--:--:--";
@@ -29,24 +32,62 @@
         #dx-flow-overlay {
           position: fixed; top: 14px; right: 14px; z-index: 2147483647;
           font-family: -apple-system,"Inter","Segoe UI",Roboto,sans-serif;
-          color: #eef1f8; width: 190px;
-          background:
-            linear-gradient(160deg, rgba(20,18,38,.88), rgba(8,9,16,.9));
-          backdrop-filter: blur(18px) saturate(160%);
-          -webkit-backdrop-filter: blur(18px) saturate(160%);
-          border: 1px solid rgba(255,255,255,.09);
-          border-radius: 10px; padding: 9px 11px;
-          box-shadow: 0 10px 26px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
-          user-select: none;
+          color: #eef1f8; user-select: none;
         }
-        #dx-flow-overlay .h { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+        #dx-flow-overlay .dx-logo-wrap {
+          position: relative; width: 52px; height: 52px; cursor: pointer;
+          border-radius: 50%;
+          transition: transform .25s ease;
+        }
+        #dx-flow-overlay .dx-logo-wrap:hover { transform: scale(1.08); }
+        #dx-flow-overlay .dx-ring {
+          position: absolute; inset: -3px; border-radius: 50%;
+          background: conic-gradient(from 0deg,
+            #7c5cfc, #22d3ee, #34d399, #fbbf24, #f472b6, #7c5cfc);
+          animation: dxspin 4s linear infinite;
+          filter: drop-shadow(0 0 10px rgba(124,92,252,.55));
+        }
+        #dx-flow-overlay .dx-ring::after {
+          content:""; position:absolute; inset:3px; border-radius:50%;
+          background: radial-gradient(circle at 30% 30%, #1a1830, #06070c);
+        }
+        @keyframes dxspin { to { transform: rotate(360deg); } }
+        #dx-flow-overlay .dx-logo {
+          position: absolute; inset: 6px; border-radius: 50%;
+          background-size: cover; background-position: center;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
+          z-index: 1;
+        }
+        #dx-flow-overlay .dx-dot {
+          position:absolute; right:-2px; top:-2px; width:12px; height:12px; border-radius:50%;
+          background:#34d399; box-shadow: 0 0 10px #34d399; border:2px solid #06070c; z-index:2;
+          animation: dxpulse 2s ease-in-out infinite;
+        }
+        #dx-flow-overlay .dx-dot.warn { background:#fbbf24; box-shadow:0 0 10px #fbbf24; }
+        #dx-flow-overlay .dx-dot.danger { background:#ef4444; box-shadow:0 0 10px #ef4444; }
+        @keyframes dxpulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+        #dx-flow-overlay .dx-card {
+          position: absolute; top: 62px; right: 0; width: 220px;
+          padding: 12px; border-radius: 14px;
+          background: linear-gradient(160deg, rgba(20,18,38,.92), rgba(8,9,16,.94));
+          backdrop-filter: blur(20px) saturate(160%);
+          -webkit-backdrop-filter: blur(20px) saturate(160%);
+          border: 1px solid rgba(255,255,255,.09);
+          box-shadow: 0 20px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+          transform-origin: top right;
+          opacity: 0; transform: scale(.85) translateY(-6px); pointer-events: none;
+          transition: opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1.2);
+        }
+        #dx-flow-overlay.open .dx-card { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        #dx-flow-overlay .h { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
         #dx-flow-overlay .brand {
-          font-size:9.5px; font-weight:800; letter-spacing:.6px;
+          font-size:10px; font-weight:800; letter-spacing:.7px;
           background:linear-gradient(90deg,#c4b5fd,#67e8f9);
           -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
         }
         #dx-flow-overlay .b {
-          padding:2px 7px; font-size:8.5px; border-radius:999px;
+          padding:2px 8px; font-size:9px; border-radius:999px;
           background:rgba(124,92,252,.22); color:#c4b5fd;
           text-transform:uppercase; font-weight:800; letter-spacing:.5px;
           border:1px solid rgba(124,92,252,.4);
@@ -55,50 +96,70 @@
         #dx-flow-overlay .b.danger { background:rgba(239,68,68,.22); color:#f87171; border-color:rgba(239,68,68,.4); }
         #dx-flow-overlay .b.ok { background:rgba(34,197,153,.2); color:#34d399; border-color:rgba(34,197,153,.4); }
         #dx-flow-overlay .t { font-size:9px; color:#8b93a8; text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
-        #dx-flow-overlay .live { display:inline-flex; align-items:center; gap:4px; font-size:8.5px; color:#34d399; font-weight:700; text-transform:uppercase; letter-spacing:.4px; }
-        #dx-flow-overlay .live .dot { width:5px; height:5px; border-radius:50%; background:#34d399; box-shadow:0 0 8px #34d399; animation: dxpulse 2s ease-in-out infinite; }
-        @keyframes dxpulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+        #dx-flow-overlay .live { display:inline-flex; align-items:center; gap:5px; font-size:9px; color:#34d399; font-weight:700; text-transform:uppercase; letter-spacing:.4px; }
+        #dx-flow-overlay .live .d { width:6px; height:6px; border-radius:50%; background:#34d399; box-shadow:0 0 8px #34d399; animation: dxpulse 2s ease-in-out infinite; }
+        #dx-flow-overlay .timebox {
+          position: relative; margin-top: 6px; padding: 10px 12px;
+          border-radius: 12px; overflow: hidden;
+          background: rgba(255,255,255,.02);
+        }
+        #dx-flow-overlay .timebox::before {
+          content:""; position:absolute; inset:0; border-radius:12px; padding:1.5px;
+          background: conic-gradient(from 0deg,
+            #7c5cfc, #22d3ee, #34d399, #fbbf24, #f472b6, #7c5cfc);
+          -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+                  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          -webkit-mask-composite: xor; mask-composite: exclude;
+          animation: dxspin 4s linear infinite;
+        }
         #dx-flow-overlay .time {
-          font-size:15px; font-weight:800; letter-spacing:-.2px; margin-top:2px;
-          font-variant-numeric: tabular-nums;
-          background: linear-gradient(135deg,#67e8f9,#c4b5fd);
+          position:relative; font-size:20px; font-weight:800; letter-spacing:.5px;
+          font-variant-numeric: tabular-nums; text-align:center;
+          background: linear-gradient(135deg,#67e8f9,#c4b5fd,#f472b6);
+          background-size: 200% 100%;
           -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+          animation: dxshift 6s linear infinite;
         }
-        #dx-flow-overlay .cr { display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; font-size:11px; }
+        @keyframes dxshift { 0%{background-position:0% 0} 100%{background-position:200% 0} }
+        #dx-flow-overlay .cr { display:flex; justify-content:space-between; align-items:baseline; margin-top:8px; font-size:11px; }
         #dx-flow-overlay .cr b { font-weight:800; color:#eef1f8; font-variant-numeric: tabular-nums; }
-        #dx-flow-overlay .pbar { height:4px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; margin-top:6px; }
-        #dx-flow-overlay .pbar > i {
-          display:block; height:100%;
-          background:linear-gradient(90deg,#7c5cfc,#22d3ee,#7c5cfc);
-          background-size:200% 100%;
-          animation: dxslide 5s linear infinite;
-          box-shadow:0 0 8px rgba(124,92,252,.5);
-          transition:width .4s;
-        }
-        @keyframes dxslide { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
-        #dx-flow-overlay .msg { font-size:9.5px; margin-top:6px; color:#fbbf24; line-height:1.35; }
+        #dx-flow-overlay .msg { font-size:10px; margin-top:6px; color:#fbbf24; line-height:1.35; }
         #dx-flow-overlay a.buy {
-          display:block; margin-top:7px; padding:6px; text-align:center; font-size:10px; font-weight:800;
+          display:block; margin-top:9px; padding:7px; text-align:center; font-size:10.5px; font-weight:800;
           background:linear-gradient(135deg,#25d366,#128c7e); color:#fff;
-          border-radius:7px; text-decoration:none; letter-spacing:.3px;
+          border-radius:8px; text-decoration:none; letter-spacing:.3px;
           box-shadow: 0 6px 14px rgba(37,211,102,.3);
         }
       </style>
-      <div class="h">
-        <span class="brand">DEVELOPERX</span>
-        <span id="dx-plan" class="b">—</span>
+      <div class="dx-logo-wrap" id="dx-toggle" title="DeveloperX — click for status">
+        <div class="dx-ring"></div>
+        <div class="dx-logo" id="dx-logo-img" style="background-image:url('${LOGO_URL}')"></div>
+        <div class="dx-dot" id="dx-dot"></div>
       </div>
-      <div id="dx-signed-out" class="t" style="font-size:10px; text-transform:none; letter-spacing:0; color:#9ba3b4;">Sign in via the extension popup.</div>
-      <div id="dx-signed-in" style="display:none">
-        <span class="live"><span class="dot"></span> Live time left</span>
-        <div class="time" id="dx-time">--:--:--</div>
-        <div class="cr"><span class="t">Credits</span><b id="dx-credits">—</b></div>
-        <div class="pbar"><i id="dx-bar" style="width:0%"></i></div>
-        <div id="dx-msg" class="msg"></div>
-        <a id="dx-buy" class="buy" href="${UPGRADE_URL}" target="_blank" style="display:none">💳 Buy more credits</a>
+      <div class="dx-card">
+        <div class="h">
+          <span class="brand">DEVELOPERX</span>
+          <span id="dx-plan" class="b">—</span>
+        </div>
+        <div id="dx-signed-out" class="t" style="font-size:10px; text-transform:none; letter-spacing:0; color:#9ba3b4;">Sign in via the extension popup.</div>
+        <div id="dx-signed-in" style="display:none">
+          <span class="live"><span class="d"></span> Live time left</span>
+          <div class="timebox"><div class="time" id="dx-time">--:--:--</div></div>
+          <div class="cr"><span class="t">Credits</span><b id="dx-credits">—</b></div>
+          <div id="dx-msg" class="msg"></div>
+          <a id="dx-buy" class="buy" href="${UPGRADE_URL}" target="_blank" style="display:none">💳 Buy more credits</a>
+        </div>
       </div>
     `;
     document.documentElement.appendChild(el);
+    const toggle = el.querySelector("#dx-toggle");
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      el.classList.toggle("open");
+    });
+    document.addEventListener("click", (e) => {
+      if (!el.contains(e.target)) el.classList.remove("open");
+    });
     return el;
   }
 
@@ -154,7 +215,7 @@
         <div class="lock">🔒</div>
         <h2>Credits Exhausted</h2>
         <p>Your Veo Unlimited credits have run out. Buy more credits to keep using Google Flow.</p>
-        <a href="https://wa.me/8801410014442" target="_blank">💳 Buy Credits · WhatsApp</a>
+        <a href="${UPGRADE_URL}" target="_blank">💳 Buy Credits · WhatsApp</a>
       </div>
     `;
     document.documentElement.appendChild(b);
@@ -176,9 +237,11 @@
     const signedIn = !!store.userId;
     document.getElementById("dx-signed-out").style.display = signedIn ? "none" : "";
     document.getElementById("dx-signed-in").style.display = signedIn ? "" : "none";
+    const dot = document.getElementById("dx-dot");
     if (!signedIn) {
       const p = document.getElementById("dx-plan");
       p.textContent = "signed out"; p.className = "b";
+      dot.className = "dx-dot warn";
       removeBlocker();
       return;
     }
@@ -189,12 +252,9 @@
     const plan = (user.plan || "basic").toLowerCase();
     const isUnlimited = UNLIMITED.has(plan);
     const credits = Number(user.creditsLeft ?? 0);
-    const total = Number(user.creditsTotal || credits || 1);
 
     document.getElementById("dx-time").textContent = isUnlimited ? "∞" : fmtHMS(credits);
     document.getElementById("dx-credits").textContent = isUnlimited ? "Unlimited" : credits.toLocaleString();
-    document.getElementById("dx-bar").style.width = isUnlimited ? "100%" :
-      Math.max(0, Math.min(100, (credits / Math.max(total, credits, 1)) * 100)) + "%";
 
     const badge = document.getElementById("dx-plan");
     badge.textContent = plan;
@@ -202,16 +262,19 @@
     const msg = document.getElementById("dx-msg");
     const buy = document.getElementById("dx-buy");
     msg.textContent = ""; buy.style.display = "none";
+    dot.className = "dx-dot";
 
     if (isUnlimited) { badge.classList.add("ok"); removeBlocker(); }
     else if (credits <= 0 || live?.blocked || live?.disabled) {
       badge.classList.add("danger");
+      dot.className = "dx-dot danger";
       msg.textContent = "🚫 Credits exhausted — access blocked.";
       buy.style.display = "";
       ensureBlocker();
       killSession();
     } else if (credits <= 60) {
       badge.classList.add("warn");
+      dot.className = "dx-dot warn";
       msg.textContent = `⚠ Low: only ${fmtHMS(credits)} remaining.`;
       buy.style.display = "";
       removeBlocker();
@@ -236,7 +299,6 @@
     timer = setInterval(tick, 1000);
   }
 
-  // React to storage updates from popup
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && (changes.userId || changes.creditsLeft || changes.userPlan)) tick();
   });
