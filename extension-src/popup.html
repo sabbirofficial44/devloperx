@@ -46,18 +46,15 @@
     background: conic-gradient(from 210deg, #7c5cfc, #22d3ee, #f472b6, #fbbf24, #7c5cfc);
     display:grid; place-items:center;
     box-shadow: 0 12px 30px rgba(124,92,252,.55), 0 0 0 1px rgba(255,255,255,.18), inset 0 0 0 1px rgba(255,255,255,.2);
-    animation: logoSpin 14s linear infinite;
     position:relative;
   }
   .brand .logo::after {
-    content:""; position:absolute; inset:-6px; border-radius:18px; pointer-events:none;
-    background: conic-gradient(from 0deg, rgba(124,92,252,.5), rgba(34,211,238,.5), rgba(244,114,182,.5), rgba(251,191,36,.5), rgba(124,92,252,.5));
-    filter: blur(14px); opacity:.55; z-index:-1;
-    animation: logoSpin 8s linear infinite reverse;
+    content:""; position:absolute; inset:-5px; border-radius:18px; pointer-events:none;
+    background: conic-gradient(from 0deg, rgba(124,92,252,.55), rgba(34,211,238,.55), rgba(244,114,182,.55), rgba(251,191,36,.55), rgba(124,92,252,.55));
+    filter: blur(12px); opacity:.5; z-index:-1;
   }
   .brand .logo img { width:100%; height:100%; border-radius:11px; display:block; object-fit:cover;
     background:#0a0a14; box-shadow: inset 0 0 0 1px rgba(0,0,0,.5); }
-  @keyframes logoSpin { to { transform: rotate(360deg); } }
   .brand h1 { font-size: 13.5px; margin: 0; font-weight: 800; letter-spacing:-.2px; line-height:1.15;
     background:linear-gradient(90deg,#fff,#c4b5fd);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent; }
   .brand small { color: #96a0b8; font-size: 10px; font-weight:500; letter-spacing:.2px; }
