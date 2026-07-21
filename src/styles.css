@@ -168,8 +168,19 @@ html {
 }
 
 body {
-  font-family: "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Plus Jakarta Sans", "Outfit", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hind Siliguri", "Noto Sans Bengali", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-size: 16px;
+  line-height: 1.55;
+  letter-spacing: 0.005em;
 }
+:where(button, a) { -webkit-tap-highlight-color: transparent; }
+:where(input, textarea, select) { font-size: 16px; } /* prevents iOS zoom */
+:where(img, video) { max-width: 100%; height: auto; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 .dx-page {
   min-height: 100vh;
@@ -1545,3 +1556,221 @@ body {
   flex-shrink: 0;
 }
 @keyframes dx-download-arrow { 0%,100%{transform:translateY(0);opacity:.7} 50%{transform:translateY(4px);opacity:1} }
+
+/* ============================================================
+   MOBILE-FIRST RESPONSIVE POLISH (user-friendly for all devices)
+   ============================================================ */
+
+/* Fluid typography scale — comfortable on phones, punchy on desktop */
+:root {
+  --dx-fs-body: clamp(15px, 1.5vw, 16px);
+  --dx-fs-lg: clamp(16px, 1.7vw, 18px);
+  --dx-fs-sm: clamp(13px, 1.3vw, 14px);
+}
+
+/* Larger tap targets everywhere */
+.dx-btn,
+.dx-btn-gold,
+.dx-btn-purple,
+.dx-btn-outline,
+.dx-btn-danger,
+.dx-btn-premium,
+.dx-btn-gold-premium,
+.dx-bkash-btn,
+.dx-nav-link,
+.dx-tab,
+.dx-auth-topcta {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+/* Section spacing scales down on smaller screens */
+@media (max-width: 900px) {
+  .dx-section { padding: 44px 0; }
+  .dx-hero { padding: 48px 0 32px; }
+  .dx-container { padding: 0 18px; }
+  .dx-hero-copy { font-size: 16px; padding: 0 4px; }
+  .dx-section-title { font-size: clamp(22px, 5.2vw, 28px); }
+  .dx-section-subtitle { font-size: 14px; padding: 0 8px; }
+}
+
+@media (max-width: 640px) {
+  body { font-size: 15.5px; line-height: 1.6; }
+  .dx-section { padding: 36px 0; }
+  .dx-hero { padding: 32px 0 20px; }
+  .dx-container { padding: 0 16px; }
+
+  /* Hero — smaller headline, tighter spacing */
+  .dx-hero-mega { font-size: clamp(30px, 9vw, 44px) !important; line-height: 1.08; }
+  .dx-hero-copy { font-size: 15px; margin-top: 18px !important; }
+  .dx-free-ribbon { font-size: 11px; padding: 5px 12px; }
+
+  /* Nav — stacked, brand + burger-style CTA row */
+  .dx-nav {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between;
+    padding: 12px 0;
+    gap: 10px;
+  }
+  .dx-nav-links {
+    gap: 10px;
+    font-size: 13px;
+  }
+  .dx-nav-links a:not(.dx-btn) { display: none; }
+  .dx-nav-link.dx-btn,
+  .dx-nav-links .dx-btn { display: inline-flex; }
+  .dx-logo { font-size: 18px; }
+  .dx-logo img { width: 30px !important; height: 30px !important; }
+
+  /* Offer strip — smaller & readable */
+  .dx-offer-strip { padding: 9px 0; }
+  .dx-offer-strip .dx-container { font-size: 12px !important; gap: 8px !important; }
+
+  /* Buttons — full width, comfy padding */
+  .dx-hero .dx-btn { width: 100%; justify-content: center; padding: 14px 22px !important; font-size: 15px !important; }
+  .dx-btn { padding: 12px 20px; font-size: 14px; }
+
+  /* Pricing — single column, tighter cards */
+  .dx-pricing-grid { grid-template-columns: 1fr !important; gap: 14px; }
+  .dx-price-card-premium { padding: 22px 20px; border-radius: 16px; }
+  .dx-plan-credits { font-size: 34px !important; }
+  .dx-plan-price { font-size: 26px !important; margin: 12px 0 4px !important; }
+  .dx-plan-name { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* Features/steps — one column */
+  .dx-features-grid { grid-template-columns: 1fr !important; gap: 14px; }
+  .dx-feature-card { padding: 20px; border-radius: 14px; }
+  .dx-feature-card h3 { font-size: 16px; }
+  .dx-feature-card p { font-size: 14px; line-height: 1.55; }
+  .dx-steps { gap: 16px; }
+  .dx-step-num { width: 42px; height: 42px; font-size: 18px; }
+
+  /* Stats bar — 2 cols on tiny screens */
+  .dx-section > div[style*="repeat(auto-fit,minmax(180px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    padding: 22px 16px !important;
+    gap: 14px !important;
+  }
+  .dx-section > div[style*="repeat(auto-fit,minmax(180px"] > div > div:first-child {
+    font-size: 24px !important;
+  }
+
+  /* Contact card */
+  .dx-contact-card { padding: 22px 18px; border-radius: 16px; }
+  .dx-contact-card h2 { font-size: 24px !important; }
+  .dx-bkash-btn { padding: 12px 20px; font-size: 14px; width: 100%; justify-content: center; }
+  .dx-contact-card .dx-btn { width: 100%; justify-content: center; }
+
+  /* Auth card — comfy on phone */
+  .dx-auth-card { padding: 26px 20px !important; border-radius: 20px; }
+  .dx-auth-card h1 { font-size: 22px; }
+  .dx-auth-sub { font-size: 13px; }
+  .dx-tab { font-size: 12.5px; padding: 11px 10px; }
+
+  /* Marquee — smaller */
+  .dx-marquee-track > div { font-size: 16px !important; }
+
+  /* Testimonials grid single col */
+  .dx-section [style*="repeat(auto-fit,minmax(280px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Download button */
+  .dx-download-btn { padding: 14px 16px; gap: 12px; }
+  .dx-download-icon { width: 44px; height: 44px; font-size: 22px; border-radius: 12px; }
+  .dx-download-title { font-size: 14px; }
+  .dx-download-sub { font-size: 11px; }
+}
+
+/* Extra small phones */
+@media (max-width: 380px) {
+  .dx-hero-mega { font-size: 28px !important; }
+  .dx-logo span { display: none; }
+  .dx-nav-link.dx-btn,
+  .dx-nav-links .dx-btn { padding: 10px 14px; font-size: 13px; }
+  .dx-badge { font-size: 11px; padding: 5px 10px; }
+}
+
+/* ===== Admin console — mobile ===== */
+@media (max-width: 900px) {
+  .ax-shell { grid-template-columns: 1fr; }
+  .ax-sidebar {
+    position: relative; height: auto; top: auto;
+    padding: 14px; overflow-x: auto;
+  }
+  .ax-nav {
+    flex-direction: row; overflow-x: auto; gap: 6px;
+    padding-bottom: 4px; scrollbar-width: none;
+  }
+  .ax-nav::-webkit-scrollbar { display: none; }
+  .ax-nav-label { display: none; }
+  .ax-nav-item {
+    flex-shrink: 0; padding: 9px 14px; font-size: 12.5px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .ax-nav-item[data-active="true"] { box-shadow: none; }
+  .ax-sidebar-foot { display: none; }
+  .ax-topbar { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+  .ax-crumb { font-size: 12px; }
+  .ax-topbar-right { font-size: 12px; gap: 8px; flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .dx-admin-container { padding: 16px 12px 40px; }
+  .ax-content { padding: 14px 12px; }
+
+  /* Admin tables — horizontal scroll wrapper */
+  .dx-admin-table,
+  .ax-table {
+    display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    white-space: nowrap; font-size: 13px;
+  }
+  .dx-admin-table thead th,
+  .ax-table thead th { font-size: 11px; padding: 10px 12px; }
+  .dx-admin-table tbody td,
+  .ax-table tbody td { padding: 10px 12px; }
+
+  .ax-brand { padding: 4px 6px 12px; }
+  .ax-brand-mark { width: 32px; height: 32px; font-size: 13px; }
+  .ax-brand-name { font-size: 14px; }
+  .ax-brand-sub { font-size: 10px; }
+}
+
+/* ===== Dashboard — mobile ===== */
+@media (max-width: 768px) {
+  .dx-container-premium { padding: 16px 14px; }
+  .dx-nav-premium {
+    flex-direction: column; align-items: stretch;
+    padding: 14px 16px; gap: 12px; border-radius: 14px;
+    margin-bottom: 20px;
+  }
+  .dx-nav-premium .dx-nav-links { justify-content: center; gap: 10px; }
+}
+
+/* Better focus rings for keyboard users */
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid rgba(167, 139, 250, 0.75);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Safe-area for notched phones */
+@supports (padding: max(0px)) {
+  .dx-container,
+  .dx-container-premium,
+  .dx-admin-container {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+}

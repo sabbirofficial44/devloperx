@@ -76,7 +76,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#08090d" },
       { title: "DeveloperX — Unlimited AI Video Generation" },
       { name: "description", content: "Get unlimited Google Flow (Veo 3, Omni, Flash) access. 12-hour free trial daily, then daily / weekly / monthly plans starting from ৳50." },
       { property: "og:title", content: "DeveloperX — Unlimited AI Video Generation" },
@@ -104,7 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap",
       },
       { rel: "icon", href: "/developerx-logo.png", type: "image/png" },
       { rel: "apple-touch-icon", href: "/developerx-logo.png" },
