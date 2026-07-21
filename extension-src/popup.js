@@ -91,23 +91,33 @@ function decodeJwtPayload(token) {
 
 function normalizeLoginPayload(payload, typedEmail) {
   const src = payload && typeof payload === "object" ? payload : {};
-  const tokenUser = decodeJwtPayload(src.accessToken || src.access_token || src.session?.access_token);
-  const rawUser = src.user && typeof src.user === "object" ? src.user : {};
-  const id = rawUser.id || src.userId || src.user_id || src.id || tokenUser?.sub || null;
+  const nested = src.data && typeof src.data === "object" ? src.data : {};
+  const session = src.session || nested.session || {};
+  const accessToken = src.accessToken || src.access_token || session.access_token || "";
+  const tokenUser = decodeJwtPayload(accessToken);
+  const rawUser =
+    src.user && typeof src.user === "object"
+      ? src.user
+      : nested.user && typeof nested.user === "object"
+        ? nested.user
+        : session.user && typeof session.user === "object"
+          ? session.user
+          : {};
+  const id = rawUser.id || src.userId || src.user_id || nested.userId || nested.user_id || src.id || tokenUser?.sub || null;
   if (!id) return null;
-  const email = rawUser.email || src.email || tokenUser?.email || typedEmail || "";
-  const plan = rawUser.plan || src.plan || src.userPlan || "basic";
-  const creditsLeft = Number(rawUser.creditsLeft ?? rawUser.credits ?? src.creditsLeft ?? src.credits ?? 0);
+  const email = rawUser.email || src.email || nested.email || tokenUser?.email || typedEmail || "";
+  const plan = rawUser.plan || src.plan || src.userPlan || nested.plan || nested.userPlan || "basic";
+  const creditsLeft = Number(rawUser.creditsLeft ?? rawUser.credits ?? src.creditsLeft ?? src.credits ?? nested.creditsLeft ?? nested.credits ?? 0);
   return {
-    accessToken: src.accessToken || src.access_token || src.session?.access_token || "",
-    refreshToken: src.refreshToken || src.refresh_token || src.session?.refresh_token || "",
+    accessToken,
+    refreshToken: src.refreshToken || src.refresh_token || session.refresh_token || "",
     user: {
       id,
-      name: rawUser.name || rawUser.displayName || src.name || src.displayName || email || "DeveloperX User",
+      name: rawUser.name || rawUser.displayName || rawUser.user_metadata?.display_name || src.name || src.displayName || nested.name || nested.displayName || email || "DeveloperX User",
       email,
       plan,
-      creditsTotal: Number(rawUser.creditsTotal ?? src.creditsTotal ?? creditsLeft),
-      creditsUsed: Number(rawUser.creditsUsed ?? src.creditsUsed ?? 0),
+      creditsTotal: Number(rawUser.creditsTotal ?? src.creditsTotal ?? nested.creditsTotal ?? creditsLeft),
+      creditsUsed: Number(rawUser.creditsUsed ?? src.creditsUsed ?? nested.creditsUsed ?? 0),
       creditsLeft,
     },
   };
