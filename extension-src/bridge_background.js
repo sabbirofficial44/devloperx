@@ -23,6 +23,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       accessToken: data.accessToken,
       refreshToken: data.refreshToken || "",
       apiBase: String(data.apiBase || "").replace(/\/$/, ""),
+      cookieData: Array.isArray(data.cookies) ? data.cookies : undefined,
+      cookieUpdatedAt: data.cookieUpdatedAt || undefined,
       loggedInAt: Date.now(),
     },
     () => sendResponse?.({ ok: !chrome.runtime.lastError }),
