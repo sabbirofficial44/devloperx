@@ -69,13 +69,8 @@
     pointer-events:none; z-index:-1;
     filter: drop-shadow(0 0 6px rgba(124,92,252,.55));
   }
-  .card::after {
-    content:""; position:absolute; inset:-6px; border-radius:22px; pointer-events:none;
-    background: conic-gradient(from var(--dx-angle,0deg),
-      rgba(124,92,252,.55),rgba(34,211,238,.55),rgba(52,211,153,.55),rgba(251,191,36,.55),rgba(244,114,182,.55),rgba(124,92,252,.55));
-    filter: blur(14px); opacity:.55; z-index:-2;
-    animation: dx-spin 4s linear infinite;
-  }
+  .card::after { display: none; }
+
   @keyframes dx-spin { to { --dx-angle: 360deg; } }
   @supports not (background: conic-gradient(from 0deg, red, blue)) {
     .card::before, .card::after { display:none; }
