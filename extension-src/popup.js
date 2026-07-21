@@ -41,16 +41,29 @@ function fmtHMS(mins) {
 
 /* ---------------- api ---------------- */
 async function login(email, password) {
-  const base = await getApiBase();
-  const res = await fetch(`${base}/api/public/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "Login failed");
-  return data;
+  const preferred = await getApiBase();
+  const tryOrder = [preferred, ...API_ENDPOINTS.filter((u) => u !== preferred)];
+  let lastErr = null;
+  for (const base of tryOrder) {
+    try {
+      const res = await fetch(`${base}/api/public/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) { await setApiBase(base); return data; }
+      // 401 = valid endpoint but bad creds → surface immediately.
+      if (res.status === 401) throw new Error(data.message || "Invalid email or password");
+      lastErr = new Error(data.message || `Login failed (${res.status})`);
+    } catch (e) {
+      lastErr = e;
+      if (e && /Invalid email or password/i.test(String(e.message))) throw e;
+    }
+  }
+  throw lastErr || new Error("Cannot reach server");
 }
+
 
 async function fetchStatus(userId) {
   const base = await getApiBase();
