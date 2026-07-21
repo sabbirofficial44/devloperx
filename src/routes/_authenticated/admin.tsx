@@ -66,7 +66,8 @@ function AdminPage() {
     queryKey: ["users"],
     queryFn: () => fetchUsers(),
     enabled: !!meQuery.data?.isAdmin,
-    refetchInterval: 10000,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
   });
 
   const historyQuery = useQuery({
