@@ -161,6 +161,28 @@
     return optionCandidates().find((el) => el !== trigger && !el.contains(trigger) && isTargetText(textOf(el))) || null;
   }
 
+  function relabelAnyTargetText() {
+    // Find leaf-ish elements whose visible text mentions the real model name
+    // (e.g. video card captions like "Veo 3.1 - Lite [Lower Priority]").
+    const walker = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const t = clean(node.nodeValue);
+        if (!t || t.length > MAX_TEXT) return NodeFilter.FILTER_REJECT;
+        if (!isTargetText(t)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    const parents = new Set();
+    let node;
+    while ((node = walker.nextNode())) {
+      const p = node.parentElement;
+      if (!p || parents.has(p)) continue;
+      if (p.closest('[role="option"], [role="menuitem"], [role="combobox"], [aria-haspopup]')) continue;
+      parents.add(p);
+    }
+    parents.forEach((el) => { if (visible(el)) markLabel(el, "caption"); });
+  }
+
   function lockVisibleLabels() {
     cleanupOldLabels();
 
@@ -176,6 +198,8 @@
         option.setAttribute("data-dx-model-option", "hidden");
       }
     }
+
+    relabelAnyTargetText();
   }
 
   let selecting = false;
