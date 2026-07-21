@@ -224,27 +224,31 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 }
 
 .dx-container {
-  width: min(100%, 1280px);
+  width: 100%;
+  max-width: min(100%, 1440px);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(16px, 3vw, 40px);
   position: relative;
   z-index: 1;
 }
 
 
 .dx-container-premium {
-  width: min(100%, 960px);
+  width: 100%;
+  max-width: min(100%, 1440px);
   margin: 0 auto;
-  padding: 24px 20px;
+  padding: clamp(16px, 2.5vw, 28px) clamp(16px, 3vw, 40px);
   position: relative;
   z-index: 1;
 }
 
 .dx-admin-container {
-  width: min(100%, 1400px);
+  width: 100%;
+  max-width: min(100%, 1600px);
   margin: 0 auto;
-  padding: 24px 20px 60px;
+  padding: clamp(16px, 2.5vw, 28px) clamp(16px, 3vw, 40px) 60px;
 }
+
 
 .dx-logo {
   font-size: 22px;
