@@ -339,7 +339,7 @@ function Dashboard() {
               <span className="dx-download-icon">📥</span>
               <span className="dx-download-text">
                 <span className="dx-download-title">Download Extension</span>
-                <span className="dx-download-sub">Latest build · v4.8.6 · Always fresh</span>
+                <span className="dx-download-sub">Latest build · v4.8.7 · Always fresh</span>
               </span>
               <span className="dx-download-arrow">↓</span>
             </button>
