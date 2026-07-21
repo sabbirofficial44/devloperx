@@ -10,23 +10,11 @@
     width: 280px;
     font-family: -apple-system, "Inter", "Segoe UI", Roboto, sans-serif;
     color: #eef1f8;
-    background:
-      radial-gradient(120% 80% at 0% 0%, rgba(124,92,252,.35), transparent 55%),
-      radial-gradient(120% 80% at 100% 100%, rgba(34,211,238,.28), transparent 55%),
-      radial-gradient(80% 60% at 50% 100%, rgba(244,114,182,.18), transparent 60%),
-      linear-gradient(160deg, #07070f 0%, #0d0820 55%, #05060d 100%);
-    overflow: hidden;
+    background: transparent;
     -webkit-font-smoothing: antialiased;
     position: relative;
   }
-  body::before {
-    content: ""; position:absolute; inset:0; pointer-events:none;
-    background-image:
-      radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
-    background-size: 3px 3px;
-    opacity:.35; z-index:0;
-    mix-blend-mode: overlay;
-  }
+
 
   .wrap { padding: 10px; position: relative; z-index:2; }
 
@@ -81,13 +69,8 @@
     pointer-events:none; z-index:-1;
     filter: drop-shadow(0 0 6px rgba(124,92,252,.55));
   }
-  .card::after {
-    content:""; position:absolute; inset:-6px; border-radius:22px; pointer-events:none;
-    background: conic-gradient(from var(--dx-angle,0deg),
-      rgba(124,92,252,.55),rgba(34,211,238,.55),rgba(52,211,153,.55),rgba(251,191,36,.55),rgba(244,114,182,.55),rgba(124,92,252,.55));
-    filter: blur(14px); opacity:.55; z-index:-2;
-    animation: dx-spin 4s linear infinite;
-  }
+  .card::after { display: none; }
+
   @keyframes dx-spin { to { --dx-angle: 360deg; } }
   @supports not (background: conic-gradient(from 0deg, red, blue)) {
     .card::before, .card::after { display:none; }
@@ -204,18 +187,15 @@
 </style>
 </head>
 <body>
-  <div class="orb a"></div>
-  <div class="orb b"></div>
-  <div class="orb c"></div>
-
   <div class="wrap">
     <div class="brand">
       <div class="logo"><img src="logo.png" alt="DeveloperX" /></div>
       <div>
-        <h1>DeveloperX · Veo</h1>
+        <h1>DeveloperX · Veo 3 Pro</h1>
         <small>Google Flow · Managed Session</small>
       </div>
     </div>
+
 
     <!-- LOGIN -->
     <div id="view-login" class="card">
