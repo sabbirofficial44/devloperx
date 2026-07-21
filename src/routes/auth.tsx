@@ -142,7 +142,9 @@ function AuthPage() {
     // Email verification required — do NOT auto sign-in
     setLoading(false);
     setError("");
-    setInfo(`✉️ A confirmation link has been sent to ${em}. Please open your Gmail and click the link to activate your account, then sign in below.`);
+    setPendingEmail(em);
+    setCooldown(60);
+    setInfo(`✉️ A confirmation link has been sent to ${em}. Please open your Gmail (check Spam too) and click the link to activate your account, then sign in below.`);
     setTab("signin");
     setPassword("");
     return;
