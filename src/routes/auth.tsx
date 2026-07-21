@@ -197,6 +197,7 @@ function AuthPage() {
             </div>
 
             {error && <div className="dx-msg-err">{error}</div>}
+            {info && <div className="dx-msg-err" style={{ background: "rgba(34,197,94,.12)", borderColor: "rgba(34,197,94,.35)", color: "#86efac" }}>{info}</div>}
 
             <button
               type="submit"
