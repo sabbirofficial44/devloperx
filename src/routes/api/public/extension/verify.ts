@@ -94,6 +94,8 @@ async function verifyFromRequest(request: Request) {
 
   if (!userId) return invalid();
 
+  // Start the trial timer on first extension login (idempotent).
+  await supabaseAdmin.rpc("start_trial_if_needed", { _user_id: userId });
   // Real-time trial burn: decrement credits by minutes elapsed since last tick.
   await supabaseAdmin.rpc("tick_trial_credits", { _user_id: userId });
 

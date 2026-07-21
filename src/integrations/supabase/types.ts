@@ -92,6 +92,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           last_tick_at: string
+          trial_started_at: string | null
           updated_at: string
           user_id: string
           user_plan: string
@@ -104,6 +105,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           last_tick_at?: string
+          trial_started_at?: string | null
           updated_at?: string
           user_id: string
           user_plan?: string
@@ -116,6 +118,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           last_tick_at?: string
+          trial_started_at?: string | null
           updated_at?: string
           user_id?: string
           user_plan?: string
@@ -212,6 +215,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      start_trial_if_needed: { Args: { _user_id: string }; Returns: undefined }
       tick_trial_credits: {
         Args: { _user_id: string }
         Returns: {
