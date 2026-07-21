@@ -266,7 +266,10 @@
     ensureStyle();
     schedule();
 
-    [80, 180, 400, 800, 1300, 2200, 3500].forEach((ms) => setTimeout(forceSelectLite, ms));
+    // Aggressive initial burst — bypass cooldown so first select actually fires.
+    [60, 200, 500, 900, 1500, 2500, 4000, 6000].forEach((ms) =>
+      setTimeout(() => forceSelectLite(true), ms),
+    );
 
     new MutationObserver(schedule).observe(document.documentElement, {
       childList: true,
@@ -280,8 +283,11 @@
       ensureStyle();
       lockVisibleLabels();
       const trigger = findModelTrigger();
-      if (trigger && !isTargetText(textOf(trigger))) forceSelectLite();
-    }, 900);
+      if (trigger && !isTargetText(textOf(trigger))) {
+        locked = false;
+        forceSelectLite(true);
+      }
+    }, 1200);
   }
 
   if (document.readyState === "loading") {
