@@ -244,6 +244,31 @@ function AuthPage() {
                 ? tab === "signin" ? "Signing in…" : "Creating…"
                 : tab === "signin" ? "Sign In" : "Create Account"}
             </button>
+
+            {tab === "signin" && pendingEmail && (
+              <button
+                type="button"
+                onClick={resendVerification}
+                disabled={cooldown > 0 || resending}
+                className="dx-btn"
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  marginTop: 8,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: cooldown > 0 ? "#9ca3af" : "#e5e7eb",
+                  cursor: cooldown > 0 || resending ? "not-allowed" : "pointer",
+                  fontSize: 13,
+                }}
+              >
+                {resending
+                  ? "Sending…"
+                  : cooldown > 0
+                  ? `Resend Verification in ${cooldown}s`
+                  : `✉️ Resend Verification Email`}
+              </button>
+            )}
           </form>
 
           <div className="dx-links">
