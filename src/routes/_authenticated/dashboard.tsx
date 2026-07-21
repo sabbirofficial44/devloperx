@@ -171,7 +171,10 @@ function Dashboard() {
       <div className="dx-ambient" />
       <div className="dx-container-premium">
         <nav className="dx-nav-premium">
-          <div className="dx-logo dx-logo-premium">DeveloperX</div>
+          <div className="dx-logo dx-logo-premium" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src="/developerx-logo.png" alt="DeveloperX" width={36} height={36} style={{ borderRadius: 10, boxShadow: "0 4px 16px rgba(240,185,11,0.4)" }} />
+            <span>DeveloperX</span>
+          </div>
           <div className="dx-nav-links" style={{ fontSize: 13 }}>
             <Link className="dx-nav-link" to="/">Home</Link>
             {data?.isAdmin && <Link className="dx-nav-link" to="/admin">Admin</Link>}
