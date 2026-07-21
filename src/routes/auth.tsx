@@ -54,24 +54,25 @@ function AuthPage() {
     if (!pendingEmail || cooldown > 0 || resending) return;
     setResending(true);
     setError("");
-    const { error: rErr } = await supabase.auth.resend({
-      type: "signup",
-      email: pendingEmail,
-      options: { emailRedirectTo: window.location.origin },
-    });
-    setResending(false);
-    if (rErr) {
-      const m = rErr.message?.toLowerCase() ?? "";
-      if (m.includes("rate") || m.includes("seconds")) {
-        setError("Too many requests. Please wait a moment before trying again.");
-        setCooldown(60);
+    try {
+      const res = await fetch("/api/public/auth/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: pendingEmail }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(j.message || "Could not resend. Try again later.");
+        setCooldown(30);
       } else {
-        setError(rErr.message);
+        setInfo(`✉️ Verification link re-sent to ${pendingEmail}. Check your Gmail (Inbox + Spam).`);
+        setCooldown(60);
       }
-      return;
+    } catch {
+      setError("Network error. Try again.");
+    } finally {
+      setResending(false);
     }
-    setInfo(`✉️ Verification link re-sent to ${pendingEmail}. Check your Gmail (including Spam).`);
-    setCooldown(60);
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -89,7 +90,8 @@ function AuthPage() {
         setLoading(false);
         const msg = siErr?.message?.toLowerCase() ?? "";
         if (msg.includes("not confirmed") || msg.includes("confirm")) {
-          setError("Please confirm your email first. Check your Gmail inbox for the verification link.");
+          setPendingEmail(email.trim().toLowerCase());
+          setError("Please confirm your email first. Check your Gmail inbox (and Spam folder) for the verification link.");
         } else {
           setError("Invalid email or password.");
         }
@@ -102,7 +104,7 @@ function AuthPage() {
       return;
     }
 
-    // signup — hard validation (only enforced on public signup, not admin-created)
+    // signup — hard validation
     const em = email.trim().toLowerCase();
     if (!em.endsWith("@gmail.com")) {
       setLoading(false);
@@ -126,29 +128,30 @@ function AuthPage() {
       return;
     }
 
-    const { data, error: sErr } = await supabase.auth.signUp({
-      email: em,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: name.trim() },
-      },
-    });
-    if (sErr || !data.user) {
+    try {
+      const res = await fetch("/api/public/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: em, password, name: name.trim() }),
+      });
+      const j = await res.json().catch(() => ({}));
       setLoading(false);
-      setError(sErr?.message ?? "Signup failed");
-      return;
+      if (!res.ok) {
+        setError(j.message || "Signup failed. Try again.");
+        return;
+      }
+      setPendingEmail(em);
+      setCooldown(60);
+      setInfo(`✉️ A confirmation link has been sent to ${em}. Open your Gmail (check Spam too), click the link, then sign in below.`);
+      setTab("signin");
+      setPassword("");
+    } catch {
+      setLoading(false);
+      setError("Network error. Try again.");
     }
-    // Email verification required — do NOT auto sign-in
-    setLoading(false);
-    setError("");
-    setPendingEmail(em);
-    setCooldown(60);
-    setInfo(`✉️ A confirmation link has been sent to ${em}. Please open your Gmail (check Spam too) and click the link to activate your account, then sign in below.`);
-    setTab("signin");
-    setPassword("");
     return;
   };
+
 
   return (
     <div className="dx-auth-shell">
