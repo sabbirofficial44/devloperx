@@ -26,6 +26,8 @@ import { Route as ApiPublicExtensionDeductRouteImport } from './routes/api/publi
 import { Route as ApiPublicExtensionCookieVersionRouteImport } from './routes/api/public/extension/cookie-version'
 import { Route as ApiPublicAuthSignupRouteImport } from './routes/api/public/auth/signup'
 import { Route as ApiPublicAuthSendVerificationRouteImport } from './routes/api/public/auth/send-verification'
+import { Route as ApiPublicAuthResetRequestRouteImport } from './routes/api/public/auth/reset-request'
+import { Route as ApiPublicAuthResetRouteImport } from './routes/api/public/auth/reset'
 import { Route as ApiPublicAuthRefreshRouteImport } from './routes/api/public/auth/refresh'
 import { Route as ApiPublicAuthLoginRouteImport } from './routes/api/public/auth/login'
 import { Route as ApiPublicAuthConfirmRouteImport } from './routes/api/public/auth/confirm'
@@ -120,6 +122,17 @@ const ApiPublicAuthSendVerificationRoute =
     path: '/api/public/auth/send-verification',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAuthResetRequestRoute =
+  ApiPublicAuthResetRequestRouteImport.update({
+    id: '/api/public/auth/reset-request',
+    path: '/api/public/auth/reset-request',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAuthResetRoute = ApiPublicAuthResetRouteImport.update({
+  id: '/api/public/auth/reset',
+  path: '/api/public/auth/reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAuthRefreshRoute = ApiPublicAuthRefreshRouteImport.update({
   id: '/api/public/auth/refresh',
   path: '/api/public/auth/refresh',
@@ -148,6 +161,8 @@ export interface FileRoutesByFullPath {
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/auth/reset': typeof ApiPublicAuthResetRoute
+  '/api/public/auth/reset-request': typeof ApiPublicAuthResetRequestRoute
   '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
   '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
@@ -169,6 +184,8 @@ export interface FileRoutesByTo {
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/auth/reset': typeof ApiPublicAuthResetRoute
+  '/api/public/auth/reset-request': typeof ApiPublicAuthResetRequestRoute
   '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
   '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
@@ -192,6 +209,8 @@ export interface FileRoutesById {
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
   '/api/public/auth/refresh': typeof ApiPublicAuthRefreshRoute
+  '/api/public/auth/reset': typeof ApiPublicAuthResetRoute
+  '/api/public/auth/reset-request': typeof ApiPublicAuthResetRequestRoute
   '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
   '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
@@ -215,6 +234,8 @@ export interface FileRouteTypes {
     | '/api/public/auth/confirm'
     | '/api/public/auth/login'
     | '/api/public/auth/refresh'
+    | '/api/public/auth/reset'
+    | '/api/public/auth/reset-request'
     | '/api/public/auth/send-verification'
     | '/api/public/auth/signup'
     | '/api/public/extension/cookie-version'
@@ -236,6 +257,8 @@ export interface FileRouteTypes {
     | '/api/public/auth/confirm'
     | '/api/public/auth/login'
     | '/api/public/auth/refresh'
+    | '/api/public/auth/reset'
+    | '/api/public/auth/reset-request'
     | '/api/public/auth/send-verification'
     | '/api/public/auth/signup'
     | '/api/public/extension/cookie-version'
@@ -258,6 +281,8 @@ export interface FileRouteTypes {
     | '/api/public/auth/confirm'
     | '/api/public/auth/login'
     | '/api/public/auth/refresh'
+    | '/api/public/auth/reset'
+    | '/api/public/auth/reset-request'
     | '/api/public/auth/send-verification'
     | '/api/public/auth/signup'
     | '/api/public/extension/cookie-version'
@@ -279,6 +304,8 @@ export interface RootRouteChildren {
   ApiPublicAuthConfirmRoute: typeof ApiPublicAuthConfirmRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
   ApiPublicAuthRefreshRoute: typeof ApiPublicAuthRefreshRoute
+  ApiPublicAuthResetRoute: typeof ApiPublicAuthResetRoute
+  ApiPublicAuthResetRequestRoute: typeof ApiPublicAuthResetRequestRoute
   ApiPublicAuthSendVerificationRoute: typeof ApiPublicAuthSendVerificationRoute
   ApiPublicAuthSignupRoute: typeof ApiPublicAuthSignupRoute
   ApiPublicExtensionCookieVersionRoute: typeof ApiPublicExtensionCookieVersionRoute
@@ -410,6 +437,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthSendVerificationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/auth/reset-request': {
+      id: '/api/public/auth/reset-request'
+      path: '/api/public/auth/reset-request'
+      fullPath: '/api/public/auth/reset-request'
+      preLoaderRoute: typeof ApiPublicAuthResetRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/auth/reset': {
+      id: '/api/public/auth/reset'
+      path: '/api/public/auth/reset'
+      fullPath: '/api/public/auth/reset'
+      preLoaderRoute: typeof ApiPublicAuthResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/auth/refresh': {
       id: '/api/public/auth/refresh'
       path: '/api/public/auth/refresh'
@@ -458,6 +499,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAuthConfirmRoute: ApiPublicAuthConfirmRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
   ApiPublicAuthRefreshRoute: ApiPublicAuthRefreshRoute,
+  ApiPublicAuthResetRoute: ApiPublicAuthResetRoute,
+  ApiPublicAuthResetRequestRoute: ApiPublicAuthResetRequestRoute,
   ApiPublicAuthSendVerificationRoute: ApiPublicAuthSendVerificationRoute,
   ApiPublicAuthSignupRoute: ApiPublicAuthSignupRoute,
   ApiPublicExtensionCookieVersionRoute: ApiPublicExtensionCookieVersionRoute,
