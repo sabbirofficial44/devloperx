@@ -13,7 +13,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-type Tab = "signin" | "signup";
+type Tab = "signin" | "signup" | "forgot";
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -27,6 +27,7 @@ function AuthPage() {
   const [pendingEmail, setPendingEmail] = useState<string>("");
   const [cooldown, setCooldown] = useState(0);
   const [resending, setResending] = useState(false);
+  const [forgotCooldown, setForgotCooldown] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
