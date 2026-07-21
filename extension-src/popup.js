@@ -1,10 +1,9 @@
 /* DeveloperX — Veo Unlimited popup */
 // Try these endpoints in order. Extension will auto-pick the one that responds.
 const API_ENDPOINTS = [
-  "https://id-preview--306a4997-5830-492f-b8db-9bb0ab4aee1f.lovable.app",
+  "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app",
   "https://devloperx.lovable.app",
   "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f.lovable.app",
-  "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app",
 ];
 const DEFAULT_API = API_ENDPOINTS[0];
 const FLOW_URL = "https://labs.google/fx/tools/flow";
@@ -50,10 +49,15 @@ async function login(email, password) {
     try {
       const res = await fetch(`${base}/api/public/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        headers: { "Content-Type": "application/json", "Accept": "application/json", "Cache-Control": "no-store" },
+        body: JSON.stringify({ email: email.trim(), password, version: chrome.runtime?.getManifest?.().version || "popup" }),
       });
-      const data = await res.json().catch(() => ({}));
+      const type = (res.headers.get("content-type") || "").toLowerCase();
+      const data = type.includes("application/json") ? await res.json().catch(() => ({})) : {};
+      if (!type.includes("application/json")) {
+        lastErr = new Error("Server returned app page instead of login API");
+        continue;
+      }
       if (res.ok) {
         const normalized = normalizeLoginPayload(data, email);
         if (!normalized?.user?.id) {
