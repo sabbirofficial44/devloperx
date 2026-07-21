@@ -24,6 +24,9 @@ function AuthPage() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string>("");
+  const [cooldown, setCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -35,10 +38,40 @@ function AuthPage() {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
+
   const switchTab = (t: Tab) => {
     setTab(t);
     setError("");
     setInfo("");
+  };
+
+  const resendVerification = async () => {
+    if (!pendingEmail || cooldown > 0 || resending) return;
+    setResending(true);
+    setError("");
+    const { error: rErr } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+    if (rErr) {
+      const m = rErr.message?.toLowerCase() ?? "";
+      if (m.includes("rate") || m.includes("seconds")) {
+        setError("Too many requests. Please wait a moment before trying again.");
+        setCooldown(60);
+      } else {
+        setError(rErr.message);
+      }
+      return;
+    }
+    setInfo(`✉️ Verification link re-sent to ${pendingEmail}. Check your Gmail (including Spam).`);
+    setCooldown(60);
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -109,7 +142,9 @@ function AuthPage() {
     // Email verification required — do NOT auto sign-in
     setLoading(false);
     setError("");
-    setInfo(`✉️ A confirmation link has been sent to ${em}. Please open your Gmail and click the link to activate your account, then sign in below.`);
+    setPendingEmail(em);
+    setCooldown(60);
+    setInfo(`✉️ A confirmation link has been sent to ${em}. Please open your Gmail (check Spam too) and click the link to activate your account, then sign in below.`);
     setTab("signin");
     setPassword("");
     return;
@@ -209,6 +244,31 @@ function AuthPage() {
                 ? tab === "signin" ? "Signing in…" : "Creating…"
                 : tab === "signin" ? "Sign In" : "Create Account"}
             </button>
+
+            {tab === "signin" && pendingEmail && (
+              <button
+                type="button"
+                onClick={resendVerification}
+                disabled={cooldown > 0 || resending}
+                className="dx-btn"
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  marginTop: 8,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: cooldown > 0 ? "#9ca3af" : "#e5e7eb",
+                  cursor: cooldown > 0 || resending ? "not-allowed" : "pointer",
+                  fontSize: 13,
+                }}
+              >
+                {resending
+                  ? "Sending…"
+                  : cooldown > 0
+                  ? `Resend Verification in ${cooldown}s`
+                  : `✉️ Resend Verification Email`}
+              </button>
+            )}
           </form>
 
           <div className="dx-links">
