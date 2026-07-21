@@ -232,50 +232,53 @@
     try { chrome.runtime.sendMessage({ type: "CLEAR_FLOW_COOKIES" }, () => {}); } catch {}
   }
 
-  function render(store, live) {
+  // Live baseline — synced from server, ticked locally each second
+  let liveBase = { credits: 0, unlimited: false, plan: "basic", syncedAt: 0, signedIn: false, blocked: false };
+
+  function paint() {
     ensureRoot();
-    const signedIn = !!store.userId;
-    document.getElementById("dx-signed-out").style.display = signedIn ? "none" : "";
-    document.getElementById("dx-signed-in").style.display = signedIn ? "" : "none";
+    const timeEl = document.getElementById("dx-time");
+    const credEl = document.getElementById("dx-credits");
+    const badge = document.getElementById("dx-plan");
     const dot = document.getElementById("dx-dot");
-    if (!signedIn) {
-      const p = document.getElementById("dx-plan");
-      p.textContent = "signed out"; p.className = "b";
+    const msg = document.getElementById("dx-msg");
+    const buy = document.getElementById("dx-buy");
+    document.getElementById("dx-signed-out").style.display = liveBase.signedIn ? "none" : "";
+    document.getElementById("dx-signed-in").style.display = liveBase.signedIn ? "" : "none";
+    if (!liveBase.signedIn) {
+      badge.textContent = "signed out"; badge.className = "b";
       dot.className = "dx-dot warn";
       removeBlocker();
       return;
     }
-    const user = live?.user || {
-      plan: store.userPlan, creditsLeft: store.creditsLeft,
-      creditsTotal: store.creditsLeft,
-    };
-    const plan = (user.plan || "basic").toLowerCase();
-    const isUnlimited = UNLIMITED.has(plan);
-    const credits = Number(user.creditsLeft ?? 0);
-
-    document.getElementById("dx-time").textContent = isUnlimited ? "∞" : fmtHMS(credits);
-    document.getElementById("dx-credits").textContent = isUnlimited ? "Unlimited" : credits.toLocaleString();
-
-    const badge = document.getElementById("dx-plan");
-    badge.textContent = plan;
+    badge.textContent = liveBase.plan;
     badge.className = "b";
-    const msg = document.getElementById("dx-msg");
-    const buy = document.getElementById("dx-buy");
-    msg.textContent = ""; buy.style.display = "none";
-    dot.className = "dx-dot";
+    msg.textContent = ""; buy.style.display = "none"; dot.className = "dx-dot";
 
-    if (isUnlimited) { badge.classList.add("ok"); removeBlocker(); }
-    else if (credits <= 0 || live?.blocked || live?.disabled) {
+    if (liveBase.unlimited) {
+      timeEl.textContent = "∞";
+      credEl.textContent = "Unlimited";
+      badge.classList.add("ok");
+      removeBlocker();
+      return;
+    }
+
+    const elapsedSec = (Date.now() - liveBase.syncedAt) / 1000;
+    const remainingMin = Math.max(0, liveBase.credits - elapsedSec / 60);
+    timeEl.textContent = fmtHMS(remainingMin);
+    credEl.textContent = Math.max(0, Math.floor(remainingMin)).toLocaleString();
+
+    if (remainingMin <= 0 || liveBase.blocked) {
       badge.classList.add("danger");
       dot.className = "dx-dot danger";
       msg.textContent = "🚫 Credits exhausted — access blocked.";
       buy.style.display = "";
       ensureBlocker();
       killSession();
-    } else if (credits <= 60) {
+    } else if (remainingMin <= 60) {
       badge.classList.add("warn");
       dot.className = "dx-dot warn";
-      msg.textContent = `⚠ Low: only ${fmtHMS(credits)} remaining.`;
+      msg.textContent = `⚠ Low: only ${fmtHMS(remainingMin)} remaining.`;
       buy.style.display = "";
       removeBlocker();
     } else {
@@ -283,24 +286,43 @@
     }
   }
 
-  let timer = null;
-  async function tick() {
+  function syncFromStore(store, live) {
+    const signedIn = !!store.userId;
+    const user = live?.user || { plan: store.userPlan, creditsLeft: store.creditsLeft };
+    const plan = (user.plan || "basic").toLowerCase();
+    liveBase = {
+      signedIn,
+      plan,
+      unlimited: UNLIMITED.has(plan),
+      credits: Number(user.creditsLeft ?? 0),
+      blocked: !!(live?.blocked || live?.disabled),
+      syncedAt: Date.now(),
+    };
+    paint();
+  }
+
+  let paintTimer = null;
+  let syncTimer = null;
+
+  async function sync() {
     const store = await getStore();
     const apiBase = (store.apiBase || DEFAULT_API).replace(/\/$/, "");
-    if (!store.userId) { render(store, null); return; }
+    if (!store.userId) { syncFromStore(store, null); return; }
     const live = await fetchLive(store.userId, apiBase, store.accessToken);
-    render(store, live);
+    syncFromStore(store, live);
   }
 
   function start() {
     ensureRoot();
-    tick();
-    if (timer) clearInterval(timer);
-    timer = setInterval(tick, 1000);
+    sync();
+    if (syncTimer) clearInterval(syncTimer);
+    if (paintTimer) clearInterval(paintTimer);
+    syncTimer = setInterval(sync, 15000);
+    paintTimer = setInterval(paint, 1000);
   }
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && (changes.userId || changes.creditsLeft || changes.userPlan)) tick();
+    if (area === "local" && (changes.userId || changes.creditsLeft || changes.userPlan)) sync();
   });
 
   if (document.readyState === "loading") {
