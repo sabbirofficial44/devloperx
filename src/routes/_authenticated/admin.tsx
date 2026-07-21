@@ -669,12 +669,30 @@ function minutesToLabel(mins: number) {
 
 function relativeTime(iso: string | null) {
   if (!iso) return "never";
-  const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  const diffSec = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
   if (diffSec < 60) return `${diffSec}s ago`;
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ${diffSec % 60}s ago`;
+  if (diffSec < 86400) {
+    const h = Math.floor(diffSec / 3600);
+    const m = Math.floor((diffSec % 3600) / 60);
+    return `${h}h ${m}m ago`;
+  }
   return `${Math.floor(diffSec / 86400)}d ago`;
 }
+
+function isOnline(iso: string | null | undefined) {
+  if (!iso) return false;
+  return Date.now() - new Date(iso).getTime() < 60_000;
+}
+
+function useLiveTick(ms = 1000) {
+  const [, setT] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setT((n) => n + 1), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+}
+
 
 function UserRow({
   user, isSelf, rotating, onSave, onRotate, onDelete,
