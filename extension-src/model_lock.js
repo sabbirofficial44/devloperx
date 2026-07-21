@@ -1,32 +1,23 @@
-/* DeveloperX — Model auto-select + rename lock
- * Goal:
- *   1. On Google Flow, force-select "Veo 3.1 - Lite [Lower Priority]" (real backend model)
- *      instead of whatever Google auto-picks (Omni Flash, etc).
- *   2. Visually rename it to "Veo 3.5 Pro" everywhere it's shown.
- *   3. Keep it locked — if user tries to change it, snap back to the Lite model.
+/* DeveloperX — Single-model lock
+ * - Force-select "Veo 3.1 - Lite [Lower Priority]" as the real backend model
+ * - Hide every other model option in the picker
+ * - Rename the visible label everywhere to "Veo 3.5 Pro"
  */
 (function () {
   if (window.__DX_MODEL_LOCK__) return;
   window.__DX_MODEL_LOCK__ = true;
 
   const DISPLAY_LABEL = "Veo 3.5 Pro";
-  // Real backend option we want to select. Match multiple label variants Google uses.
   const TARGET_MATCHERS = [
     /veo\s*3\.?1?\s*[-–]?\s*lite/i,
     /lower\s*priority/i,
     /lite\s*\[/i,
   ];
 
-  function textOf(el) {
-    return (el?.textContent || "").replace(/\s+/g, " ").trim();
-  }
+  const textOf = (el) => (el?.textContent || "").replace(/\s+/g, " ").trim();
+  const isTarget = (t) => !!t && TARGET_MATCHERS.some((rx) => rx.test(t));
 
-  function isTargetLabel(txt) {
-    if (!txt) return false;
-    return TARGET_MATCHERS.some((rx) => rx.test(txt));
-  }
-
-  /* -------- Visual rename via CSS overlay -------- */
+  /* ---- styles: relabel + hide-others ---- */
   function ensureStyle() {
     if (document.getElementById("dx-model-lock-style")) return;
     const s = document.createElement("style");
@@ -37,75 +28,75 @@
         content: attr(data-dx-relabel);
         position: absolute; inset: 0;
         display: flex; align-items: center; justify-content: flex-start;
-        padding: inherit;
-        font: inherit; color: inherit;
-        background: transparent;
-        letter-spacing: .1px;
-        white-space: nowrap;
-        pointer-events: none;
-        visibility: visible !important;
+        padding: inherit; font: inherit; color: inherit;
+        background: transparent; white-space: nowrap;
+        pointer-events: none; visibility: visible !important;
       }
       [data-dx-relabel] { position: relative !important; }
+      [data-dx-hide-option="1"] {
+        display: none !important;
+        height: 0 !important; padding: 0 !important; margin: 0 !important;
+        visibility: hidden !important; pointer-events: none !important;
+      }
     `;
     (document.head || document.documentElement).appendChild(s);
   }
 
   function relabelNode(el) {
-    if (!el || el.getAttribute("data-dx-relabel") === DISPLAY_LABEL) return;
-    // Only relabel leaf-ish elements that contain the target label text
-    const txt = textOf(el);
-    if (!isTargetLabel(txt)) return;
-    el.setAttribute("data-dx-relabel", DISPLAY_LABEL);
+    if (!el) return;
+    if (el.getAttribute("data-dx-relabel") !== DISPLAY_LABEL) {
+      el.setAttribute("data-dx-relabel", DISPLAY_LABEL);
+    }
   }
 
   function scanAndRelabel() {
-    ensureStyle();
-    // Look at likely trigger / option nodes: buttons, menu items, spans inside model picker
-    const selectors = [
-      "button", '[role="option"]', '[role="menuitem"]',
-      '[role="combobox"]', '[data-testid*="model" i]',
-      "span", "div",
-    ];
-    const seen = new Set();
-    for (const sel of selectors) {
-      let nodes;
-      try { nodes = document.querySelectorAll(sel); } catch { continue; }
-      for (const n of nodes) {
-        if (seen.has(n)) continue;
-        seen.add(n);
-        // Skip huge containers — only relabel small text nodes
-        const t = textOf(n);
-        if (!t || t.length > 60) continue;
-        if (!isTargetLabel(t)) continue;
-        // Prefer the innermost element containing the text
-        const inner = [...n.querySelectorAll("*")].find((c) => isTargetLabel(textOf(c)) && textOf(c).length <= 60);
-        relabelNode(inner || n);
+    const nodes = document.querySelectorAll(
+      'button, [role="option"], [role="menuitem"], [role="combobox"], span, div'
+    );
+    for (const n of nodes) {
+      const t = textOf(n);
+      if (!t || t.length > 60) continue;
+      if (!isTarget(t)) continue;
+      const inner = [...n.querySelectorAll("*")].find(
+        (c) => isTarget(textOf(c)) && textOf(c).length <= 60
+      );
+      relabelNode(inner || n);
+    }
+  }
+
+  /* ---- hide non-target options inside any open dropdown ---- */
+  function hideOtherOptions() {
+    const opts = document.querySelectorAll('[role="option"], [role="menuitem"]');
+    for (const o of opts) {
+      const t = textOf(o);
+      if (!t) continue;
+      if (isTarget(t)) {
+        o.removeAttribute("data-dx-hide-option");
+      } else {
+        o.setAttribute("data-dx-hide-option", "1");
       }
     }
   }
 
-  /* -------- Auto-select the Lite model -------- */
-  let autoSelectDone = false;
-  let lastAutoAttempt = 0;
+  /* ---- auto-select the Lite model ---- */
+  let lastAttempt = 0;
 
   function findModelTrigger() {
-    // Common patterns: a button with role=combobox / aria-haspopup=listbox near text "Model"
-    const candidates = [
+    const cands = [
       ...document.querySelectorAll('button[aria-haspopup="listbox"]'),
       ...document.querySelectorAll('[role="combobox"]'),
       ...document.querySelectorAll('button[aria-haspopup="menu"]'),
     ];
-    for (const c of candidates) {
+    for (const c of cands) {
       const t = textOf(c).toLowerCase();
-      // If the button text mentions any veo/omni/model keyword, it's likely the model picker
       if (/veo|omni|flash|lite|model|pro/.test(t)) return c;
     }
     return null;
   }
 
   function currentTriggerLabel() {
-    const trig = findModelTrigger();
-    return trig ? textOf(trig) : "";
+    const t = findModelTrigger();
+    return t ? textOf(t) : "";
   }
 
   function findLiteOption() {
@@ -113,72 +104,68 @@
     for (const o of opts) {
       const t = textOf(o);
       if (!t || t.length > 80) continue;
-      if (isTargetLabel(t)) return o;
+      if (isTarget(t)) return o;
     }
     return null;
   }
 
   async function tryAutoSelect() {
     const now = Date.now();
-    if (now - lastAutoAttempt < 1500) return;
-    lastAutoAttempt = now;
+    if (now - lastAttempt < 1500) return;
+    lastAttempt = now;
 
     const trig = findModelTrigger();
     if (!trig) return;
 
-    const currentTxt = textOf(trig);
-    if (isTargetLabel(currentTxt)) {
-      // Already the right backend model — just relabel visually
-      autoSelectDone = true;
+    if (isTarget(textOf(trig))) {
       scanAndRelabel();
       return;
     }
 
-    // Open the dropdown
     try { trig.click(); } catch { return; }
-
-    // Wait for options to render
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 260));
+    hideOtherOptions();
 
     const opt = findLiteOption();
     if (opt) {
-      try { opt.click(); autoSelectDone = true; } catch {}
-      await new Promise((r) => setTimeout(r, 150));
+      try { opt.click(); } catch {}
+      await new Promise((r) => setTimeout(r, 160));
       scanAndRelabel();
     } else {
-      // Close menu by clicking trigger again if it's still open
       try { trig.click(); } catch {}
     }
   }
 
-  /* -------- Main loop -------- */
-  let rafScheduled = false;
+  /* ---- main loop ---- */
+  let scheduled = false;
   function schedule() {
-    if (rafScheduled) return;
-    rafScheduled = true;
+    if (scheduled) return;
+    scheduled = true;
     requestAnimationFrame(() => {
-      rafScheduled = false;
+      scheduled = false;
+      ensureStyle();
       scanAndRelabel();
-      // If trigger label isn't our target, keep trying to auto-switch
-      if (!isTargetLabel(currentTriggerLabel())) {
-        tryAutoSelect();
-      }
+      hideOtherOptions();
+      if (!isTarget(currentTriggerLabel())) tryAutoSelect();
     });
   }
 
   function start() {
     ensureStyle();
     scanAndRelabel();
+    hideOtherOptions();
     tryAutoSelect();
 
-    const mo = new MutationObserver(() => schedule());
-    mo.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(schedule).observe(document.documentElement, {
+      childList: true, subtree: true, characterData: true,
+    });
 
-    // Periodic safety net
     setInterval(() => {
+      ensureStyle();
       scanAndRelabel();
-      if (!isTargetLabel(currentTriggerLabel())) tryAutoSelect();
-    }, 2500);
+      hideOtherOptions();
+      if (!isTarget(currentTriggerLabel())) tryAutoSelect();
+    }, 2000);
   }
 
   if (document.readyState === "loading") {
