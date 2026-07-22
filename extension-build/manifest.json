@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Shadhin Digital Store",
+  "name": "DeveloperX",
   "version": "1.0.1",
-  "description": "Shadhin Digital Store — managed Google Flow access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
+  "description": "DeveloperX — managed Google Flow access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
   "permissions": [
     "cookies",
     "tabs",

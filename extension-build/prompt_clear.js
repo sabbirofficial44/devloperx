@@ -1,4 +1,4 @@
-/* Shadhin Digital Store — auto-clear Flow prompt after submit (Enter) */
+/* DeveloperX — auto-clear Flow prompt after submit (Enter) */
 (function () {
   if (window.__DX_PROMPT_CLEAR_V1__) return;
   window.__DX_PROMPT_CLEAR_V1__ = true;
