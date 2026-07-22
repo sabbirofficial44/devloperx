@@ -2349,3 +2349,106 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   .dx-hero-mega .dx-word { animation: none !important; opacity: 1 !important; }
   .dx-hero-mega .dx-word-accent::after { animation: none !important; transform: scaleX(1) !important; opacity: 1 !important; }
 }
+
+/* =========================================================
+   ✨ PRICING GRID — bulletproof responsive (all devices)
+   Fluid clamps, no overflow, buttons never break the card.
+   ========================================================= */
+.dx-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 1.6vw, 18px);
+  width: 100%;
+}
+@media (min-width: 640px)  { .dx-pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .dx-pricing-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
+.dx-price-card-premium {
+  min-width: 0;
+  padding: clamp(14px, 2.4vw, 26px) clamp(12px, 1.8vw, 22px);
+  border-radius: clamp(14px, 1.8vw, 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.dx-price-card-premium > * { min-width: 0; max-width: 100%; }
+
+.dx-price-card-premium .dx-plan-name {
+  font-size: clamp(11px, 1.15vw, 15px);
+  letter-spacing: .8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dx-price-card-premium .dx-plan-credits {
+  font-size: clamp(22px, 3.6vw, 42px) !important;
+  line-height: 1.05 !important;
+  margin: 6px 0 2px !important;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.dx-price-card-premium .dx-plan-duration {
+  font-size: clamp(11px, 1vw, 13px) !important;
+  line-height: 1.35;
+}
+.dx-price-card-premium .dx-plan-price {
+  font-size: clamp(18px, 2vw, 26px) !important;
+  margin: clamp(10px, 1.4vw, 18px) 0 4px !important;
+  line-height: 1.1;
+}
+.dx-price-card-premium .dx-plan-badge-top {
+  font-size: clamp(9px, .85vw, 11px) !important;
+  padding: 3px 8px !important;
+  top: 8px !important;
+  right: 8px !important;
+  white-space: nowrap;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card button — never overflow, always wrap gracefully */
+.dx-price-card-premium .dx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  max-width: 100%;
+  padding: clamp(9px, 1.1vw, 12px) clamp(8px, 1vw, 14px) !important;
+  font-size: clamp(10.5px, 1vw, 13px) !important;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-height: 40px;
+  box-sizing: border-box;
+  margin-top: auto;
+}
+
+/* Disable idle 3D tilt on pricing — was pushing content off-center */
+.dx-price-card-premium,
+.dx-price-card-premium.featured {
+  animation: none !important;
+  transform: none;
+}
+.dx-price-card-premium:hover {
+  transform: perspective(1400px) translate3d(0,-6px,20px) rotateX(4deg) rotateY(-4deg);
+}
+
+/* Narrow-phone override: keep 2 columns but tighten */
+@media (max-width: 420px) {
+  .dx-pricing-grid { gap: 8px; }
+  .dx-price-card-premium { padding: 12px 10px !important; border-radius: 12px; }
+  .dx-price-card-premium .dx-plan-credits { font-size: 20px !important; }
+  .dx-price-card-premium .dx-plan-price { font-size: 17px !important; }
+  .dx-price-card-premium .dx-btn { font-size: 10px !important; min-height: 36px; padding: 8px 6px !important; }
+  .dx-price-card-premium .dx-plan-badge-top { font-size: 8.5px !important; padding: 2px 6px !important; }
+}
+
+/* Tablet sweet spot — 3 up */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .dx-price-card-premium { padding: 18px 14px !important; }
+  .dx-price-card-premium .dx-plan-credits { font-size: 30px !important; }
+}
