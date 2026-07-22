@@ -441,6 +441,89 @@ function Dashboard() {
             </div>
           </section>
 
+          <section className="dx-quick-grid">
+            <button className="dx-quick-card" onClick={() => window.open(FLOW_URL, "_blank", "noopener,noreferrer")}>
+              <div className="dx-quick-icon dx-quick-blue"><ExternalLink size={20} /></div>
+              <div className="dx-quick-label">Open Flow</div>
+              <div className="dx-quick-sub">Launch Google Flow</div>
+            </button>
+            <button className="dx-quick-card" onClick={downloadExtension}>
+              <div className="dx-quick-icon dx-quick-gold"><Download size={20} /></div>
+              <div className="dx-quick-label">Extension</div>
+              <div className="dx-quick-sub">Download latest</div>
+            </button>
+            <button className="dx-quick-card" onClick={() => openWhatsApp(UPGRADE_URL)}>
+              <div className="dx-quick-icon dx-quick-green"><MessageCircle size={20} /></div>
+              <div className="dx-quick-label">Support</div>
+              <div className="dx-quick-sub">WhatsApp chat</div>
+            </button>
+            <button className="dx-quick-card" onClick={() => openWhatsApp(UPGRADE_URL)}>
+              <div className="dx-quick-icon dx-quick-purple"><Crown size={20} /></div>
+              <div className="dx-quick-label">Upgrade</div>
+              <div className="dx-quick-sub">More credits</div>
+            </button>
+          </section>
+
+          <section className="dx-main-card">
+            <h2><BarChart3 size={18} /> Usage · Last 7 Days</h2>
+            <div className="dx-usage-summary">
+              <div className="dx-usage-pill"><Flame size={14} /> Today: <strong>{usage?.today ?? 0} min</strong></div>
+              <div className="dx-usage-pill"><Clock size={14} /> 7d total: <strong>{usage?.total7d ?? 0} min</strong></div>
+            </div>
+            <div className="dx-chart">
+              {(usage?.buckets ?? []).map((b) => {
+                const h = Math.round((b.used / maxUsage) * 100);
+                const label = new Date(b.day + "T00:00:00Z").toLocaleDateString(undefined, { weekday: "short" });
+                return (
+                  <div key={b.day} className="dx-chart-col" title={`${label}: ${b.used} min`}>
+                    <div className="dx-chart-value">{b.used}</div>
+                    <div className="dx-chart-bar" style={{ height: `${Math.max(4, h)}%` }} />
+                    <div className="dx-chart-label">{label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="dx-main-card">
+            <h2><History size={18} /> Prompt History <span className="dx-pill">{prompts.length}</span></h2>
+            {prompts.length === 0 ? (
+              <div className="dx-empty">
+                <Wand2 size={28} opacity={0.4} />
+                <div>No prompts yet. Generate a video above and it'll appear here.</div>
+              </div>
+            ) : (
+              <div className="dx-prompt-list">
+                {prompts.map((p) => (
+                  <div key={p.id} className="dx-prompt-item">
+                    <div className="dx-prompt-text">{p.prompt}</div>
+                    <div className="dx-prompt-meta">
+                      <span><Clock size={12} /> {relTime(p.createdAt)}</span>
+                    </div>
+                    <div className="dx-prompt-actions">
+                      <button className="dx-icon-btn" title="Reuse" onClick={() => reusePrompt(p.prompt)}>
+                        <Play size={14} />
+                      </button>
+                      <button className="dx-icon-btn" title="Copy" onClick={() => copyPrompt(p.id, p.prompt)}>
+                        {copiedId === p.id ? <CheckCircle2 size={14} color="#22c55e" /> : <Copy size={14} />}
+                      </button>
+                      <button
+                        className="dx-icon-btn dx-icon-danger"
+                        title="Delete"
+                        onClick={() => deleteMutation.mutate(p.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+
+
           <section className="dx-main-card">
             <h2><Package size={18} /> DeveloperX Extension</h2>
             <div className="dx-extension-steps">
