@@ -216,15 +216,17 @@ function Index() {
                     </Link>
                   ) : (
                     <a
-                      className="dx-btn dx-btn-purple"
-                      style={{ width: "100%" }}
+                      className="dx-btn dx-btn-gold-premium dx-cta-glow"
+                      style={{ width: "100%", marginTop: "auto" }}
                       href={WA_LINK}
-                      target="_blank"
+                      target="_top"
                       rel="noreferrer"
+                      onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }}
                     >
-                      💬 Contact — {CONTACT_NUMBER}
+                      💬 Contact
                     </a>
                   )}
+
 
                 </div>
               ))}
