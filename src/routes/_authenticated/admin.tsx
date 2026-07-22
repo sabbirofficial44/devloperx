@@ -582,10 +582,10 @@ function AdminPage() {
           {section === "ledger" && (
             <>
               <h1 className="ax-page-title">Credit ledger</h1>
-              <p className="ax-page-sub">Every deduction from the extension is logged with source and remaining balance.</p>
+              <p className="ax-page-sub">Grouped by user — click a row to expand full usage history.</p>
               <section className="ax-panel">
                 <div className="ax-panel-head">
-                  <div className="ax-panel-title">Activity</div>
+                  <div className="ax-panel-title">Users</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <input
                       value={ledgerFilter}
@@ -600,35 +600,12 @@ function AdminPage() {
                 {ledgerQuery.isLoading && <div className="ax-empty">Loading…</div>}
                 {ledgerQuery.data && ledgerQuery.data.length === 0 && <div className="ax-empty">No credit activity yet.</div>}
                 {ledgerQuery.data && ledgerQuery.data.length > 0 && (
-                  <div className="ax-table-wrap" style={{ maxHeight: 560, overflowY: "auto" }}>
-                    <table className="ax-table">
-                      <thead style={{ position: "sticky", top: 0 }}>
-                        <tr><th>When</th><th>User</th><th>Amount</th><th>Balance after</th><th>Reason</th><th>Source</th></tr>
-                      </thead>
-                      <tbody>
-                        {ledgerQuery.data.map((r) => (
-                          <tr key={r.id}>
-                            <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{new Date(r.createdAt).toLocaleString()}</td>
-                            <td>
-                              <div>{r.email ?? "—"}</div>
-                              <div className="ax-mono" style={{ color: "#475569", fontSize: 10 }}>{r.userId.slice(0, 8)}…</div>
-                            </td>
-                            <td className="ax-mono" style={{ color: r.amount < 0 ? "#fca5a5" : r.amount > 0 ? "#34d399" : "#64748b" }}>
-                              {r.amount > 0 ? `+${r.amount}` : r.amount}
-                            </td>
-                            <td className="ax-mono">{r.balanceAfter ?? "—"}</td>
-                            <td>{r.reason ?? "—"}</td>
-                            <td style={{ color: "#64748b" }}>{r.source ?? "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-          )}
-
+                  <LedgerGrouped rows={ledgerQuery.data} />
+                )}
               </section>
             </>
           )}
+
 
           {section === "settings" && <SettingsPanel />}
         </div>
