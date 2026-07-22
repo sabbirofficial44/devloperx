@@ -15,7 +15,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   const nextState = {
     userId: data.userId,
-    userName: data.name || data.displayName || data.email || "Shadhin User",
+    userName: data.name || data.displayName || data.email || "DeveloperX User",
     userEmail: data.email || "",
     userPlan: data.plan || "basic",
     creditsLeft: Number(data.creditsLeft ?? data.credits ?? 0),
