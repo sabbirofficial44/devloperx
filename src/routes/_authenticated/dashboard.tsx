@@ -1,14 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Home, LogOut, Download, Sparkles, Play, Zap, Crown, Coins,
   Activity, TrendingUp, AlertTriangle, ShieldAlert, Wand2, Package,
-  ChevronRight, User as UserIcon,
+  ChevronRight, User as UserIcon, History, Bell, BarChart3, Copy,
+  Trash2, ExternalLink, Cookie, MessageCircle, Clock, Flame, CheckCircle2,
 } from "lucide-react";
 import { getMyProfile } from "@/lib/flow-admin.functions";
 import { getSiteSettings } from "@/lib/site-settings.functions";
+import {
+  getPromptHistory, savePrompt, deletePrompt, getAnnouncements, getUsageStats,
+} from "@/lib/user-dashboard.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -60,12 +64,21 @@ function openWhatsApp(url: string) {
 function Dashboard() {
   const fetchProfile = useServerFn(getMyProfile);
   const fetchSettings = useServerFn(getSiteSettings);
+  const fetchPrompts = useServerFn(getPromptHistory);
+  const savePromptFn = useServerFn(savePrompt);
+  const deletePromptFn = useServerFn(deletePrompt);
+  const fetchAnnouncements = useServerFn(getAnnouncements);
+  const fetchUsage = useServerFn(getUsageStats);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [prompt, setPrompt] = useState("");
   const [bridgeStatus, setBridgeStatus] = useState<"idle" | "sent" | "missing">("idle");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("dx_dismissed_ann") || "[]")); } catch { return new Set(); }
+  });
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { data } = useQuery({
@@ -79,6 +92,31 @@ function Dashboard() {
     queryFn: () => fetchSettings(),
     staleTime: 60_000,
   });
+  const { data: prompts = [] } = useQuery({
+    queryKey: ["prompt-history"],
+    queryFn: () => fetchPrompts(),
+    staleTime: 30_000,
+  });
+  const { data: announcements = [] } = useQuery({
+    queryKey: ["announcements"],
+    queryFn: () => fetchAnnouncements(),
+    staleTime: 60_000,
+  });
+  const { data: usage } = useQuery({
+    queryKey: ["usage-stats"],
+    queryFn: () => fetchUsage(),
+    refetchInterval: 30_000,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (p: string) => savePromptFn({ data: { prompt: p } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["prompt-history"] }),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deletePromptFn({ data: { id } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["prompt-history"] }),
+  });
+
   const UPGRADE_URL = normalizeWa(siteSettings?.whatsappNumber ?? siteSettings?.contactNumber ?? "01410014442");
 
   useEffect(() => {
@@ -138,6 +176,7 @@ function Dashboard() {
   const openFlowWithPrompt = () => {
     const cleanedPrompt = prompt.trim();
     setBridgeStatus("idle");
+    if (cleanedPrompt) saveMutation.mutate(cleanedPrompt);
 
     let ponged = false;
     const onPong = () => {
@@ -163,13 +202,61 @@ function Dashboard() {
     }, 700);
   };
 
+  const copyPrompt = (id: string, text: string) => {
+    navigator.clipboard?.writeText(text).catch(() => undefined);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId((v) => (v === id ? null : v)), 1500);
+  };
+
+  const reusePrompt = (text: string) => {
+    setPrompt(text);
+    document.getElementById("flow-prompt")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (document.getElementById("flow-prompt") as HTMLTextAreaElement | null)?.focus();
+  };
+
+  const downloadExtension = () => {
+    fetch(`/flow-extension.zip?v=${Date.now()}`, { cache: "no-store" })
+      .then((res) => { if (!res.ok) throw new Error(`Download failed: ${res.status}`); return res.blob(); })
+      .then((blob) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "flow-extension.zip";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch((err) => alert(err.message));
+  };
+
+  const dismissAnn = (id: string) => {
+    setDismissed((prev) => {
+      const next = new Set(prev); next.add(id);
+      try { localStorage.setItem("dx_dismissed_ann", JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  const visibleAnnouncements = useMemo(
+    () => announcements.filter((a) => !dismissed.has(a.id)),
+    [announcements, dismissed],
+  );
+  const maxUsage = useMemo(
+    () => Math.max(1, ...(usage?.buckets ?? []).map((b) => b.used)),
+    [usage],
+  );
+  const relTime = (iso: string) => {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return `${Math.floor(diff)}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
   const credits = data?.credits ?? 0;
   const planKey = (data?.plan ?? "free").toLowerCase();
   const totalCredits = PLAN_TOTALS[planKey] ?? Math.max(credits, 1000);
   const pct = Math.min(100, Math.max(0, (credits / totalCredits) * 100));
   const usedCredits = Math.max(0, totalCredits - credits);
   const displayName = data?.displayName || (data?.email ? data.email.split("@")[0] : "User");
-  const initial = (displayName[0] || "U").toUpperCase();
 
   return (
     <div className="dx-page-premium">
@@ -285,6 +372,22 @@ function Dashboard() {
             );
           })()}
 
+          {visibleAnnouncements.length > 0 && (
+            <section className="dx-announcements">
+              {visibleAnnouncements.map((a) => (
+                <div key={a.id} className={`dx-ann dx-ann-${a.kind}`}>
+                  <div className="dx-ann-icon"><Bell size={16} /></div>
+                  <div className="dx-ann-body">
+                    <div className="dx-ann-title">{a.title}</div>
+                    <div className="dx-ann-text">{a.body}</div>
+                    <div className="dx-ann-time">{relTime(a.createdAt)}</div>
+                  </div>
+                  <button className="dx-ann-close" onClick={() => dismissAnn(a.id)} aria-label="Dismiss">×</button>
+                </div>
+              ))}
+            </section>
+          )}
+
           <section className="dx-status-cards">
             <div className="dx-stat-card">
               <div className="dx-stat-head"><Crown size={16} /><span>Plan</span></div>
@@ -337,6 +440,89 @@ function Dashboard() {
               {bridgeStatus === "missing" && <span style={{ color: "#fbbf24", fontSize: 13 }}>Extension not detected here. Prompt copied; paste it in Google Flow.</span>}
             </div>
           </section>
+
+          <section className="dx-quick-grid">
+            <button className="dx-quick-card" onClick={() => window.open(FLOW_URL, "_blank", "noopener,noreferrer")}>
+              <div className="dx-quick-icon dx-quick-blue"><ExternalLink size={20} /></div>
+              <div className="dx-quick-label">Open Flow</div>
+              <div className="dx-quick-sub">Launch Google Flow</div>
+            </button>
+            <button className="dx-quick-card" onClick={downloadExtension}>
+              <div className="dx-quick-icon dx-quick-gold"><Download size={20} /></div>
+              <div className="dx-quick-label">Extension</div>
+              <div className="dx-quick-sub">Download latest</div>
+            </button>
+            <button className="dx-quick-card" onClick={() => openWhatsApp(UPGRADE_URL)}>
+              <div className="dx-quick-icon dx-quick-green"><MessageCircle size={20} /></div>
+              <div className="dx-quick-label">Support</div>
+              <div className="dx-quick-sub">WhatsApp chat</div>
+            </button>
+            <button className="dx-quick-card" onClick={() => openWhatsApp(UPGRADE_URL)}>
+              <div className="dx-quick-icon dx-quick-purple"><Crown size={20} /></div>
+              <div className="dx-quick-label">Upgrade</div>
+              <div className="dx-quick-sub">More credits</div>
+            </button>
+          </section>
+
+          <section className="dx-main-card">
+            <h2><BarChart3 size={18} /> Usage · Last 7 Days</h2>
+            <div className="dx-usage-summary">
+              <div className="dx-usage-pill"><Flame size={14} /> Today: <strong>{usage?.today ?? 0} min</strong></div>
+              <div className="dx-usage-pill"><Clock size={14} /> 7d total: <strong>{usage?.total7d ?? 0} min</strong></div>
+            </div>
+            <div className="dx-chart">
+              {(usage?.buckets ?? []).map((b) => {
+                const h = Math.round((b.used / maxUsage) * 100);
+                const label = new Date(b.day + "T00:00:00Z").toLocaleDateString(undefined, { weekday: "short" });
+                return (
+                  <div key={b.day} className="dx-chart-col" title={`${label}: ${b.used} min`}>
+                    <div className="dx-chart-value">{b.used}</div>
+                    <div className="dx-chart-bar" style={{ height: `${Math.max(4, h)}%` }} />
+                    <div className="dx-chart-label">{label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="dx-main-card">
+            <h2><History size={18} /> Prompt History <span className="dx-pill">{prompts.length}</span></h2>
+            {prompts.length === 0 ? (
+              <div className="dx-empty">
+                <Wand2 size={28} opacity={0.4} />
+                <div>No prompts yet. Generate a video above and it'll appear here.</div>
+              </div>
+            ) : (
+              <div className="dx-prompt-list">
+                {prompts.map((p) => (
+                  <div key={p.id} className="dx-prompt-item">
+                    <div className="dx-prompt-text">{p.prompt}</div>
+                    <div className="dx-prompt-meta">
+                      <span><Clock size={12} /> {relTime(p.createdAt)}</span>
+                    </div>
+                    <div className="dx-prompt-actions">
+                      <button className="dx-icon-btn" title="Reuse" onClick={() => reusePrompt(p.prompt)}>
+                        <Play size={14} />
+                      </button>
+                      <button className="dx-icon-btn" title="Copy" onClick={() => copyPrompt(p.id, p.prompt)}>
+                        {copiedId === p.id ? <CheckCircle2 size={14} color="#22c55e" /> : <Copy size={14} />}
+                      </button>
+                      <button
+                        className="dx-icon-btn dx-icon-danger"
+                        title="Delete"
+                        onClick={() => deleteMutation.mutate(p.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+
 
           <section className="dx-main-card">
             <h2><Package size={18} /> DeveloperX Extension</h2>

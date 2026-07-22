@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      announcements: {
+        Row: {
+          active: boolean
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          created_at?: string
+          id?: string
+          kind?: string
+          title: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          title?: string
+        }
+        Relationships: []
+      }
       credit_ledger: {
         Row: {
           amount: number
@@ -182,6 +209,27 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_plan?: string
+        }
+        Relationships: []
+      }
+      prompt_history: {
+        Row: {
+          created_at: string
+          id: string
+          prompt: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prompt: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prompt?: string
+          user_id?: string
         }
         Relationships: []
       }
