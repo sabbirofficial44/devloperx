@@ -107,7 +107,7 @@ function Index() {
             <Link className="dx-cta-premium" to="/auth">
               <span className="dx-cta-bg" />
               <span className="dx-cta-shimmer" />
-              <span className="dx-cta-glow" />
+              <span className="dx-cta-premium-glow" />
               <span className="dx-cta-label">
                 Get Started
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -122,9 +122,9 @@ function Index() {
           {/* HERO */}
           <section className="dx-hero" style={{ position: "relative", paddingTop: 60, paddingBottom: 40 }}>
             <div className="dx-hero-orbs">
-              <div className="dx-orb dx-float" style={{ width: 380, height: 380, top: -80, left: "-8%", background: "radial-gradient(circle,#7c5cfc,transparent)" }} />
-              <div className="dx-orb" style={{ width: 320, height: 320, bottom: -60, right: "-6%", background: "radial-gradient(circle,#f0b90b,transparent)", animationDelay: "2s" }} />
-              <div className="dx-orb dx-float" style={{ width: 200, height: 200, top: "40%", right: "20%", background: "radial-gradient(circle,#22d3ee,transparent)", animationDelay: "1s" }} />
+              <div className="dx-orb dx-float" style={{ width: 320, height: 320, top: -90, left: "-8%", background: "radial-gradient(circle,rgba(124,92,252,.18),transparent 68%)" }} />
+              <div className="dx-orb" style={{ width: 280, height: 280, bottom: -80, right: "-7%", background: "radial-gradient(circle,rgba(240,185,11,.12),transparent 70%)", animationDelay: "2s" }} />
+              <div className="dx-orb dx-float" style={{ width: 180, height: 180, top: "44%", right: "22%", background: "radial-gradient(circle,rgba(124,92,252,.10),transparent 70%)", animationDelay: "1s" }} />
             </div>
 
             <div style={{ position: "relative", zIndex: 1 }}>
