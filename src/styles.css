@@ -2918,48 +2918,37 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
 }
 .dx-price-card-premium > .dx-price-cta { margin-top: auto; }
 
-/* Premium pricing CTA — refined glass w/ animated gradient border, blends with dark bg */
+/* Premium pricing CTA — matches bKash upgrade button style: icon left, label+value stacked */
 .dx-price-cta {
+  --dx-cta-c1: #a78bfa;
+  --dx-cta-c2: #ec4899;
+  --dx-cta-glow: rgba(167,139,250,.5);
   position: relative;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px;
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  gap: 12px;
   width: 100%;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 0; cursor: pointer;
-  font-family: inherit; font-weight: 800; font-size: 14px;
+  border: 1px solid color-mix(in oklab, var(--dx-cta-c1) 55%, transparent);
+  cursor: pointer;
+  font-family: inherit; font-weight: 700; font-size: 14px;
   color: #f5f7ff; text-decoration: none;
-  line-height: 1.2;
+  line-height: 1.2; text-align: left;
   overflow: hidden; isolation: isolate;
   background:
-    linear-gradient(180deg, rgba(20,14,38,.92), rgba(12,8,24,.96));
+    linear-gradient(135deg,
+      color-mix(in oklab, var(--dx-cta-c1) 22%, transparent),
+      color-mix(in oklab, var(--dx-cta-c2) 10%, transparent)),
+    linear-gradient(180deg, rgba(20,14,38,.9), rgba(12,8,24,.95));
   backdrop-filter: blur(10px);
-  transition: transform .25s ease, box-shadow .35s ease, background .3s ease;
+  transition: transform .25s ease, box-shadow .35s ease, border-color .3s ease;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.08),
-    0 8px 22px -12px rgba(0,0,0,.7);
+    0 10px 26px -12px var(--dx-cta-glow);
 }
-/* Animated gradient border ring */
-.dx-price-cta::before {
-  content: ""; position: absolute; inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(from var(--dx-cta-angle, 0deg),
-    #a78bfa, #ec4899, #f0b90b, #22d3ee, #a78bfa);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  animation: dxCtaSpin 6s linear infinite;
-  z-index: 1;
-  pointer-events: none;
-  opacity: .85;
-}
-/* Shimmer sweep on hover */
 .dx-price-cta::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.14) 50%, transparent 65%);
+  background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.12) 50%, transparent 65%);
   transform: translateX(-120%);
   transition: transform .8s ease;
   z-index: 0;
@@ -2967,60 +2956,61 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
 }
 .dx-price-cta > * { position: relative; z-index: 2; }
 .dx-price-cta:hover {
-  transform: translateY(-2px);
-  background:
-    linear-gradient(180deg, rgba(30,20,55,.95), rgba(15,10,30,.98));
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.12),
-    0 14px 32px -12px rgba(124,58,237,.5),
-    0 0 24px -4px rgba(167,139,250,.35);
-}
-.dx-price-cta:hover::before { opacity: 1; }
-.dx-price-cta:hover::after { transform: translateX(120%); }
-.dx-price-cta:active { transform: translateY(0); }
-
-.dx-price-cta-row {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: linear-gradient(90deg,#fff 0%,#e9e4ff 60%,#c4b5fd 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 800;
-}
-.dx-price-cta-row svg { color: #22d3ee; -webkit-text-fill-color: initial; filter: drop-shadow(0 0 6px rgba(34,211,238,.55)); }
-.dx-price-cta-sub {
-  font-size: 10.5px; font-weight: 700; letter-spacing: .5px;
-  color: #cbb8ff;
-  text-shadow: 0 0 10px rgba(167,139,250,.5);
-}
-
-/* Free plan — green ring & mint accent */
-.dx-price-cta-free::before {
-  background: conic-gradient(from var(--dx-cta-angle, 0deg),
-    #22c55e, #22d3ee, #a7f3d0, #22c55e);
-}
-.dx-price-cta-free .dx-price-cta-row {
-  background: linear-gradient(90deg,#d1fae5,#22c55e);
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-}
-.dx-price-cta-free .dx-price-cta-row svg { color: #4ade80; filter: drop-shadow(0 0 6px rgba(74,222,128,.6)); }
-
-/* Featured plan — gold ring */
-.dx-price-cta-contact.is-featured::before {
-  background: conic-gradient(from var(--dx-cta-angle, 0deg),
-    #f0b90b, #f97316, #ec4899, #a78bfa, #f0b90b);
-  opacity: 1;
-}
-.dx-price-cta-contact.is-featured .dx-price-cta-row {
-  background: linear-gradient(90deg,#fff 0%,#fde68a 55%,#f0b90b 100%);
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-}
-.dx-price-cta-contact.is-featured .dx-price-cta-row svg { color: #fbbf24; filter: drop-shadow(0 0 8px rgba(251,191,36,.7)); }
-.dx-price-cta-contact.is-featured .dx-price-cta-sub { color: #fde68a; text-shadow: 0 0 10px rgba(251,191,36,.5); }
-.dx-price-cta-contact.is-featured:hover {
+  transform: translateY(-3px);
+  border-color: var(--dx-cta-c1);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.14),
-    0 14px 32px -12px rgba(240,185,11,.55),
-    0 0 26px -4px rgba(251,191,36,.4);
+    0 18px 38px -12px var(--dx-cta-glow),
+    0 0 24px -4px var(--dx-cta-glow);
+}
+.dx-price-cta:hover::after { transform: translateX(120%); }
+.dx-price-cta:active { transform: translateY(-1px); }
+
+.dx-price-cta-row {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 10px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--dx-cta-c1), var(--dx-cta-c2));
+  color: #fff;
+  box-shadow: 0 6px 16px -4px var(--dx-cta-glow);
+}
+.dx-price-cta-row > span { display: none; }
+.dx-price-cta-row svg { color: #fff; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3)); width: 18px; height: 18px; -webkit-text-fill-color: initial; }
+
+.dx-price-cta-sub {
+  display: flex; flex-direction: column; min-width: 0;
+  font-size: 14px; font-weight: 700; color: #fff;
+  letter-spacing: .2px;
+  text-shadow: none;
+}
+.dx-price-cta-sub::before {
+  content: "CONTACT";
+  font-size: 10px; font-weight: 800; letter-spacing: 1.4px;
+  color: rgba(226,232,240,.6); text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.dx-price-cta-free {
+  --dx-cta-c1: #22c55e;
+  --dx-cta-c2: #4ade80;
+  --dx-cta-glow: rgba(34,197,94,.5);
+}
+.dx-price-cta-free .dx-price-cta-sub::before { content: "START"; }
+
+.dx-price-cta-contact.is-featured {
+  --dx-cta-c1: #f0b90b;
+  --dx-cta-c2: #f97316;
+  --dx-cta-glow: rgba(240,185,11,.55);
+}
+
+.dx-price-grid-premium .dx-price-card-premium:nth-child(3n+1) .dx-price-cta-contact:not(.is-featured) {
+  --dx-cta-c1: #22d3ee; --dx-cta-c2: #0ea5e9; --dx-cta-glow: rgba(34,211,238,.5);
+}
+.dx-price-grid-premium .dx-price-card-premium:nth-child(3n+2) .dx-price-cta-contact:not(.is-featured) {
+  --dx-cta-c1: #ec4899; --dx-cta-c2: #a78bfa; --dx-cta-glow: rgba(236,72,153,.5);
+}
+.dx-price-grid-premium .dx-price-card-premium:nth-child(3n) .dx-price-cta-contact:not(.is-featured) {
+  --dx-cta-c1: #38bdf8; --dx-cta-c2: #6366f1; --dx-cta-glow: rgba(56,189,248,.5);
 }
 
 @property --dx-cta-angle {
