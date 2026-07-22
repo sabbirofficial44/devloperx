@@ -287,7 +287,10 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   border-radius: 16px;
   background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(20px);
+  position: relative;
+  z-index: 100;
 }
+
 
 .dx-nav-links {
   display: flex;
