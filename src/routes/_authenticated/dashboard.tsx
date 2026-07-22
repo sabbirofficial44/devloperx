@@ -2,6 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import {
+  Home, LogOut, Download, Sparkles, Play, Zap, Crown, Coins,
+  Activity, TrendingUp, AlertTriangle, ShieldAlert, Wand2, Package,
+  ChevronRight, User as UserIcon,
+} from "lucide-react";
 import { getMyProfile } from "@/lib/flow-admin.functions";
 import { getSiteSettings } from "@/lib/site-settings.functions";
 import { supabase } from "@/integrations/supabase/client";
