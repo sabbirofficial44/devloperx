@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ExtensionRemovedRouteImport } from './routes/extension-removed'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -35,6 +36,11 @@ import { Route as ApiPublicAuthConfirmRouteImport } from './routes/api/public/au
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExtensionRemovedRoute = ExtensionRemovedRouteImport.update({
+  id: '/extension-removed',
+  path: '/extension-removed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
+  '/extension-removed': typeof ExtensionRemovedRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
+  '/extension-removed': typeof ExtensionRemovedRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
+  '/extension-removed': typeof ExtensionRemovedRoute
   '/signup': typeof SignupRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-login'
     | '/auth'
+    | '/extension-removed'
     | '/signup'
     | '/admin'
     | '/dashboard'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-login'
     | '/auth'
+    | '/extension-removed'
     | '/signup'
     | '/admin'
     | '/dashboard'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/admin-login'
     | '/auth'
+    | '/extension-removed'
     | '/signup'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
   AuthRoute: typeof AuthRoute
+  ExtensionRemovedRoute: typeof ExtensionRemovedRoute
   SignupRoute: typeof SignupRoute
   ApiVerifyRoute: typeof ApiVerifyRoute
   ApiPublicCreditsRoute: typeof ApiPublicCreditsRoute
@@ -323,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/extension-removed': {
+      id: '/extension-removed'
+      path: '/extension-removed'
+      fullPath: '/extension-removed'
+      preLoaderRoute: typeof ExtensionRemovedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -493,6 +513,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
   AuthRoute: AuthRoute,
+  ExtensionRemovedRoute: ExtensionRemovedRoute,
   SignupRoute: SignupRoute,
   ApiVerifyRoute: ApiVerifyRoute,
   ApiPublicCreditsRoute: ApiPublicCreditsRoute,
