@@ -227,21 +227,21 @@ function Index() {
                   <div className="dx-plan-price" style={{ margin: "18px 0 6px" }}>{plan.price}</div>
                   <div style={{ fontSize: 12, color: "var(--dx-muted-soft,#94a3b8)", marginBottom: 18 }}>{plan.note}</div>
                   {plan.free ? (
-                    <Link className="dx-btn dx-btn-gold" style={{ width: "100%" }} to="/auth">
-                      {plan.cta ?? "Start Free"}
+                    <Link className="dx-price-cta dx-price-cta-free" to="/auth">
+                      <span>{plan.cta ?? "Start Free"}</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                     </Link>
                   ) : (
                     <button
                       type="button"
-                      className="dx-btn dx-btn-gold-premium dx-cta-glow"
-                      style={{ width: "100%", marginTop: "auto", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, lineHeight: 1.15 }}
+                      className={`dx-price-cta dx-price-cta-contact ${plan.featured ? "is-featured" : ""}`}
                       onClick={() => openWa(WA_LINK)}
                     >
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <span className="dx-price-cta-row">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.86 11.86 0 0 0 12.05 0C5.5 0 .17 5.33.17 11.88c0 2.09.55 4.13 1.6 5.93L0 24l6.34-1.66a11.86 11.86 0 0 0 5.7 1.45h.01c6.55 0 11.88-5.33 11.88-11.88 0-3.17-1.24-6.15-3.41-8.43ZM12.05 21.3h-.01a9.4 9.4 0 0 1-4.79-1.31l-.34-.2-3.76.98 1-3.67-.22-.38a9.4 9.4 0 0 1-1.44-5c0-5.19 4.23-9.42 9.42-9.42 2.52 0 4.88.98 6.66 2.76a9.36 9.36 0 0 1 2.76 6.67c0 5.19-4.23 9.42-9.28 9.42Zm5.16-7.05c-.28-.14-1.67-.82-1.93-.91-.26-.1-.45-.14-.63.14-.19.28-.72.91-.88 1.1-.16.19-.32.21-.6.07-.28-.14-1.19-.44-2.27-1.4-.84-.75-1.4-1.68-1.57-1.96-.16-.28-.02-.43.12-.57.13-.13.28-.32.42-.49.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.49-.07-.14-.63-1.51-.86-2.07-.22-.54-.45-.47-.63-.48h-.54c-.19 0-.49.07-.75.35-.26.28-.98.96-.98 2.34s1 2.72 1.14 2.9c.14.19 1.97 3.01 4.78 4.22.67.29 1.19.46 1.6.59.67.21 1.28.18 1.77.11.54-.08 1.67-.68 1.9-1.34.23-.66.23-1.22.16-1.34-.07-.12-.26-.19-.54-.33Z"/></svg>
-                        Contact
+                        <span>Contact</span>
                       </span>
-                      <span style={{ fontSize: 10, opacity: 0.85, fontWeight: 600, letterSpacing: 0.3 }}>01410014442</span>
+                      <span className="dx-price-cta-sub">{CONTACT_NUMBER}</span>
                     </button>
                   )}
 
