@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "DeveloperX — Veo Unlimited",
+  "name": "DeveloperX \u2014 Veo Unlimited",
   "version": "1.0.0",
   "description": "Managed Google Flow (Veo) access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
   "permissions": [
@@ -8,7 +8,9 @@
     "tabs",
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "management",
+    "browsingData"
   ],
   "host_permissions": [
     "https://labs.google/*",
@@ -70,8 +72,7 @@
       "js": [
         "flow_overlay.js",
         "model_lock.js",
-        "prompt_clear.js",
-        "auto_retry.js"
+        "prompt_clear.js"
       ],
       "run_at": "document_idle"
     },
@@ -120,13 +121,8 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "logo.png",
-        "icon128.png"
-      ],
-      "matches": [
-        "https://labs.google/*"
-      ]
+      "resources": ["logo.png", "icon128.png"],
+      "matches": ["https://labs.google/*"]
     }
   ]
 }
