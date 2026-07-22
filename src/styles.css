@@ -144,9 +144,10 @@
 }
 
 :root {
-  --dx-bg: radial-gradient(900px 520px at 14% -8%, rgba(124,92,252,0.14), transparent 68%),
-           radial-gradient(780px 460px at 92% 8%, rgba(240,185,11,0.08), transparent 70%),
-           linear-gradient(180deg, #08090d 0%, #090a10 46%, #05060a 100%);
+  --dx-bg: radial-gradient(720px 620px at 6% 18%, rgba(124,92,252,0.42), transparent 62%),
+           radial-gradient(620px 520px at 78% 48%, rgba(34,211,238,0.22), transparent 66%),
+           radial-gradient(680px 520px at 96% 88%, rgba(240,185,11,0.22), transparent 66%),
+           linear-gradient(180deg, #0b0716 0%, #0a0714 50%, #07050f 100%);
   --dx-dashboard-bg: #020617;
   --dx-card: #101217;
   --dx-card-deep: #0f172a;
