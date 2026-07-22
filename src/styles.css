@@ -2139,20 +2139,26 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
 }
 .dx-feature-card:hover,
 .dx-stat-card:hover,
-.dx-step:hover,
-.dx-main-card:hover {
-  transform: perspective(1400px) rotateX(3deg) rotateY(-3deg) translate3d(0,-6px,20px);
+.dx-step:hover {
+  transform: translate3d(0,-4px,0);
   box-shadow:
-    0 40px 80px -30px rgba(0,0,0,.7),
-    0 30px 60px -30px rgba(124,92,252,.5),
-    0 0 0 1px rgba(255,255,255,.08) inset;
-  border-color: rgba(167,139,250,.45);
+    0 30px 60px -30px rgba(0,0,0,.6),
+    0 20px 40px -25px rgba(124,92,252,.4),
+    0 0 0 1px rgba(255,255,255,.06) inset;
+  border-color: rgba(167,139,250,.4);
+}
+.dx-main-card:hover {
+  transform: translate3d(0,-3px,0);
+  box-shadow:
+    0 30px 60px -30px rgba(0,0,0,.6),
+    0 0 0 1px rgba(240,185,11,.25) inset;
+  border-color: rgba(240,185,11,.35);
 }
 .dx-price-card-premium:hover {
-  transform: perspective(1400px) rotateX(4deg) rotateY(-4deg) translate3d(0,-8px,30px) scale(1.02);
+  transform: translate3d(0,-6px,0) scale(1.015);
   box-shadow:
-    0 50px 100px -30px rgba(0,0,0,.75),
-    0 35px 70px -25px rgba(240,185,11,.4),
+    0 40px 80px -30px rgba(0,0,0,.7),
+    0 30px 60px -25px rgba(240,185,11,.35),
     0 0 0 1px rgba(240,185,11,.35) inset;
 }
 
