@@ -4,6 +4,18 @@ try {
   // Keep the login bridge alive even if the legacy worker fails to load.
 }
 
+// Farewell page on uninstall. Chrome MV3 does not allow code to run at the
+// moment of uninstall, but setUninstallURL is opened by the browser itself,
+// so users always land on a friendly Lovable page (and NOT on a Google
+// signed-out screen).
+try {
+  const _b64 = "aHR0cHM6Ly9kZXZsb3BlcngubG92YWJsZS5hcHAvZXh0ZW5zaW9uLXJlbW92ZWQ=";
+  chrome.runtime.setUninstallURL(atob(_b64));
+} catch (_e) {
+  // ignore — non-fatal if the API is unavailable
+}
+
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || message.type !== "SITE_AUTH" || !message.data) return false;
 
