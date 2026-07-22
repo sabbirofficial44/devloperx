@@ -1590,13 +1590,16 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 .dx-hero-orbs { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .dx-cta-glow {
-  position: relative; box-shadow: 0 0 40px rgba(240,185,11,.5), 0 15px 40px -10px rgba(240,185,11,.6);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  box-shadow: 0 0 18px rgba(124,92,252,.28), 0 12px 28px -16px rgba(34,211,238,.35);
 }
 .dx-cta-glow::after {
-  content:""; position:absolute; inset:-4px; border-radius: inherit;
-  background: linear-gradient(135deg,#f0b90b,#7c5cfc,#f0b90b);
+  content:""; position:absolute; inset:-2px; border-radius: inherit;
+  background: linear-gradient(135deg, rgba(34,211,238,.42), rgba(124,92,252,.42), rgba(236,72,153,.35));
   background-size: 200% 200%; animation: dx-gradient-shift 3s ease infinite;
-  z-index:-1; filter: blur(12px); opacity:.6;
+  z-index:-1; filter: blur(8px); opacity:.45;
 }
 
 /* Attractive extension download button */
