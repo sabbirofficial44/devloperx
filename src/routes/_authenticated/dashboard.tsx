@@ -176,6 +176,7 @@ function Dashboard() {
   const openFlowWithPrompt = () => {
     const cleanedPrompt = prompt.trim();
     setBridgeStatus("idle");
+    if (cleanedPrompt) saveMutation.mutate(cleanedPrompt);
 
     let ponged = false;
     const onPong = () => {
@@ -201,13 +202,61 @@ function Dashboard() {
     }, 700);
   };
 
+  const copyPrompt = (id: string, text: string) => {
+    navigator.clipboard?.writeText(text).catch(() => undefined);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId((v) => (v === id ? null : v)), 1500);
+  };
+
+  const reusePrompt = (text: string) => {
+    setPrompt(text);
+    document.getElementById("flow-prompt")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (document.getElementById("flow-prompt") as HTMLTextAreaElement | null)?.focus();
+  };
+
+  const downloadExtension = () => {
+    fetch(`/flow-extension.zip?v=${Date.now()}`, { cache: "no-store" })
+      .then((res) => { if (!res.ok) throw new Error(`Download failed: ${res.status}`); return res.blob(); })
+      .then((blob) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "flow-extension.zip";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch((err) => alert(err.message));
+  };
+
+  const dismissAnn = (id: string) => {
+    setDismissed((prev) => {
+      const next = new Set(prev); next.add(id);
+      try { localStorage.setItem("dx_dismissed_ann", JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  const visibleAnnouncements = useMemo(
+    () => announcements.filter((a) => !dismissed.has(a.id)),
+    [announcements, dismissed],
+  );
+  const maxUsage = useMemo(
+    () => Math.max(1, ...(usage?.buckets ?? []).map((b) => b.used)),
+    [usage],
+  );
+  const relTime = (iso: string) => {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return `${Math.floor(diff)}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
   const credits = data?.credits ?? 0;
   const planKey = (data?.plan ?? "free").toLowerCase();
   const totalCredits = PLAN_TOTALS[planKey] ?? Math.max(credits, 1000);
   const pct = Math.min(100, Math.max(0, (credits / totalCredits) * 100));
   const usedCredits = Math.max(0, totalCredits - credits);
   const displayName = data?.displayName || (data?.email ? data.email.split("@")[0] : "User");
-  const initial = (displayName[0] || "U").toUpperCase();
 
   return (
     <div className="dx-page-premium">
