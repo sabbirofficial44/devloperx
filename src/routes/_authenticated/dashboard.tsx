@@ -247,54 +247,79 @@ function Dashboard() {
             const lowTrial = !isUnlimited && credits > 0 && credits <= 60;
             if (exhausted) {
               return (
-                <div className="dx-alert" style={{ background: "linear-gradient(135deg,rgba(239,68,68,.18),rgba(220,38,38,.08))", border: "1px solid rgba(239,68,68,.4)" }}>
-                  <strong>🚫 Credits exhausted</strong><br />
-                  <small>Your free trial has ended. Purchase a credit pack to keep using the extension.</small>
-                  <div style={{ marginTop: 10 }}>
-                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>💳 Buy Credits</a>
+                <div className="dx-alert dx-alert-danger">
+                  <div className="dx-alert-icon"><ShieldAlert size={22} /></div>
+                  <div className="dx-alert-body">
+                    <strong>Credits exhausted</strong>
+                    <small>Your trial has ended. Purchase a credit pack to keep using the extension.</small>
                   </div>
+                  <button className="dx-btn dx-btn-gold-premium dx-alert-cta" onClick={() => openWhatsApp(UPGRADE_URL)}>
+                    <Coins size={16} /> Buy Credits
+                  </button>
                 </div>
               );
             }
             if (lowTrial) {
               return (
-                <div className="dx-alert" style={{ background: "linear-gradient(135deg,rgba(240,185,11,.18),rgba(240,185,11,.05))", border: "1px solid rgba(240,185,11,.35)" }}>
-                  <strong>⚠️ Low on credits — {credits} min left</strong><br />
-                  <small>Top up now to avoid interruption. Upgrade plans start with more credits and unlimited use.</small>
-                  <div style={{ marginTop: 10 }}>
-                    <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>⬆ Upgrade / Buy Credits</a>
+                <div className="dx-alert dx-alert-warn">
+                  <div className="dx-alert-icon"><AlertTriangle size={22} /></div>
+                  <div className="dx-alert-body">
+                    <strong>Low on credits — {credits} min left</strong>
+                    <small>Top up now to avoid interruption.</small>
                   </div>
+                  <button className="dx-btn dx-btn-gold-premium dx-alert-cta" onClick={() => openWhatsApp(UPGRADE_URL)}>
+                    <TrendingUp size={16} /> Upgrade
+                  </button>
                 </div>
               );
             }
             return (
               <div className="dx-alert dx-alert-info">
-                <strong>⏳ {planKey === "basic" ? "5-hour Trial" : planKey.toUpperCase()} · {isUnlimited ? "Unlimited access" : `${credits} min (${Math.floor(credits / 60)}h ${credits % 60}m) remaining`}</strong><br />
-                <small>{isUnlimited ? "You have unrestricted access." : "1 credit = 1 minute of extension usage. Upgrade for more."}</small>
+                <div className="dx-alert-icon"><Sparkles size={22} /></div>
+                <div className="dx-alert-body">
+                  <strong>{planKey === "basic" ? "5-hour Trial" : planKey.toUpperCase()} · {isUnlimited ? "Unlimited access" : `${credits} min (${Math.floor(credits / 60)}h ${credits % 60}m) remaining`}</strong>
+                  <small>{isUnlimited ? "You have unrestricted access." : "1 credit = 1 minute of extension usage."}</small>
+                </div>
               </div>
             );
           })()}
 
           <section className="dx-status-cards">
-            <div className="dx-stat-card"><div className="dx-stat-label">Plan</div><div className="dx-stat-value dx-value-purple">{planKey.toUpperCase()}</div></div>
-            <div className="dx-stat-card"><div className="dx-stat-label">Credits Left</div><div className="dx-stat-value dx-value-gold">{UNLIMITED_PLANS.has(planKey) ? "∞" : credits.toLocaleString()}</div></div>
-            <div className="dx-stat-card"><div className="dx-stat-label">Used</div><div className="dx-stat-value">{UNLIMITED_PLANS.has(planKey) ? "—" : usedCredits.toLocaleString()}</div></div>
-            <div className="dx-stat-card"><div className="dx-stat-label">Status</div><div className="dx-stat-value dx-value-green">{credits <= 0 && !UNLIMITED_PLANS.has(planKey) ? "Blocked" : "Active"}</div></div>
+            <div className="dx-stat-card">
+              <div className="dx-stat-head"><Crown size={16} /><span>Plan</span></div>
+              <div className="dx-stat-value dx-value-purple">{planKey.toUpperCase()}</div>
+            </div>
+            <div className="dx-stat-card">
+              <div className="dx-stat-head"><Coins size={16} /><span>Credits Left</span></div>
+              <div className="dx-stat-value dx-value-gold">{UNLIMITED_PLANS.has(planKey) ? "∞" : credits.toLocaleString()}</div>
+            </div>
+            <div className="dx-stat-card">
+              <div className="dx-stat-head"><Zap size={16} /><span>Used</span></div>
+              <div className="dx-stat-value">{UNLIMITED_PLANS.has(planKey) ? "—" : usedCredits.toLocaleString()}</div>
+            </div>
+            <div className="dx-stat-card">
+              <div className="dx-stat-head"><Activity size={16} /><span>Status</span></div>
+              <div className="dx-stat-value dx-value-green">{credits <= 0 && !UNLIMITED_PLANS.has(planKey) ? "Blocked" : "Active"}</div>
+            </div>
           </section>
 
           <section className="dx-main-card dx-fade-in">
-            <h2>👋 Welcome, <span>{displayName}</span> <span className="dx-pill">{planKey}</span></h2>
+            <h2><UserIcon size={18} /> Welcome, <span>{displayName}</span> <span className="dx-pill">{planKey}</span></h2>
             <div style={{ color: "var(--dx-muted-soft)", fontSize: 13, marginBottom: 10 }}>Account: {data?.email ?? "—"}</div>
             <div className="dx-pbar"><div className="dx-pbar-fill" style={{ width: `${pct}%` }} /></div>
             <div style={{ marginTop: 18, fontSize: 12, color: "var(--dx-muted-soft)" }}>{Math.round(pct)}% credits available</div>
             <div className="dx-btn-group" style={{ marginTop: 18 }}>
-              <a className="dx-btn dx-btn-gold-premium" href={UPGRADE_URL} target="_top" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openWhatsApp(UPGRADE_URL); }}>⬆ Upgrade Plan</a>
-              <button className="dx-btn dx-btn-outline" onClick={signOut}>Sign Out</button>
+              <button className="dx-btn dx-btn-gold-premium" onClick={() => openWhatsApp(UPGRADE_URL)}>
+                <TrendingUp size={16} /> Upgrade Plan
+              </button>
+              <button className="dx-btn dx-btn-outline" onClick={signOut}>
+                <LogOut size={15} /> Sign Out
+              </button>
             </div>
           </section>
 
           <section className="dx-main-card">
-            <h2>🎬 Generate Video</h2>
+            <h2><Wand2 size={18} /> Generate Video</h2>
             <textarea
               id="flow-prompt"
               value={prompt}
@@ -304,14 +329,16 @@ function Dashboard() {
               style={{ minHeight: 120, background: "rgba(0,0,0,.3)", borderColor: "var(--dx-border)", borderRadius: 10 }}
             />
             <div className="dx-btn-group" style={{ marginTop: 14, alignItems: "center" }}>
-              <button type="button" onClick={openFlowWithPrompt} className="dx-btn dx-btn-premium">▶ Open & Fill Flow</button>
+              <button type="button" onClick={openFlowWithPrompt} className="dx-btn dx-btn-premium">
+                <Play size={15} /> Open & Fill Flow
+              </button>
               {bridgeStatus === "sent" && <span style={{ color: "var(--dx-green)", fontSize: 13 }}>Sent to extension. Google Flow will open and fill the prompt.</span>}
               {bridgeStatus === "missing" && <span style={{ color: "#fbbf24", fontSize: 13 }}>Extension not detected here. Prompt copied; paste it in Google Flow.</span>}
             </div>
           </section>
 
           <section className="dx-main-card">
-            <h2>📦 DeveloperX Extension</h2>
+            <h2><Package size={18} /> DeveloperX Extension</h2>
             <div className="dx-extension-steps">
               <ol>
                 <li>Open <code>chrome://extensions</code> in Chrome</li>
@@ -341,12 +368,12 @@ function Dashboard() {
               }}
             >
               <span className="dx-download-glow" />
-              <span className="dx-download-icon">📥</span>
+              <span className="dx-download-icon"><Download size={22} /></span>
               <span className="dx-download-text">
                 <span className="dx-download-title">Download Extension</span>
                 <span className="dx-download-sub">Latest build · v1.0.0 · Always fresh</span>
               </span>
-              <span className="dx-download-arrow">↓</span>
+              <span className="dx-download-arrow"><ChevronRight size={18} /></span>
             </button>
           </section>
         </main>
