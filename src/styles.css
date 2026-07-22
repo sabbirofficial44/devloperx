@@ -144,9 +144,9 @@
 }
 
 :root {
-  --dx-bg: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(124,92,252,0.35), transparent 60%),
-           radial-gradient(ellipse 70% 60% at 85% 80%, rgba(217,119,6,0.18), transparent 60%),
-           #08090d;
+  --dx-bg: radial-gradient(900px 520px at 14% -8%, rgba(124,92,252,0.14), transparent 68%),
+           radial-gradient(780px 460px at 92% 8%, rgba(240,185,11,0.08), transparent 70%),
+           linear-gradient(180deg, #08090d 0%, #090a10 46%, #05060a 100%);
   --dx-dashboard-bg: #020617;
   --dx-card: #101217;
   --dx-card-deep: #0f172a;
@@ -216,13 +216,13 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 .dx-ambient::before {
   top: -10%;
   left: -10%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.25), transparent 70%);
+  background: radial-gradient(circle, rgba(124, 92, 252, 0.08), transparent 72%);
 }
 
 .dx-ambient::after {
   right: -10%;
   bottom: -10%;
-  background: radial-gradient(circle, rgba(34, 211, 238, 0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(240, 185, 11, 0.06), transparent 72%);
 }
 
 .dx-container {
