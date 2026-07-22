@@ -64,12 +64,21 @@ function openWhatsApp(url: string) {
 function Dashboard() {
   const fetchProfile = useServerFn(getMyProfile);
   const fetchSettings = useServerFn(getSiteSettings);
+  const fetchPrompts = useServerFn(getPromptHistory);
+  const savePromptFn = useServerFn(savePrompt);
+  const deletePromptFn = useServerFn(deletePrompt);
+  const fetchAnnouncements = useServerFn(getAnnouncements);
+  const fetchUsage = useServerFn(getUsageStats);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [prompt, setPrompt] = useState("");
   const [bridgeStatus, setBridgeStatus] = useState<"idle" | "sent" | "missing">("idle");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("dx_dismissed_ann") || "[]")); } catch { return new Set(); }
+  });
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { data } = useQuery({
@@ -83,6 +92,31 @@ function Dashboard() {
     queryFn: () => fetchSettings(),
     staleTime: 60_000,
   });
+  const { data: prompts = [] } = useQuery({
+    queryKey: ["prompt-history"],
+    queryFn: () => fetchPrompts(),
+    staleTime: 30_000,
+  });
+  const { data: announcements = [] } = useQuery({
+    queryKey: ["announcements"],
+    queryFn: () => fetchAnnouncements(),
+    staleTime: 60_000,
+  });
+  const { data: usage } = useQuery({
+    queryKey: ["usage-stats"],
+    queryFn: () => fetchUsage(),
+    refetchInterval: 30_000,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (p: string) => savePromptFn({ data: { prompt: p } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["prompt-history"] }),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deletePromptFn({ data: { id } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["prompt-history"] }),
+  });
+
   const UPGRADE_URL = normalizeWa(siteSettings?.whatsappNumber ?? siteSettings?.contactNumber ?? "01410014442");
 
   useEffect(() => {
