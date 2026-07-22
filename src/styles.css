@@ -2051,40 +2051,9 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   75%     { transform: perspective(1400px) rotateX(-1deg) rotateY(1.4deg); }
 }
 
-/* Immersive backdrop — animated aurora over the existing dark bg */
-.dx-page::before,
-.dx-page-premium::before,
-.dx-auth-shell::before {
-  content: "";
-  position: fixed; inset: -20% -10% -10% -10%;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(600px 500px at 15% 20%, rgba(124,92,252,.28), transparent 60%),
-    radial-gradient(700px 600px at 85% 10%, rgba(240,185,11,.18), transparent 60%),
-    radial-gradient(800px 700px at 50% 100%, rgba(34,211,238,.22), transparent 60%),
-    radial-gradient(500px 500px at 80% 80%, rgba(236,72,153,.16), transparent 60%);
-  filter: blur(30px) saturate(115%);
-  background-size: 200% 200%;
-  animation: dx3d-gradient-shift 18s ease-in-out infinite, dx3d-bg-drift 22s ease-in-out infinite;
-}
+/* Backdrop disabled — restored original dark background */
 .dx-page > *, .dx-page-premium > *, .dx-auth-shell > * { position: relative; z-index: 1; }
 
-/* Subtle starfield grid for depth */
-.dx-page::after,
-.dx-page-premium::after {
-  content: "";
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.4), transparent 50%),
-    radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.3), transparent 50%),
-    radial-gradient(1.5px 1.5px at 40% 80%, rgba(167,139,250,.5), transparent 50%),
-    radial-gradient(1px 1px at 90% 20%, rgba(240,185,11,.4), transparent 50%),
-    radial-gradient(1px 1px at 10% 70%, rgba(34,211,238,.4), transparent 50%);
-  background-size: 400px 400px;
-  opacity: .5;
-  animation: dx3d-bg-drift 40s linear infinite;
-}
 
 /* Give containers real 3D perspective so children can tilt */
 .dx-container, .dx-container-premium { perspective: 1600px; transform-style: preserve-3d; }
