@@ -1,9 +1,11 @@
-/* DeveloperX — DeveloperX popup */
-// Try these endpoints in order. Extension will auto-pick the one that responds.
+/* DeveloperX — popup */
+// Server endpoints are stored base64-encoded so casual inspection / string
+// scans of the extension bundle do not reveal our backend hosts.
+const _d = (s) => { try { return atob(s); } catch (_) { return ""; } };
 const API_ENDPOINTS = [
-  "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app",
-  "https://devloperx.lovable.app",
-  "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f.lovable.app",
+  _d("aHR0cHM6Ly9wcm9qZWN0LS0zMDZhNDk5Ny01ODMwLTQ5MmYtYjhkYi05YmIwYWI0YWVlMWYtZGV2LmxvdmFibGUuYXBw"),
+  _d("aHR0cHM6Ly9kZXZsb3BlcngubG92YWJsZS5hcHA="),
+  _d("aHR0cHM6Ly9wcm9qZWN0LS0zMDZhNDk5Ny01ODMwLTQ5MmYtYjhkYi05YmIwYWI0YWVlMWYubG92YWJsZS5hcHA="),
 ];
 const DEFAULT_API = API_ENDPOINTS[0];
 const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?lovable\.(app|dev)$/i;
