@@ -214,7 +214,7 @@
       <div class="box">
         <div class="lock">🔒</div>
         <h2>Credits Exhausted</h2>
-        <p>Your Veo Unlimited credits have run out. Buy more credits to keep using Google Flow.</p>
+        <p>Your Shadhin Digital Store credits have run out. Buy more credits to keep using Google Flow.</p>
         <a href="${UPGRADE_URL}" target="_blank">💳 Buy Credits · WhatsApp</a>
       </div>
     `;
