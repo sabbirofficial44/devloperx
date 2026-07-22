@@ -432,7 +432,9 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 .dx-section {
   padding: 60px 0;
+  scroll-margin-top: 100px;
 }
+
 
 .dx-section-title {
   font-size: 28px;
