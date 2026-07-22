@@ -48,6 +48,19 @@ const NAV: { key: Section; label: string; Icon: React.ComponentType<{ size?: num
   { key: "settings", label: "Pricing & Contact", Icon: Settings },
 ];
 
+function dedupeLedgerByUser(rows: Array<{ userId: string; email: string | null; amount: number; createdAt: string }>) {
+  const map = new Map<string, { userId: string; email: string | null; totalUsed: number; count: number; lastAt: string }>();
+  for (const r of rows) {
+    const g = map.get(r.userId) ?? { userId: r.userId, email: r.email, totalUsed: 0, count: 0, lastAt: r.createdAt };
+    if (r.amount < 0) g.totalUsed += -r.amount;
+    g.count += 1;
+    if (new Date(r.createdAt) > new Date(g.lastAt)) g.lastAt = r.createdAt;
+    if (!g.email && r.email) g.email = r.email;
+    map.set(r.userId, g);
+  }
+  return Array.from(map.values()).sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
+}
+
 
 function AdminPage() {
   const navigate = useNavigate();
