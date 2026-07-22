@@ -227,21 +227,21 @@ function Index() {
                   <div className="dx-plan-price" style={{ margin: "18px 0 6px" }}>{plan.price}</div>
                   <div style={{ fontSize: 12, color: "var(--dx-muted-soft,#94a3b8)", marginBottom: 18 }}>{plan.note}</div>
                   {plan.free ? (
-                    <Link className="dx-btn dx-btn-gold" style={{ width: "100%" }} to="/auth">
-                      {plan.cta ?? "Start Free"}
+                    <Link className="dx-price-cta dx-price-cta-free" to="/auth">
+                      <span>{plan.cta ?? "Start Free"}</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                     </Link>
                   ) : (
                     <button
                       type="button"
-                      className="dx-btn dx-btn-gold-premium dx-cta-glow"
-                      style={{ width: "100%", marginTop: "auto", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, lineHeight: 1.15 }}
+                      className={`dx-price-cta dx-price-cta-contact ${plan.featured ? "is-featured" : ""}`}
                       onClick={() => openWa(WA_LINK)}
                     >
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <span className="dx-price-cta-row">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.86 11.86 0 0 0 12.05 0C5.5 0 .17 5.33.17 11.88c0 2.09.55 4.13 1.6 5.93L0 24l6.34-1.66a11.86 11.86 0 0 0 5.7 1.45h.01c6.55 0 11.88-5.33 11.88-11.88 0-3.17-1.24-6.15-3.41-8.43ZM12.05 21.3h-.01a9.4 9.4 0 0 1-4.79-1.31l-.34-.2-3.76.98 1-3.67-.22-.38a9.4 9.4 0 0 1-1.44-5c0-5.19 4.23-9.42 9.42-9.42 2.52 0 4.88.98 6.66 2.76a9.36 9.36 0 0 1 2.76 6.67c0 5.19-4.23 9.42-9.28 9.42Zm5.16-7.05c-.28-.14-1.67-.82-1.93-.91-.26-.1-.45-.14-.63.14-.19.28-.72.91-.88 1.1-.16.19-.32.21-.6.07-.28-.14-1.19-.44-2.27-1.4-.84-.75-1.4-1.68-1.57-1.96-.16-.28-.02-.43.12-.57.13-.13.28-.32.42-.49.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.49-.07-.14-.63-1.51-.86-2.07-.22-.54-.45-.47-.63-.48h-.54c-.19 0-.49.07-.75.35-.26.28-.98.96-.98 2.34s1 2.72 1.14 2.9c.14.19 1.97 3.01 4.78 4.22.67.29 1.19.46 1.6.59.67.21 1.28.18 1.77.11.54-.08 1.67-.68 1.9-1.34.23-.66.23-1.22.16-1.34-.07-.12-.26-.19-.54-.33Z"/></svg>
-                        Contact
+                        <span>Contact</span>
                       </span>
-                      <span style={{ fontSize: 10, opacity: 0.85, fontWeight: 600, letterSpacing: 0.3 }}>01410014442</span>
+                      <span className="dx-price-cta-sub">{CONTACT_NUMBER}</span>
                     </button>
                   )}
 
@@ -259,61 +259,100 @@ function Index() {
 
           {/* CONTACT / bKash section */}
           <section className="dx-section" id="contact">
-            <div className="dx-contact-card dx-rise">
-              <div style={{ fontSize: 40, marginBottom: 10 }}>💳</div>
-              <h2 style={{ fontSize: 32, fontWeight: 800, margin: "0 0 10px", color: "#fff" }}>
+            <div className="dx-upgrade-card dx-rise">
+              <div className="dx-upgrade-orb dx-upgrade-orb-1" aria-hidden />
+              <div className="dx-upgrade-orb dx-upgrade-orb-2" aria-hidden />
+
+              <div className="dx-upgrade-badge">
+                <span className="dx-upgrade-badge-dot" />
+                INSTANT ACTIVATION
+              </div>
+              <h2 className="dx-upgrade-title">
                 Ready to <span className="dx-shimmer-text">Upgrade?</span>
               </h2>
-              <p style={{ color: "#cbd5e1", maxWidth: 520, margin: "0 auto 22px" }}>
-                Free trial-এর পর daily / weekly / monthly plan নিতে চাইলে bKash payment করে আমাদের সাথে যোগাযোগ করুন। Instant activation।
+              <p className="dx-upgrade-sub">
+                Free trial-এর পর daily / weekly / monthly plan নিতে চাইলে bKash payment করে আমাদের সাথে যোগাযোগ করুন।
               </p>
-              <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-                <a className="dx-bkash-btn" href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }}>
-                  📱 bKash: {BKASH_NUMBER}
+
+              <div className="dx-upgrade-actions">
+                <a className="dx-upgrade-btn dx-upgrade-btn-bkash" href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }}>
+                  <span className="dx-upgrade-btn-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v12H4z" opacity=".2"/><path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6zm2 2v8h16V8H4zm2 6h4v2H6v-2z"/></svg>
+                  </span>
+                  <span className="dx-upgrade-btn-body">
+                    <span className="dx-upgrade-btn-label">bKash Payment</span>
+                    <span className="dx-upgrade-btn-value">{BKASH_NUMBER}</span>
+                  </span>
                 </a>
-                <a className="dx-btn dx-btn-outline" href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }} style={{ padding: "14px 28px", fontSize: 15 }}>
-                  💬 WhatsApp {CONTACT_NUMBER}
+
+                <a className="dx-upgrade-btn dx-upgrade-btn-wa" href={WA_LINK} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }}>
+                  <span className="dx-upgrade-btn-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.86 11.86 0 0 0 12.05 0C5.5 0 .17 5.33.17 11.88c0 2.09.55 4.13 1.6 5.93L0 24l6.34-1.66a11.86 11.86 0 0 0 5.7 1.45c6.55 0 11.88-5.33 11.88-11.88 0-3.17-1.24-6.15-3.41-8.43zM17.2 14.25c-.28-.14-1.67-.82-1.93-.91-.26-.1-.45-.14-.63.14-.19.28-.72.91-.88 1.1-.16.19-.32.21-.6.07-.28-.14-1.19-.44-2.27-1.4-.84-.75-1.4-1.68-1.57-1.96-.16-.28-.02-.43.12-.57.13-.13.28-.32.42-.49.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.49-.07-.14-.63-1.51-.86-2.07-.22-.54-.45-.47-.63-.48h-.54c-.19 0-.49.07-.75.35-.26.28-.98.96-.98 2.34s1 2.72 1.14 2.9c.14.19 1.97 3.01 4.78 4.22 1.79.77 2.5.83 3.37.71.54-.08 1.67-.68 1.9-1.34.23-.66.23-1.22.16-1.34-.07-.12-.26-.19-.54-.33z"/></svg>
+                  </span>
+                  <span className="dx-upgrade-btn-body">
+                    <span className="dx-upgrade-btn-label">WhatsApp</span>
+                    <span className="dx-upgrade-btn-value">{CONTACT_NUMBER}</span>
+                  </span>
                 </a>
-                <a className="dx-btn dx-btn-outline" href={TELEGRAM_URL} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(TELEGRAM_URL); }} style={{ padding: "14px 28px", fontSize: 15 }}>
-                  ✈ Telegram
+
+                <a className="dx-upgrade-btn dx-upgrade-btn-tg" href={TELEGRAM_URL} target="_top" rel="noreferrer" onClick={(e) => { e.preventDefault(); openWa(TELEGRAM_URL); }}>
+                  <span className="dx-upgrade-btn-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.24 3.64 11.95c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+                  </span>
+                  <span className="dx-upgrade-btn-body">
+                    <span className="dx-upgrade-btn-label">Telegram</span>
+                    <span className="dx-upgrade-btn-value">Join channel</span>
+                  </span>
                 </a>
-              </div>
-              <div style={{ marginTop: 20, fontSize: 12, color: "var(--dx-muted-soft,#94a3b8)" }}>
-                bKash Send Money → <strong style={{ color: "#e2136e" }}>{BKASH_NUMBER}</strong> (Personal) · Screenshot পাঠান WhatsApp <strong>{CONTACT_NUMBER}</strong> এ
               </div>
 
+              <div className="dx-upgrade-footnote">
+                bKash Send Money → <strong style={{ color: "#e2136e" }}>{BKASH_NUMBER}</strong> (Personal) · Screenshot পাঠান WhatsApp <strong style={{ color: "#f0b90b" }}>{CONTACT_NUMBER}</strong> এ
+              </div>
             </div>
           </section>
 
           {/* FEATURES */}
           <section className="dx-section" id="features">
-            <h2 className="dx-section-title">Why DeveloperX?</h2>
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <span className="dx-eyebrow">✦ WHY CHOOSE US</span>
+            </div>
+            <h2 className="dx-section-title">Why <span className="dx-shimmer-text">DeveloperX?</span></h2>
             <p className="dx-section-subtitle">Everything you need for AI video creation in one place.</p>
-            <div className="dx-features-grid">
-              {features.map((feature, i) => (
-                <article className="dx-feature-card dx-rise" key={feature.title} style={{ animationDelay: `${i * 70}ms` }}>
-                  <h3>{feature.title}</h3>
-                  <p>{feature.copy}</p>
-                </article>
-              ))}
+            <div className="dx-features-grid-premium">
+              {features.map((feature, i) => {
+                const [icon, ...titleRest] = feature.title.split(" ");
+                const cleanTitle = titleRest.join(" ");
+                return (
+                  <article className="dx-feature-premium dx-rise" key={feature.title} style={{ animationDelay: `${i * 70}ms` }}>
+                    <div className="dx-feature-premium-icon">{icon}</div>
+                    <h3 className="dx-feature-premium-title">{cleanTitle}</h3>
+                    <p className="dx-feature-premium-copy">{feature.copy}</p>
+                    <div className="dx-feature-premium-shine" aria-hidden />
+                  </article>
+                );
+              })}
             </div>
           </section>
 
           {/* HOW IT WORKS */}
           <section className="dx-section">
-            <h2 className="dx-section-title">How It Works</h2>
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <span className="dx-eyebrow">⚡ 3 SIMPLE STEPS</span>
+            </div>
+            <h2 className="dx-section-title">How It <span className="dx-shimmer-text">Works</span></h2>
             <p className="dx-section-subtitle">Three simple steps to start creating AI videos.</p>
-            <div className="dx-steps">
+            <div className="dx-steps-premium">
               {[
-                ["1", "Sign Up Free", "Create account in 20 seconds. Get 12 hours (720 credits) instantly, daily."],
-                ["2", "Install Extension", "Download from dashboard, load unpacked in Chrome. Login with same account."],
-                ["3", "Generate on Flow", "Open Google Flow — floating HUD shows live credits. Generate away."],
-              ].map(([num, title, copy], i) => (
-
-                <div className="dx-step dx-rise" key={num} style={{ animationDelay: `${i * 100}ms` }}>
-                  <div className="dx-step-num">{num}</div>
-                  <h3>{title}</h3>
-                  <p>{copy}</p>
+                ["01", "Sign Up Free", "Create account in 20 seconds. Get 12 hours (720 credits) instantly, daily.", "👤"],
+                ["02", "Install Extension", "Download from dashboard, load unpacked in Chrome. Login with same account.", "🧩"],
+                ["03", "Generate on Flow", "Open Google Flow — floating HUD shows live credits. Generate away.", "🎬"],
+              ].map(([num, title, copy, emoji], i) => (
+                <div className="dx-step-premium dx-rise" key={num} style={{ animationDelay: `${i * 100}ms` }}>
+                  <div className="dx-step-premium-num">{num}</div>
+                  <div className="dx-step-premium-icon">{emoji}</div>
+                  <h3 className="dx-step-premium-title">{title}</h3>
+                  <p className="dx-step-premium-copy">{copy}</p>
                 </div>
               ))}
             </div>
