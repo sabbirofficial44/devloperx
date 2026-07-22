@@ -1,4 +1,4 @@
-/* DeveloperX — Veo Unlimited popup */
+/* Shadhin Digital Store — Shadhin popup */
 // Try these endpoints in order. Extension will auto-pick the one that responds.
 const API_ENDPOINTS = [
   "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app",
@@ -130,7 +130,7 @@ function normalizeLoginPayload(payload, typedEmail) {
     refreshToken: src.refreshToken || src.refresh_token || session.refresh_token || "",
     user: {
       id,
-      name: rawUser.name || rawUser.displayName || rawUser.user_metadata?.display_name || src.name || src.displayName || nested.name || nested.displayName || email || "DeveloperX User",
+      name: rawUser.name || rawUser.displayName || rawUser.user_metadata?.display_name || src.name || src.displayName || nested.name || nested.displayName || email || "Shadhin User",
       email,
       plan,
       creditsTotal: Number(rawUser.creditsTotal ?? src.creditsTotal ?? nested.creditsTotal ?? creditsLeft),

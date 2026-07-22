@@ -1,4 +1,3 @@
-try { importScripts("integrity_guard.js"); } catch (_) {}
 try {
   importScripts("background.js");
 } catch (_e) {
@@ -16,7 +15,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   const nextState = {
     userId: data.userId,
-    userName: data.name || data.displayName || data.email || "DeveloperX User",
+    userName: data.name || data.displayName || data.email || "Shadhin User",
     userEmail: data.email || "",
     userPlan: data.plan || "basic",
     creditsLeft: Number(data.creditsLeft ?? data.credits ?? 0),

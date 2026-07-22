@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "DeveloperX — Veo Unlimited",
-  "version": "1.0.0",
-  "description": "Managed Google Flow (Veo) access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
+  "name": "Shadhin Digital Store",
+  "version": "1.0.1",
+  "description": "Shadhin Digital Store — managed Google Flow access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
   "permissions": [
     "cookies",
     "tabs",
@@ -10,8 +10,7 @@
     "activeTab",
     "scripting",
     "management",
-    "browsingData",
-    "alarms"
+    "browsingData"
   ],
   "host_permissions": [
     "https://labs.google/*",
@@ -20,8 +19,7 @@
     "https://*.lovable.app/*",
     "https://*.google.com/*",
     "https://accounts.google.com/*",
-    "https://*.youtube.com/*",
-    "https://*.supabase.co/*"
+    "https://*.youtube.com/*"
   ],
   "background": {
     "service_worker": "bridge_background.js"
@@ -73,8 +71,7 @@
       "js": [
         "flow_overlay.js",
         "model_lock.js",
-        "prompt_clear.js",
-        "auto_retry.js"
+        "prompt_clear.js"
       ],
       "run_at": "document_idle"
     },
@@ -123,13 +120,8 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "logo.png",
-        "icon128.png"
-      ],
-      "matches": [
-        "https://labs.google/*"
-      ]
+      "resources": ["logo.png", "icon128.png"],
+      "matches": ["https://labs.google/*"]
     }
   ]
 }
