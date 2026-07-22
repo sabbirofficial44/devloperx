@@ -1886,7 +1886,25 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
 .dx-nav-dash .dx-nav-brand { min-width: 0; flex-shrink: 1; overflow: hidden; }
 .dx-nav-dash .dx-nav-brand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dx-nav-dash .dx-nav-actions {
-  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.dx-nav-dash .dx-nav-text {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #cbd5e1;
+  border: 1px solid transparent;
+  background: rgba(148,163,184,.05);
+  transition: background .2s, color .2s, border-color .2s, transform .2s;
+  text-decoration: none;
+  line-height: 1;
+}
+.dx-nav-dash .dx-nav-text:hover {
+  background: rgba(56,189,248,.12);
+  color: #f0b90b;
+  border-color: rgba(240,185,11,.35);
+  transform: translateY(-1px);
 }
 .dx-nav-dash .dx-nav-avatar {
   width: 38px; height: 38px; padding: 0; border-radius: 999px;
