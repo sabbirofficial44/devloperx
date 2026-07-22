@@ -3288,3 +3288,252 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   .dx-price-cta { padding: 11px 10px; font-size: 13px; }
   .dx-price-cta-sub { font-size: 9.5px; }
 }
+
+/* ============================================================
+   GLOBAL GLASS PASS — every card & button floats with animated
+   gradient border and soft blur-shadow. Applied last, wins cascade.
+   ============================================================ */
+@property --dx-glass-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes dxGlassSpin { to { --dx-glass-angle: 360deg; } }
+@keyframes dxGlassFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-3px); }
+}
+
+/* Cards / tiles / panels — glassmorphic surface */
+.dx-card,
+.dx-price-card-premium,
+.dx-feature-premium,
+.dx-step-premium,
+.dx-testi-card,
+.dx-upgrade-card,
+.dx-contact-card,
+.dx-auth-card,
+.dx-stat-card,
+.dx-dashboard-card,
+.dx-panel,
+.dx-glass {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(24,18,44,.55), rgba(12,8,24,.75)) !important;
+  backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255,255,255,.06) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 20px 45px -22px rgba(0,0,0,.75),
+    0 8px 24px -12px rgba(124,58,237,.25) !important;
+  isolation: isolate;
+}
+
+/* Animated linear gradient border ring */
+.dx-card::after,
+.dx-price-card-premium::after,
+.dx-feature-premium::after,
+.dx-step-premium::after,
+.dx-testi-card::after,
+.dx-upgrade-card::after,
+.dx-contact-card::after,
+.dx-auth-card::after,
+.dx-stat-card::after,
+.dx-dashboard-card::after,
+.dx-panel::after,
+.dx-glass::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--dx-glass-angle,0deg),
+    rgba(167,139,250,.55),
+    rgba(34,211,238,.5),
+    rgba(240,185,11,.45),
+    rgba(236,72,153,.5),
+    rgba(167,139,250,.55));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: dxGlassSpin 9s linear infinite;
+  pointer-events: none;
+  opacity: .55;
+  z-index: 2;
+}
+
+/* Featured / hover states — brighter ring */
+.dx-price-card-premium.featured::after,
+.dx-card:hover::after,
+.dx-price-card-premium:hover::after,
+.dx-feature-premium:hover::after,
+.dx-step-premium:hover::after,
+.dx-testi-card:hover::after,
+.dx-upgrade-card:hover::after,
+.dx-contact-card:hover::after,
+.dx-auth-card:hover::after,
+.dx-stat-card:hover::after,
+.dx-dashboard-card:hover::after,
+.dx-panel:hover::after {
+  opacity: 1;
+  animation-duration: 4.5s;
+}
+
+/* Soft floating blur-shadow underneath — makes card feel suspended */
+.dx-card::before,
+.dx-price-card-premium::before,
+.dx-feature-premium::before,
+.dx-step-premium::before,
+.dx-testi-card::before,
+.dx-upgrade-card::before,
+.dx-auth-card::before,
+.dx-stat-card::before,
+.dx-dashboard-card::before,
+.dx-panel::before {
+  content: "";
+  position: absolute;
+  left: 8%; right: 8%; bottom: -18px; height: 32px;
+  background: radial-gradient(ellipse at center,
+    rgba(124,58,237,.35),
+    rgba(34,211,238,.18) 45%,
+    transparent 75%);
+  filter: blur(18px);
+  z-index: -1;
+  opacity: .7;
+  pointer-events: none;
+  transition: opacity .35s ease, transform .35s ease;
+}
+.dx-card:hover::before,
+.dx-price-card-premium:hover::before,
+.dx-feature-premium:hover::before,
+.dx-step-premium:hover::before,
+.dx-testi-card:hover::before,
+.dx-upgrade-card:hover::before,
+.dx-auth-card:hover::before,
+.dx-stat-card:hover::before,
+.dx-dashboard-card:hover::before {
+  opacity: 1;
+  transform: translateY(4px) scaleX(1.05);
+}
+
+/* Ensure card content stays above the ring */
+.dx-card > *,
+.dx-price-card-premium > *,
+.dx-feature-premium > *,
+.dx-step-premium > *,
+.dx-testi-card > *,
+.dx-upgrade-card > *:not(.dx-upgrade-orb),
+.dx-contact-card > *,
+.dx-auth-card > *,
+.dx-stat-card > *,
+.dx-dashboard-card > *,
+.dx-panel > * { position: relative; z-index: 3; }
+
+/* ---------- BUTTONS — glass with animated gradient border ---------- */
+.dx-btn,
+.dx-btn-gold,
+.dx-btn-gold-premium,
+.dx-btn-purple,
+.dx-btn-premium,
+.dx-btn-outline,
+.dx-btn-danger {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(30,22,55,.75), rgba(14,10,28,.9)) !important;
+  color: #f5f7ff !important;
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 0 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    0 12px 26px -14px rgba(0,0,0,.7),
+    0 6px 18px -10px rgba(124,58,237,.35) !important;
+  isolation: isolate;
+  overflow: hidden;
+}
+.dx-btn::before,
+.dx-btn-gold::before,
+.dx-btn-gold-premium::before,
+.dx-btn-purple::before,
+.dx-btn-premium::before,
+.dx-btn-outline::before,
+.dx-btn-danger::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--dx-glass-angle,0deg),
+    #a78bfa, #22d3ee, #f0b90b, #ec4899, #a78bfa);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: dxGlassSpin 6s linear infinite;
+  pointer-events: none;
+  opacity: .8;
+  z-index: 1;
+}
+.dx-btn > *,
+.dx-btn-gold > *,
+.dx-btn-gold-premium > *,
+.dx-btn-purple > *,
+.dx-btn-premium > *,
+.dx-btn-outline > *,
+.dx-btn-danger > * { position: relative; z-index: 2; }
+
+.dx-btn:hover,
+.dx-btn-gold:hover,
+.dx-btn-gold-premium:hover,
+.dx-btn-purple:hover,
+.dx-btn-premium:hover,
+.dx-btn-outline:hover,
+.dx-btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    0 18px 34px -14px rgba(0,0,0,.75),
+    0 12px 28px -10px rgba(167,139,250,.5) !important;
+}
+.dx-btn:hover::before,
+.dx-btn-gold:hover::before,
+.dx-btn-gold-premium:hover::before,
+.dx-btn-purple:hover::before,
+.dx-btn-premium:hover::before,
+.dx-btn-danger:hover::before { opacity: 1; animation-duration: 3s; }
+
+/* Gold buttons keep warm gradient tint on text */
+.dx-btn-gold,
+.dx-btn-gold-premium {
+  color: #fde68a !important;
+  text-shadow: 0 0 12px rgba(240,185,11,.35);
+}
+.dx-btn-gold::before,
+.dx-btn-gold-premium::before {
+  background: conic-gradient(from var(--dx-glass-angle,0deg),
+    #f0b90b, #f97316, #ec4899, #a78bfa, #f0b90b);
+}
+
+/* Fallback: no @property support */
+@supports not (background: conic-gradient(from 0deg, red, blue)) {
+  .dx-card::after, .dx-price-card-premium::after, .dx-feature-premium::after,
+  .dx-step-premium::after, .dx-testi-card::after, .dx-upgrade-card::after,
+  .dx-contact-card::after, .dx-auth-card::after, .dx-stat-card::after,
+  .dx-dashboard-card::after, .dx-panel::after,
+  .dx-btn::before, .dx-btn-gold::before, .dx-btn-gold-premium::before,
+  .dx-btn-purple::before, .dx-btn-premium::before, .dx-btn-outline::before,
+  .dx-btn-danger::before { display: none; }
+  .dx-card, .dx-price-card-premium, .dx-feature-premium, .dx-step-premium,
+  .dx-testi-card, .dx-upgrade-card, .dx-contact-card, .dx-auth-card,
+  .dx-stat-card, .dx-dashboard-card, .dx-panel,
+  .dx-btn, .dx-btn-gold, .dx-btn-gold-premium, .dx-btn-purple,
+  .dx-btn-premium, .dx-btn-outline, .dx-btn-danger {
+    border: 1px solid rgba(167,139,250,.35) !important;
+  }
+}
