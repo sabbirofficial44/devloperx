@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   bulkCreateUsers,
   createUser,
@@ -582,10 +582,10 @@ function AdminPage() {
           {section === "ledger" && (
             <>
               <h1 className="ax-page-title">Credit ledger</h1>
-              <p className="ax-page-sub">Every deduction from the extension is logged with source and remaining balance.</p>
+              <p className="ax-page-sub">Grouped by user — click a row to expand full usage history.</p>
               <section className="ax-panel">
                 <div className="ax-panel-head">
-                  <div className="ax-panel-title">Activity</div>
+                  <div className="ax-panel-title">Users</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <input
                       value={ledgerFilter}
@@ -600,35 +600,12 @@ function AdminPage() {
                 {ledgerQuery.isLoading && <div className="ax-empty">Loading…</div>}
                 {ledgerQuery.data && ledgerQuery.data.length === 0 && <div className="ax-empty">No credit activity yet.</div>}
                 {ledgerQuery.data && ledgerQuery.data.length > 0 && (
-                  <div className="ax-table-wrap" style={{ maxHeight: 560, overflowY: "auto" }}>
-                    <table className="ax-table">
-                      <thead style={{ position: "sticky", top: 0 }}>
-                        <tr><th>When</th><th>User</th><th>Amount</th><th>Balance after</th><th>Reason</th><th>Source</th></tr>
-                      </thead>
-                      <tbody>
-                        {ledgerQuery.data.map((r) => (
-                          <tr key={r.id}>
-                            <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{new Date(r.createdAt).toLocaleString()}</td>
-                            <td>
-                              <div>{r.email ?? "—"}</div>
-                              <div className="ax-mono" style={{ color: "#475569", fontSize: 10 }}>{r.userId.slice(0, 8)}…</div>
-                            </td>
-                            <td className="ax-mono" style={{ color: r.amount < 0 ? "#fca5a5" : r.amount > 0 ? "#34d399" : "#64748b" }}>
-                              {r.amount > 0 ? `+${r.amount}` : r.amount}
-                            </td>
-                            <td className="ax-mono">{r.balanceAfter ?? "—"}</td>
-                            <td>{r.reason ?? "—"}</td>
-                            <td style={{ color: "#64748b" }}>{r.source ?? "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-          )}
-
+                  <LedgerGrouped rows={ledgerQuery.data} />
+                )}
               </section>
             </>
           )}
+
 
           {section === "settings" && <SettingsPanel />}
         </div>
@@ -636,6 +613,132 @@ function AdminPage() {
     </div>
   );
 }
+
+type LedgerRow = {
+  id: string;
+  userId: string;
+  email: string | null;
+  amount: number;
+  balanceAfter: number | null;
+  reason: string | null;
+  source: string | null;
+  createdAt: string;
+};
+
+function LedgerGrouped({ rows }: { rows: LedgerRow[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const groups = useMemo(() => {
+    const map = new Map<string, {
+      userId: string;
+      email: string | null;
+      rows: LedgerRow[];
+      totalUsed: number;
+      totalAdded: number;
+      lastAt: string;
+      lastBalance: number | null;
+    }>();
+    for (const r of rows) {
+      const key = r.userId;
+      const g = map.get(key) ?? {
+        userId: r.userId,
+        email: r.email,
+        rows: [],
+        totalUsed: 0,
+        totalAdded: 0,
+        lastAt: r.createdAt,
+        lastBalance: r.balanceAfter,
+      };
+      g.rows.push(r);
+      if (r.amount < 0) g.totalUsed += -r.amount;
+      else g.totalAdded += r.amount;
+      if (new Date(r.createdAt) > new Date(g.lastAt)) {
+        g.lastAt = r.createdAt;
+        g.lastBalance = r.balanceAfter;
+      }
+      if (!g.email && r.email) g.email = r.email;
+      map.set(key, g);
+    }
+    return Array.from(map.values()).sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
+  }, [rows]);
+
+  const nowMs = Date.now();
+  return (
+    <div className="ax-table-wrap" style={{ maxHeight: 620, overflowY: "auto" }}>
+      <table className="ax-table">
+        <thead style={{ position: "sticky", top: 0 }}>
+          <tr><th></th><th>User</th><th>Total used</th><th>Added</th><th>Last activity</th><th>Current balance</th><th>Events</th></tr>
+        </thead>
+        <tbody>
+          {groups.map((g) => {
+            const open = expanded === g.userId;
+            const lastMs = new Date(g.lastAt).getTime();
+            const mins = Math.floor((nowMs - lastMs) / 60000);
+            const online = mins < 2;
+            return (
+              <>
+                <tr
+                  key={g.userId}
+                  onClick={() => setExpanded(open ? null : g.userId)}
+                  style={{ cursor: "pointer", background: open ? "rgba(124,92,252,.08)" : undefined }}
+                >
+                  <td style={{ width: 24, color: "#94a3b8" }}>{open ? "▼" : "▶"}</td>
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{
+                        width: 8, height: 8, borderRadius: "50%",
+                        background: online ? "#34d399" : "#64748b",
+                        boxShadow: online ? "0 0 8px #34d399" : "none",
+                      }} />
+                      <span>{g.email ?? "—"}</span>
+                    </div>
+                    <div className="ax-mono" style={{ color: "#475569", fontSize: 10 }}>{g.userId.slice(0, 8)}…</div>
+                  </td>
+                  <td className="ax-mono" style={{ color: "#fca5a5" }}>-{g.totalUsed}</td>
+                  <td className="ax-mono" style={{ color: "#34d399" }}>{g.totalAdded > 0 ? `+${g.totalAdded}` : "—"}</td>
+                  <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>
+                    {new Date(g.lastAt).toLocaleString()}
+                    <div style={{ fontSize: 10, color: online ? "#34d399" : "#64748b" }}>
+                      {online ? "online now" : `${mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`} ago`}
+                    </div>
+                  </td>
+                  <td className="ax-mono">{g.lastBalance ?? "—"}</td>
+                  <td className="ax-mono">{g.rows.length}</td>
+                </tr>
+                {open && (
+                  <tr key={g.userId + "-detail"}>
+                    <td colSpan={7} style={{ background: "rgba(2,6,23,.4)", padding: 12 }}>
+                      <div style={{ maxHeight: 320, overflowY: "auto" }}>
+                        <table className="ax-table" style={{ margin: 0 }}>
+                          <thead>
+                            <tr><th>When</th><th>Amount</th><th>Balance after</th><th>Reason</th><th>Source</th></tr>
+                          </thead>
+                          <tbody>
+                            {g.rows.map((r) => (
+                              <tr key={r.id}>
+                                <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{new Date(r.createdAt).toLocaleString()}</td>
+                                <td className="ax-mono" style={{ color: r.amount < 0 ? "#fca5a5" : r.amount > 0 ? "#34d399" : "#64748b" }}>
+                                  {r.amount > 0 ? `+${r.amount}` : r.amount}
+                                </td>
+                                <td className="ax-mono">{r.balanceAfter ?? "—"}</td>
+                                <td>{r.reason ?? "—"}</td>
+                                <td style={{ color: "#64748b" }}>{r.source ?? "—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 
 function Field({
   label, value, onChange, type = "text",
