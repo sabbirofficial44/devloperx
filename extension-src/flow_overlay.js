@@ -131,14 +131,14 @@
           box-shadow: 0 6px 14px rgba(37,211,102,.3);
         }
       </style>
-      <div class="dx-logo-wrap" id="dx-toggle" title="DeveloperX — click for status">
+      <div class="dx-logo-wrap" id="dx-toggle" title="Shadhin Digital Store — click for status">
         <div class="dx-ring"></div>
         <div class="dx-logo" id="dx-logo-img" style="background-image:url('${LOGO_URL}')"></div>
         <div class="dx-dot" id="dx-dot"></div>
       </div>
       <div class="dx-card">
         <div class="h">
-          <span class="brand">DEVELOPERX</span>
+          <span class="brand">SHADHIN</span>
           <span id="dx-plan" class="b">—</span>
         </div>
         <div id="dx-signed-out" class="t" style="font-size:10px; text-transform:none; letter-spacing:0; color:#9ba3b4;">Sign in via the extension popup.</div>
