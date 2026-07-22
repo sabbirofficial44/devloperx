@@ -107,7 +107,7 @@ function Index() {
             <Link className="dx-cta-premium" to="/auth">
               <span className="dx-cta-bg" />
               <span className="dx-cta-shimmer" />
-              <span className="dx-cta-glow" />
+              <span className="dx-cta-premium-glow" />
               <span className="dx-cta-label">
                 Get Started
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
