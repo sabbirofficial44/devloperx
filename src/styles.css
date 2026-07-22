@@ -2948,19 +2948,25 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   width: 100%;
   padding: 13px 14px;
   border-radius: 12px;
-  border: none; cursor: pointer;
+  border: 1px solid rgba(0,255,240,0.35); cursor: pointer;
   font-family: inherit; font-weight: 800; font-size: 14px;
-  color: #0a0a0a; text-decoration: none;
+  color: #f0faff; text-decoration: none;
   line-height: 1.2;
   overflow: hidden; isolation: isolate;
-  transition: transform .25s ease, box-shadow .3s ease;
+  transition: transform .25s ease, box-shadow .3s ease, border-color .3s ease;
+  text-shadow: 0 0 8px rgba(0,255,240,0.55), 0 0 16px rgba(124,58,237,0.4);
+  box-shadow:
+    0 0 0 1px rgba(0,255,240,0.18) inset,
+    0 0 14px rgba(0,255,240,0.35),
+    0 0 32px rgba(124,58,237,0.35);
 }
 .dx-price-cta::before {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(135deg, #f0b90b 0%, #fbbf24 50%, #f59e0b 100%);
-  background-size: 200% 200%;
-  animation: dxGoldFlow 5s ease infinite;
+  background: linear-gradient(90deg, #00fff0, #7c3aed, #ec4899, #7c3aed, #00fff0);
+  background-size: 300% 100%;
+  animation: dxNeonFlow 4.5s linear infinite;
   z-index: -2;
+  opacity: 0.9;
 }
 .dx-price-cta::after {
   content: ""; position: absolute; inset: 0;
@@ -2968,26 +2974,43 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   transform: translateX(-120%);
   transition: transform .8s ease;
   z-index: -1;
+  mix-blend-mode: overlay;
 }
-.dx-price-cta:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -12px rgba(240,185,11,.6); }
+.dx-price-cta:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0,255,240,0.7);
+  box-shadow:
+    0 0 0 1px rgba(0,255,240,0.5) inset,
+    0 0 22px rgba(0,255,240,0.8),
+    0 0 50px rgba(124,58,237,0.7),
+    0 20px 40px -12px rgba(236,72,153,0.55);
+}
 .dx-price-cta:hover::after { transform: translateX(120%); }
 
 .dx-price-cta-row { display: inline-flex; align-items: center; gap: 7px; }
 .dx-price-cta-sub {
-  font-size: 10.5px; font-weight: 700; opacity: 0.85; letter-spacing: 0.4px;
+  font-size: 10.5px; font-weight: 700; opacity: 0.95; letter-spacing: 0.4px;
+  color: #fff; text-shadow: 0 0 6px rgba(0,255,240,0.7);
 }
-.dx-price-cta-free {
-  background: transparent;
+.dx-price-cta-free::before {
+  background: linear-gradient(90deg, #22c55e, #00fff0, #22c55e);
+  background-size: 300% 100%;
 }
 .dx-price-cta-contact.is-featured::before {
-  background: linear-gradient(135deg, #fbbf24 0%, #f0b90b 40%, #a855f7 100%);
-  background-size: 200% 200%;
+  background: linear-gradient(90deg, #f0b90b, #ec4899, #a855f7, #00fff0, #f0b90b);
+  background-size: 300% 100%;
+}
+
+@keyframes dxNeonFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
 }
 
 @keyframes dxGoldFlow {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
+
 
 /* --------- Upgrade / Contact section (premium) --------- */
 .dx-upgrade-card {
