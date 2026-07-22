@@ -88,17 +88,33 @@ function Index() {
 
 
       <div className="dx-container">
-        <nav className="dx-nav">
-          <div className="dx-logo dx-rise" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src="/developerx-logo.png" alt="DeveloperX" width={36} height={36} style={{ borderRadius: 10, boxShadow: "0 4px 16px rgba(240,185,11,0.4)" }} />
-            <span>DeveloperX</span>
+        <nav className="dx-nav-pill">
+          <div className="dx-nav-brand dx-rise">
+            <span className="dx-nav-logo-ring">
+              <img src="/developerx-logo.png" alt="DeveloperX" />
+            </span>
+            <span className="dx-nav-brand-text">Developer<span className="dx-nav-brand-x">X</span></span>
           </div>
-          <div className="dx-nav-links">
-            <a className="dx-nav-link" href="#pricing">Pricing</a>
-            <a className="dx-nav-link" href="#features">Features</a>
-            <a className="dx-nav-link" href="#contact">Contact</a>
-            <Link className="dx-nav-link" to="/auth">Login</Link>
-            <Link className="dx-btn dx-btn-purple" to="/auth">Get Started</Link>
+
+          <div className="dx-nav-capsule">
+            <a className="dx-nav-pill-link" href="#pricing">Pricing</a>
+            <a className="dx-nav-pill-link" href="#features">Features</a>
+            <a className="dx-nav-pill-link" href="#contact">Contact</a>
+          </div>
+
+          <div className="dx-nav-actions">
+            <Link className="dx-nav-login" to="/auth">Login</Link>
+            <Link className="dx-cta-premium" to="/auth">
+              <span className="dx-cta-bg" />
+              <span className="dx-cta-shimmer" />
+              <span className="dx-cta-glow" />
+              <span className="dx-cta-label">
+                Get Started
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </span>
+            </Link>
           </div>
         </nav>
 
