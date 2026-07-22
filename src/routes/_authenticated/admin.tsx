@@ -359,14 +359,14 @@ function AdminPage() {
                 ) : (
                   <div className="ax-table-wrap">
                     <table className="ax-table">
-                      <thead><tr><th>When</th><th>User</th><th>Amount</th><th>Reason</th></tr></thead>
+                      <thead><tr><th>User</th><th>Last activity</th><th>Total used</th><th>Events</th></tr></thead>
                       <tbody>
-                        {(ledgerQuery.data ?? []).slice(0, 8).map((r) => (
-                          <tr key={r.id}>
-                            <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{new Date(r.createdAt).toLocaleString()}</td>
-                            <td>{r.email ?? "—"}</td>
-                            <td className="ax-mono" style={{ color: r.amount < 0 ? "#fca5a5" : "#34d399" }}>{r.amount > 0 ? `+${r.amount}` : r.amount}</td>
-                            <td>{r.reason ?? "—"}</td>
+                        {dedupeLedgerByUser(ledgerQuery.data ?? []).slice(0, 8).map((g) => (
+                          <tr key={g.userId} style={{ cursor: "pointer" }} onClick={() => setSection("ledger")}>
+                            <td>{g.email ?? "—"}</td>
+                            <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{new Date(g.lastAt).toLocaleString()}</td>
+                            <td className="ax-mono" style={{ color: "#fca5a5" }}>-{g.totalUsed}</td>
+                            <td className="ax-mono">{g.count}</td>
                           </tr>
                         ))}
                       </tbody>
