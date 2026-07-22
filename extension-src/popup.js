@@ -7,8 +7,7 @@ const API_ENDPOINTS = [
 ];
 const DEFAULT_API = API_ENDPOINTS[0];
 const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?lovable\.(app|dev)$/i;
-const AUTH_API_BASE = "https://bbyenyctnzuiujpydcxt.supabase.co";
-const AUTH_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieWVueWN0bnp1aXVqcHlkY3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NjEwMDMsImV4cCI6MjEwMDEzNzAwM30.CghONV6AVnW8-UxwdbYNcTCW0ZdNU68986uZp1nSeMM";
+// Backend auth is proxied through our own /api/public/auth/login — no direct DB creds in the extension.
 const FLOW_URL = "https://labs.google/fx/tools/flow";
 const FLOW_MATCH = /^https:\/\/labs\.google\/fx\/tools\/flow/i;
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
@@ -90,74 +89,11 @@ async function login(email, password) {
     }
   }
 
-  // Final fallback: authenticate against the same backend auth service used by the website.
-  // This avoids stale app endpoints showing "invalid password" when the real account is valid.
-  try {
-    return await directAuthLogin(email, password);
-  } catch (e) {
-    const msg = String(e?.message || "");
-    if (/confirm|verified|verification/i.test(msg)) unconfirmedErr = new Error(msg);
-    else if (/invalid|credential|password|email/i.test(msg)) credentialErr = new Error("Invalid email or password");
-    else lastErr = e;
-  }
-
   if (unconfirmedErr) throw unconfirmedErr;
   if (credentialErr) throw credentialErr;
   throw lastErr || new Error(`Cannot reach server (${failures.join(" | ")})`);
 }
 
-function normalizeExtensionEmail(raw) {
-  const trimmed = String(raw || "").trim();
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed.toLowerCase();
-  const slug = trimmed.toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^-+|-+$/g, "") || "user";
-  return `${slug}@dx.local`;
-}
-
-function directLoginCandidates(raw) {
-  const trimmed = String(raw || "").trim();
-  return Array.from(new Set([trimmed, trimmed.toLowerCase(), normalizeExtensionEmail(trimmed)].filter(Boolean)));
-}
-
-async function directAuthLogin(email, password) {
-  let last = null;
-  for (const candidate of directLoginCandidates(email)) {
-    const res = await fetch(`${AUTH_API_BASE}/auth/v1/token?grant_type=password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "apikey": AUTH_API_KEY,
-        "Authorization": `Bearer ${AUTH_API_KEY}`,
-      },
-      cache: "no-store",
-      body: JSON.stringify({ email: candidate, password }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      last = new Error(data.error_description || data.msg || data.message || "Invalid email or password");
-      continue;
-    }
-
-    const user = data.user || {};
-    const userId = user.id || decodeJwtPayload(data.access_token)?.sub;
-    if (!userId || !data.access_token) throw new Error("Login response missing session.");
-
-    const status = await fetchStatusForToken(userId, data.access_token);
-    const profileUser = status.data?.user || null;
-    return normalizeLoginPayload({
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token || "",
-      user: profileUser || {
-        id: userId,
-        email: user.email || candidate || email,
-        name: user.user_metadata?.display_name || user.user_metadata?.full_name || user.email || email,
-        plan: "basic",
-        creditsLeft: 0,
-      },
-    }, email);
-  }
-  throw last || new Error("Invalid email or password");
-}
 
 function decodeJwtPayload(token) {
   try {
