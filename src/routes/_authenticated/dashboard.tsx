@@ -205,8 +205,8 @@ function Dashboard() {
                     </div>
                     <div className="dx-pbar"><div className="dx-pbar-fill" style={{ width: `${pct}%` }} /></div>
                   </div>
-                  <Link to="/" style={{ display: "block", width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-text-soft)", background: "transparent", borderTop: "1px solid var(--dx-border)", textDecoration: "none" }}>
-                    🏠 Home
+                  <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-text-soft)", background: "transparent", borderTop: "1px solid var(--dx-border)", textDecoration: "none" }}>
+                    <Home size={15} /> Home
                   </Link>
                   <button
                     onClick={() => {
@@ -224,15 +224,15 @@ function Dashboard() {
                         })
                         .catch((err) => alert(err.message));
                     }}
-                    style={{ width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-text-soft)", background: "transparent", border: 0, borderTop: "1px solid var(--dx-border)", cursor: "pointer" }}
+                    style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-text-soft)", background: "transparent", border: 0, borderTop: "1px solid var(--dx-border)", cursor: "pointer" }}
                   >
-                    📥 Get Extension
+                    <Download size={15} /> Get Extension
                   </button>
                   <button
                     onClick={signOut}
-                    style={{ width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-red)", background: "transparent", border: 0, borderTop: "1px solid var(--dx-border)", cursor: "pointer" }}
+                    style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-red)", background: "transparent", border: 0, borderTop: "1px solid var(--dx-border)", cursor: "pointer" }}
                   >
-                    ↪ Sign Out
+                    <LogOut size={15} /> Sign Out
                   </button>
                 </div>
               )}
