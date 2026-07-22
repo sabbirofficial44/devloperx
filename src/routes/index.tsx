@@ -116,13 +116,7 @@ function Index() {
                 <span>✨</span> 12-Hour Daily FREE Trial · No credit card
               </div>
               <h1 className="dx-hero-mega dx-rise-2">
-                <span className="dx-word">Unlimited</span>{" "}
-                <span className="dx-word dx-word-accent">AI</span>{" "}
-                <span className="dx-word">Video</span>
-                <br />
-                <span className="dx-word">with</span>{" "}
-                <span className="dx-word dx-word-accent">Google</span>{" "}
-                <span className="dx-word dx-word-accent">Flow</span>
+                Unlimited AI Video<br />with Google Flow
               </h1>
               <p className="dx-hero-copy dx-rise-3" style={{ maxWidth: 640, margin: "24px auto 0" }}>
                 Access <strong style={{ color: "#f0b90b" }}>Veo 3</strong>, <strong style={{ color: "#a78bfa" }}>Omni</strong> & <strong style={{ color: "#22d3ee" }}>Flash</strong> through one Chrome extension. Live credit tracking, floating HUD on Flow, and Bangla support.
