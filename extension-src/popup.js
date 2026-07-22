@@ -94,58 +94,6 @@ async function login(email, password) {
   throw lastErr || new Error(`Cannot reach server (${failures.join(" | ")})`);
 }
 
-function normalizeExtensionEmail(raw) {
-  const trimmed = String(raw || "").trim();
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed.toLowerCase();
-  const slug = trimmed.toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/^-+|-+$/g, "") || "user";
-  return `${slug}@dx.local`;
-}
-
-function directLoginCandidates(raw) {
-  const trimmed = String(raw || "").trim();
-  return Array.from(new Set([trimmed, trimmed.toLowerCase(), normalizeExtensionEmail(trimmed)].filter(Boolean)));
-}
-
-async function directAuthLogin(email, password) {
-  let last = null;
-  for (const candidate of directLoginCandidates(email)) {
-    const res = await fetch(`${AUTH_API_BASE}/auth/v1/token?grant_type=password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "apikey": AUTH_API_KEY,
-        "Authorization": `Bearer ${AUTH_API_KEY}`,
-      },
-      cache: "no-store",
-      body: JSON.stringify({ email: candidate, password }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      last = new Error(data.error_description || data.msg || data.message || "Invalid email or password");
-      continue;
-    }
-
-    const user = data.user || {};
-    const userId = user.id || decodeJwtPayload(data.access_token)?.sub;
-    if (!userId || !data.access_token) throw new Error("Login response missing session.");
-
-    const status = await fetchStatusForToken(userId, data.access_token);
-    const profileUser = status.data?.user || null;
-    return normalizeLoginPayload({
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token || "",
-      user: profileUser || {
-        id: userId,
-        email: user.email || candidate || email,
-        name: user.user_metadata?.display_name || user.user_metadata?.full_name || user.email || email,
-        plan: "basic",
-        creditsLeft: 0,
-      },
-    }, email);
-  }
-  throw last || new Error("Invalid email or password");
-}
 
 function decodeJwtPayload(token) {
   try {
