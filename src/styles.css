@@ -1941,3 +1941,340 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
     padding-right: max(16px, env(safe-area-inset-right));
   }
 }
+
+/* =========================================================
+   ✨ 3D IMMERSIVE UPGRADE — global (public site + auth + dashboard)
+   Admin pages (.dx-admin-*) intentionally untouched.
+   ========================================================= */
+
+@keyframes dx3d-float-y {
+  0%,100% { transform: translate3d(0,0,0) rotateX(0) rotateY(0); }
+  50%     { transform: translate3d(0,-14px,0) rotateX(2deg) rotateY(-2deg); }
+}
+@keyframes dx3d-float-orb {
+  0%,100% { transform: translate3d(0,0,0) scale(1); opacity:.85; }
+  50%     { transform: translate3d(30px,-40px,0) scale(1.12); opacity:1; }
+}
+@keyframes dx3d-spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes dx3d-gradient-shift {
+  0%,100% { background-position: 0% 50%; }
+  50%     { background-position: 100% 50%; }
+}
+@keyframes dx3d-glow-pulse {
+  0%,100% { box-shadow: 0 20px 60px -20px rgba(124,92,252,.45), 0 0 0 1px rgba(255,255,255,.06) inset; }
+  50%     { box-shadow: 0 30px 90px -20px rgba(240,185,11,.55), 0 0 0 1px rgba(255,255,255,.12) inset; }
+}
+@keyframes dx3d-rise-3d {
+  from { opacity:0; transform: perspective(1200px) translate3d(0,40px,-80px) rotateX(-12deg); }
+  to   { opacity:1; transform: perspective(1200px) translate3d(0,0,0) rotateX(0); }
+}
+@keyframes dx3d-shine-sweep {
+  0%   { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%) skewX(-20deg); }
+}
+@keyframes dx3d-bg-drift {
+  0%,100% { transform: translate3d(0,0,0); }
+  50%     { transform: translate3d(-2%, -1%, 0); }
+}
+@keyframes dx3d-tilt-idle {
+  0%,100% { transform: perspective(1400px) rotateX(0) rotateY(0); }
+  25%     { transform: perspective(1400px) rotateX(1.2deg) rotateY(-1.5deg); }
+  75%     { transform: perspective(1400px) rotateX(-1deg) rotateY(1.4deg); }
+}
+
+/* Immersive backdrop — animated aurora over the existing dark bg */
+.dx-page::before,
+.dx-page-premium::before,
+.dx-auth-shell::before {
+  content: "";
+  position: fixed; inset: -20% -10% -10% -10%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(600px 500px at 15% 20%, rgba(124,92,252,.28), transparent 60%),
+    radial-gradient(700px 600px at 85% 10%, rgba(240,185,11,.18), transparent 60%),
+    radial-gradient(800px 700px at 50% 100%, rgba(34,211,238,.22), transparent 60%),
+    radial-gradient(500px 500px at 80% 80%, rgba(236,72,153,.16), transparent 60%);
+  filter: blur(30px) saturate(115%);
+  background-size: 200% 200%;
+  animation: dx3d-gradient-shift 18s ease-in-out infinite, dx3d-bg-drift 22s ease-in-out infinite;
+}
+.dx-page > *, .dx-page-premium > *, .dx-auth-shell > * { position: relative; z-index: 1; }
+
+/* Subtle starfield grid for depth */
+.dx-page::after,
+.dx-page-premium::after {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.4), transparent 50%),
+    radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.3), transparent 50%),
+    radial-gradient(1.5px 1.5px at 40% 80%, rgba(167,139,250,.5), transparent 50%),
+    radial-gradient(1px 1px at 90% 20%, rgba(240,185,11,.4), transparent 50%),
+    radial-gradient(1px 1px at 10% 70%, rgba(34,211,238,.4), transparent 50%);
+  background-size: 400px 400px;
+  opacity: .5;
+  animation: dx3d-bg-drift 40s linear infinite;
+}
+
+/* Give containers real 3D perspective so children can tilt */
+.dx-container, .dx-container-premium { perspective: 1600px; transform-style: preserve-3d; }
+
+/* HERO — layered 3D headline with glow */
+.dx-hero-mega {
+  background: linear-gradient(120deg,#fff 10%,#a78bfa 35%,#f0b90b 55%,#22d3ee 75%,#fff 95%);
+  background-size: 220% 220%;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  animation: dx3d-gradient-shift 8s ease-in-out infinite;
+  text-shadow: 0 20px 80px rgba(124,92,252,.25);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 12px 30px rgba(124,92,252,.35));
+}
+.dx-hero-copy { transform: translateZ(0); }
+
+/* Orbs — richer 3D float + glow */
+.dx-orb {
+  filter: blur(60px) saturate(140%);
+  animation: dx3d-float-orb 12s ease-in-out infinite;
+  will-change: transform;
+}
+.dx-orb.dx-float { animation-duration: 10s; }
+
+/* Marquee & badges — tiny 3D lift */
+.dx-badge {
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.2,.9,.3,1.3), box-shadow .4s ease, background .4s ease;
+}
+.dx-badge:hover {
+  transform: perspective(600px) translateZ(20px) rotateX(-8deg);
+  box-shadow: 0 18px 40px -15px rgba(124,92,252,.6);
+}
+
+/* Cards — universal 3D tilt on hover */
+.dx-feature-card,
+.dx-price-card-premium,
+.dx-stat-card,
+.dx-step,
+.dx-main-card,
+.dx-contact-card {
+  transform-style: preserve-3d;
+  transform: perspective(1400px) rotateX(0) rotateY(0) translateZ(0);
+  transition:
+    transform .6s cubic-bezier(.2,.8,.2,1),
+    box-shadow .5s ease,
+    border-color .4s ease,
+    background .5s ease;
+  will-change: transform;
+  position: relative;
+  overflow: hidden;
+}
+.dx-feature-card::before,
+.dx-price-card-premium::before,
+.dx-stat-card::before,
+.dx-step::before,
+.dx-main-card::before,
+.dx-contact-card::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.10) 50%, transparent 70%);
+  transform: translateX(-120%) skewX(-20deg);
+  pointer-events: none;
+  transition: opacity .3s;
+  opacity: 0;
+}
+.dx-feature-card:hover::before,
+.dx-price-card-premium:hover::before,
+.dx-stat-card:hover::before,
+.dx-step:hover::before,
+.dx-main-card:hover::before {
+  opacity: 1;
+  animation: dx3d-shine-sweep 1.1s ease forwards;
+}
+.dx-feature-card:hover,
+.dx-stat-card:hover,
+.dx-step:hover,
+.dx-main-card:hover {
+  transform: perspective(1400px) rotateX(6deg) rotateY(-6deg) translate3d(0,-10px,40px);
+  box-shadow:
+    0 40px 80px -30px rgba(0,0,0,.7),
+    0 30px 60px -30px rgba(124,92,252,.5),
+    0 0 0 1px rgba(255,255,255,.08) inset;
+  border-color: rgba(167,139,250,.45);
+}
+.dx-price-card-premium {
+  animation: dx3d-tilt-idle 9s ease-in-out infinite;
+}
+.dx-price-card-premium:hover {
+  animation: none;
+  transform: perspective(1400px) rotateX(8deg) rotateY(-8deg) translate3d(0,-14px,60px) scale(1.03);
+  box-shadow:
+    0 50px 100px -30px rgba(0,0,0,.75),
+    0 35px 70px -25px rgba(240,185,11,.4),
+    0 0 0 1px rgba(240,185,11,.35) inset;
+}
+.dx-price-card-premium.featured {
+  animation: dx3d-glow-pulse 4s ease-in-out infinite, dx3d-tilt-idle 9s ease-in-out infinite;
+}
+
+/* Buttons — 3D press with glow layer */
+.dx-btn {
+  transform-style: preserve-3d;
+  transition:
+    transform .35s cubic-bezier(.2,.9,.3,1.3),
+    box-shadow .35s ease,
+    filter .35s ease;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.dx-btn::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%);
+  transform: translateX(-140%) skewX(-20deg);
+  z-index: -1;
+  transition: opacity .2s;
+}
+.dx-btn:hover {
+  transform: perspective(700px) translateZ(12px) translateY(-3px) rotateX(-6deg);
+  filter: brightness(1.08);
+  box-shadow: 0 22px 45px -15px rgba(124,92,252,.55), 0 0 0 1px rgba(255,255,255,.1) inset;
+}
+.dx-btn:hover::after { animation: dx3d-shine-sweep .9s ease forwards; }
+.dx-btn:active { transform: perspective(700px) translateZ(4px) translateY(0) rotateX(-2deg); }
+
+.dx-btn-gold, .dx-btn-gold-premium {
+  box-shadow: 0 18px 40px -12px rgba(240,185,11,.5), 0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.dx-btn-gold:hover, .dx-btn-gold-premium:hover {
+  box-shadow: 0 28px 60px -15px rgba(240,185,11,.7), 0 0 0 1px rgba(255,255,255,.15) inset;
+}
+
+/* Logo — floating with subtle rotation halo */
+.dx-logo img, .dx-auth-brand img {
+  animation: dx3d-float-y 6s ease-in-out infinite;
+  transition: transform .5s cubic-bezier(.2,.9,.3,1.3), filter .4s;
+}
+.dx-logo:hover img, .dx-auth-brand:hover img {
+  transform: perspective(500px) rotateY(20deg) rotateX(-8deg) scale(1.08);
+  filter: drop-shadow(0 8px 20px rgba(240,185,11,.6));
+}
+
+/* Section titles get shimmer + slight 3D */
+.dx-section-title {
+  background: linear-gradient(100deg,#fff 20%,#a78bfa 45%,#f0b90b 65%,#fff 85%);
+  background-size: 220% 220%;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  animation: dx3d-gradient-shift 10s ease-in-out infinite;
+  text-shadow: 0 10px 40px rgba(124,92,252,.15);
+}
+
+/* Rise-in animations upgraded to real 3D entrance */
+.dx-rise, .dx-rise-2, .dx-rise-3, .dx-rise-4, .dx-fade-in {
+  animation: dx3d-rise-3d .9s cubic-bezier(.2,.8,.2,1) both;
+}
+.dx-rise-2 { animation-delay: .1s; }
+.dx-rise-3 { animation-delay: .2s; }
+.dx-rise-4 { animation-delay: .3s; }
+
+/* ================= AUTH page — 3D card ================= */
+.dx-auth-shell { perspective: 1800px; }
+.dx-auth-card {
+  transform-style: preserve-3d;
+  animation: dx3d-tilt-idle 12s ease-in-out infinite, dx3d-rise-3d 1s cubic-bezier(.2,.8,.2,1) both;
+  box-shadow:
+    0 60px 120px -30px rgba(0,0,0,.75),
+    0 30px 80px -25px rgba(124,92,252,.4),
+    0 0 0 1px rgba(255,255,255,.08) inset;
+  position: relative;
+}
+.dx-auth-card::before {
+  content: "";
+  position: absolute; inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(120deg, rgba(167,139,250,.6), rgba(240,185,11,.5), rgba(34,211,238,.6), rgba(167,139,250,.6));
+  background-size: 300% 300%;
+  animation: dx3d-gradient-shift 6s ease-in-out infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none;
+}
+.dx-auth-card:hover { animation-play-state: paused; }
+.dx-input {
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease;
+}
+.dx-input:focus {
+  transform: perspective(600px) translateZ(6px);
+  box-shadow: 0 12px 30px -10px rgba(167,139,250,.4), 0 0 0 3px rgba(167,139,250,.25);
+}
+
+/* ================= DASHBOARD — stat cards & prompt ================= */
+.dx-status-cards { perspective: 1400px; }
+.dx-stat-value { transition: transform .4s ease, text-shadow .4s ease; }
+.dx-stat-card:hover .dx-stat-value {
+  transform: translateZ(20px) scale(1.05);
+  text-shadow: 0 10px 30px rgba(240,185,11,.45);
+}
+.dx-textarea {
+  transition: transform .35s ease, box-shadow .35s ease, border-color .3s;
+}
+.dx-textarea:focus {
+  transform: perspective(700px) translateZ(8px);
+  box-shadow: 0 20px 40px -12px rgba(124,92,252,.35), 0 0 0 3px rgba(124,92,252,.25);
+}
+
+/* Progress bar — animated shimmer */
+.dx-pbar-fill { position: relative; overflow: hidden; }
+.dx-pbar-fill::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  animation: dx3d-shine-sweep 2.4s linear infinite;
+}
+
+/* Download button — 3D press */
+.dx-download-btn {
+  transform-style: preserve-3d;
+  transition: transform .4s cubic-bezier(.2,.9,.3,1.3), box-shadow .4s ease;
+}
+.dx-download-btn:hover {
+  transform: perspective(900px) translateZ(20px) translateY(-4px) rotateX(-6deg);
+  box-shadow: 0 30px 70px -20px rgba(240,185,11,.55), 0 0 0 1px rgba(255,255,255,.1) inset;
+}
+
+/* Nav — smooth reveal */
+.dx-nav, .dx-nav-premium { animation: dx3d-rise-3d .8s cubic-bezier(.2,.8,.2,1) both; }
+.dx-nav-link { transition: transform .3s ease, color .3s; }
+.dx-nav-link:hover { transform: translateY(-2px) translateZ(6px); color: #f0b90b; }
+
+/* Avatar button */
+.dx-nav-avatar { transition: transform .4s cubic-bezier(.2,.9,.3,1.3), box-shadow .4s; }
+.dx-nav-avatar:hover {
+  transform: perspective(600px) rotateY(15deg) rotateX(-10deg) translateZ(10px);
+  box-shadow: 0 18px 40px -12px rgba(240,185,11,.55);
+}
+
+/* Step numbers 3D */
+.dx-step-num {
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.2,.9,.3,1.3);
+}
+.dx-step:hover .dx-step-num {
+  transform: perspective(500px) rotateY(360deg) translateZ(20px) scale(1.15);
+}
+
+/* Reduced-motion — turn off heavy 3D idle animations */
+@media (prefers-reduced-motion: reduce) {
+  .dx-page::before, .dx-page-premium::before, .dx-auth-shell::before,
+  .dx-page::after, .dx-page-premium::after,
+  .dx-orb, .dx-logo img, .dx-auth-brand img,
+  .dx-price-card-premium, .dx-price-card-premium.featured,
+  .dx-auth-card, .dx-hero-mega, .dx-section-title,
+  .dx-pbar-fill::after { animation: none !important; }
+}
