@@ -154,7 +154,63 @@
     `;
     document.documentElement.appendChild(el);
     const toggle = el.querySelector("#dx-toggle");
+
+    // Restore saved position
+    try {
+      const saved = JSON.parse(localStorage.getItem("__dx_overlay_pos__") || "null");
+      if (saved && typeof saved.left === "number" && typeof saved.top === "number") {
+        el.style.left = saved.left + "px";
+        el.style.top = saved.top + "px";
+        el.style.right = "auto";
+      }
+    } catch (_) {}
+
+    // Draggable (mouse + touch)
+    let drag = null;
+    const onDown = (e) => {
+      const p = e.touches ? e.touches[0] : e;
+      const rect = el.getBoundingClientRect();
+      drag = { dx: p.clientX - rect.left, dy: p.clientY - rect.top, moved: false, startX: p.clientX, startY: p.clientY };
+    };
+    const onMove = (e) => {
+      if (!drag) return;
+      const p = e.touches ? e.touches[0] : e;
+      const dxm = Math.abs(p.clientX - drag.startX);
+      const dym = Math.abs(p.clientY - drag.startY);
+      if (!drag.moved && dxm < 4 && dym < 4) return;
+      drag.moved = true;
+      e.preventDefault();
+      const maxL = window.innerWidth - 60;
+      const maxT = window.innerHeight - 60;
+      const left = Math.max(4, Math.min(maxL, p.clientX - drag.dx));
+      const top = Math.max(4, Math.min(maxT, p.clientY - drag.dy));
+      el.style.left = left + "px";
+      el.style.top = top + "px";
+      el.style.right = "auto";
+    };
+    const onUp = () => {
+      if (drag && drag.moved) {
+        try {
+          localStorage.setItem("__dx_overlay_pos__", JSON.stringify({
+            left: parseFloat(el.style.left) || 0,
+            top: parseFloat(el.style.top) || 0,
+          }));
+        } catch (_) {}
+        // suppress click if dragged
+        setTimeout(() => { drag = null; }, 50);
+      } else {
+        drag = null;
+      }
+    };
+    toggle.addEventListener("mousedown", onDown);
+    toggle.addEventListener("touchstart", onDown, { passive: true });
+    window.addEventListener("mousemove", onMove, { passive: false });
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchend", onUp);
+
     toggle.addEventListener("click", (e) => {
+      if (drag && drag.moved) { e.stopPropagation(); e.preventDefault(); drag = null; return; }
       e.stopPropagation();
       el.classList.toggle("open");
     });

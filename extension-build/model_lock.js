@@ -36,11 +36,20 @@
   function clickLikeUser(el) {
     if (!el) return false;
     try { el.scrollIntoView({ block: "center", inline: "center" }); } catch {}
-    for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const touchInit = { bubbles: true, cancelable: true, composed: true, clientX: cx, clientY: cy };
+    for (const type of ["pointerover", "pointerenter", "pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
       try {
-        el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+        el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, composed: true, view: window, clientX: cx, clientY: cy, button: 0 }));
       } catch {}
     }
+    try {
+      const t = new Touch({ identifier: Date.now(), target: el, clientX: cx, clientY: cy });
+      el.dispatchEvent(new TouchEvent("touchstart", { ...touchInit, touches: [t], targetTouches: [t], changedTouches: [t] }));
+      el.dispatchEvent(new TouchEvent("touchend", { ...touchInit, touches: [], targetTouches: [], changedTouches: [t] }));
+    } catch {}
     try { el.click(); } catch {}
     return true;
   }
