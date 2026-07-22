@@ -89,17 +89,6 @@ async function login(email, password) {
     }
   }
 
-  // Final fallback: authenticate against the same backend auth service used by the website.
-  // This avoids stale app endpoints showing "invalid password" when the real account is valid.
-  try {
-    return await directAuthLogin(email, password);
-  } catch (e) {
-    const msg = String(e?.message || "");
-    if (/confirm|verified|verification/i.test(msg)) unconfirmedErr = new Error(msg);
-    else if (/invalid|credential|password|email/i.test(msg)) credentialErr = new Error("Invalid email or password");
-    else lastErr = e;
-  }
-
   if (unconfirmedErr) throw unconfirmedErr;
   if (credentialErr) throw credentialErr;
   throw lastErr || new Error(`Cannot reach server (${failures.join(" | ")})`);
