@@ -3,6 +3,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  LayoutDashboard, Users, UserPlus, Zap, Cookie, ScrollText,
+  BarChart3, Settings, ArrowLeft, Home, RefreshCw, ChevronDown, ChevronRight,
+  Circle,
+} from "lucide-react";
+import {
   bulkCreateUsers,
   createUser,
   deleteUser,
@@ -32,16 +37,30 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 type Section = "overview" | "users" | "create" | "bulk" | "cookies" | "history" | "ledger" | "settings";
 
-const NAV: { key: Section; label: string; icon: string }[] = [
-  { key: "overview", label: "Overview", icon: "▦" },
-  { key: "users", label: "Users", icon: "👥" },
-  { key: "create", label: "Create User", icon: "➕" },
-  { key: "bulk", label: "Bulk Generate", icon: "⚡" },
-  { key: "cookies", label: "Cookies", icon: "🍪" },
-  { key: "history", label: "Created History", icon: "🧾" },
-  { key: "ledger", label: "Credit Ledger", icon: "📊" },
-  { key: "settings", label: "Pricing & Contact", icon: "⚙" },
+const NAV: { key: Section; label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+  { key: "overview", label: "Overview", Icon: LayoutDashboard },
+  { key: "users", label: "Users", Icon: Users },
+  { key: "create", label: "Create User", Icon: UserPlus },
+  { key: "bulk", label: "Bulk Generate", Icon: Zap },
+  { key: "cookies", label: "Cookies", Icon: Cookie },
+  { key: "history", label: "Created History", Icon: ScrollText },
+  { key: "ledger", label: "Credit Ledger", Icon: BarChart3 },
+  { key: "settings", label: "Pricing & Contact", Icon: Settings },
 ];
+
+function dedupeLedgerByUser(rows: Array<{ userId: string; email: string | null; amount: number; createdAt: string }>) {
+  const map = new Map<string, { userId: string; email: string | null; totalUsed: number; count: number; lastAt: string }>();
+  for (const r of rows) {
+    const g = map.get(r.userId) ?? { userId: r.userId, email: r.email, totalUsed: 0, count: 0, lastAt: r.createdAt };
+    if (r.amount < 0) g.totalUsed += -r.amount;
+    g.count += 1;
+    if (new Date(r.createdAt) > new Date(g.lastAt)) g.lastAt = r.createdAt;
+    if (!g.email && r.email) g.email = r.email;
+    map.set(r.userId, g);
+  }
+  return Array.from(map.values()).sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
+}
+
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -292,17 +311,17 @@ function AdminPage() {
               onClick={() => setSection(n.key)}
               className="ax-nav-item"
             >
-              <span className="ax-nav-icon">{n.icon}</span>
+              <span className="ax-nav-icon"><n.Icon size={16} /></span>
               <span>{n.label}</span>
             </button>
           ))}
           <div className="ax-nav-label">Shortcuts</div>
           <Link to="/dashboard" className="ax-nav-item">
-            <span className="ax-nav-icon">↩</span>
+            <span className="ax-nav-icon"><ArrowLeft size={16} /></span>
             <span>User Dashboard</span>
           </Link>
           <Link to="/" className="ax-nav-item">
-            <span className="ax-nav-icon">⌂</span>
+            <span className="ax-nav-icon"><Home size={16} /></span>
             <span>Home</span>
           </Link>
         </nav>
@@ -353,14 +372,14 @@ function AdminPage() {
                 ) : (
                   <div className="ax-table-wrap">
                     <table className="ax-table">
-                      <thead><tr><th>When</th><th>User</th><th>Amount</th><th>Reason</th></tr></thead>
+                      <thead><tr><th>User</th><th>Last activity</th><th>Total used</th><th>Events</th></tr></thead>
                       <tbody>
-                        {(ledgerQuery.data ?? []).slice(0, 8).map((r) => (
-                          <tr key={r.id}>
-                            <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{new Date(r.createdAt).toLocaleString()}</td>
-                            <td>{r.email ?? "—"}</td>
-                            <td className="ax-mono" style={{ color: r.amount < 0 ? "#fca5a5" : "#34d399" }}>{r.amount > 0 ? `+${r.amount}` : r.amount}</td>
-                            <td>{r.reason ?? "—"}</td>
+                        {dedupeLedgerByUser(ledgerQuery.data ?? []).slice(0, 8).map((g) => (
+                          <tr key={g.userId} style={{ cursor: "pointer" }} onClick={() => setSection("ledger")}>
+                            <td>{g.email ?? "—"}</td>
+                            <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{new Date(g.lastAt).toLocaleString()}</td>
+                            <td className="ax-mono" style={{ color: "#fca5a5" }}>-{g.totalUsed}</td>
+                            <td className="ax-mono">{g.count}</td>
                           </tr>
                         ))}
                       </tbody>
