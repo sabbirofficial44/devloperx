@@ -372,6 +372,22 @@ function Dashboard() {
             );
           })()}
 
+          {visibleAnnouncements.length > 0 && (
+            <section className="dx-announcements">
+              {visibleAnnouncements.map((a) => (
+                <div key={a.id} className={`dx-ann dx-ann-${a.kind}`}>
+                  <div className="dx-ann-icon"><Bell size={16} /></div>
+                  <div className="dx-ann-body">
+                    <div className="dx-ann-title">{a.title}</div>
+                    <div className="dx-ann-text">{a.body}</div>
+                    <div className="dx-ann-time">{relTime(a.createdAt)}</div>
+                  </div>
+                  <button className="dx-ann-close" onClick={() => dismissAnn(a.id)} aria-label="Dismiss">×</button>
+                </div>
+              ))}
+            </section>
+          )}
+
           <section className="dx-status-cards">
             <div className="dx-stat-card">
               <div className="dx-stat-head"><Crown size={16} /><span>Plan</span></div>
