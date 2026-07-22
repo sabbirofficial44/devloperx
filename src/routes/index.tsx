@@ -215,16 +215,14 @@ function Index() {
                       {plan.cta ?? "Start Free"}
                     </Link>
                   ) : (
-                    <a
+                    <button
+                      type="button"
                       className="dx-btn dx-btn-gold-premium dx-cta-glow"
-                      style={{ width: "100%", marginTop: "auto" }}
-                      href={WA_LINK}
-                      target="_top"
-                      rel="noreferrer"
-                      onClick={(e) => { e.preventDefault(); openWa(WA_LINK); }}
+                      style={{ width: "100%", marginTop: "auto", border: "none", cursor: "pointer" }}
+                      onClick={() => openWa(WA_LINK)}
                     >
                       💬 Contact
-                    </a>
+                    </button>
                   )}
 
 
