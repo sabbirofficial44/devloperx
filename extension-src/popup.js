@@ -1,4 +1,4 @@
-/* Shadhin Digital Store — Veo Unlimited popup */
+/* Shadhin Digital Store — Shadhin popup */
 // Try these endpoints in order. Extension will auto-pick the one that responds.
 const API_ENDPOINTS = [
   "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app",

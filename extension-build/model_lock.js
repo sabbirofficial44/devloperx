@@ -1,4 +1,4 @@
-/* DeveloperX — Flow single model lock v4.4
+/* Shadhin Digital Store — Flow single model lock v4.4
  * Real model: the Lite / Lower Priority option that Flow exposes.
  * Visible model: only "Veo 3.5 Pro" — no Omni, no Lite, no Lower Priority text.
  */

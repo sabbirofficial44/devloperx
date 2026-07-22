@@ -1,4 +1,4 @@
-/* DeveloperX Flow overlay — floating logo badge on labs.google/fx/tools/flow
+/* Shadhin Digital Store Flow overlay — floating logo badge on labs.google/fx/tools/flow
  * Collapsed: small round logo with rotating conic border.
  * Expanded (on click): compact card with live HH:MM:SS timer, credits & buy CTA.
  */
