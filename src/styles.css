@@ -3033,8 +3033,9 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   position: absolute; border-radius: 999px; filter: blur(80px); pointer-events: none;
   z-index: 0;
 }
-.dx-upgrade-orb-1 { width: 280px; height: 280px; top: -80px; left: -60px; background: rgba(226,19,110,.35); animation: dx-glow-pulse 6s ease-in-out infinite; }
-.dx-upgrade-orb-2 { width: 320px; height: 320px; bottom: -100px; right: -80px; background: rgba(124,92,252,.35); animation: dx-glow-pulse 7s ease-in-out infinite reverse; }
+.dx-upgrade-orb-1 { width: 200px; height: 200px; top: -60px; left: -40px; background: rgba(226,19,110,.35); animation: dx-glow-pulse 6s ease-in-out infinite; }
+.dx-upgrade-orb-2 { width: 220px; height: 220px; bottom: -70px; right: -50px; background: rgba(124,92,252,.35); animation: dx-glow-pulse 7s ease-in-out infinite reverse; }
+
 .dx-upgrade-card > * { position: relative; z-index: 1; }
 
 .dx-upgrade-badge {
