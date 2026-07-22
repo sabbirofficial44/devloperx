@@ -2098,27 +2098,21 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
 .dx-stat-card:hover,
 .dx-step:hover,
 .dx-main-card:hover {
-  transform: perspective(1400px) rotateX(6deg) rotateY(-6deg) translate3d(0,-10px,40px);
+  transform: perspective(1400px) rotateX(3deg) rotateY(-3deg) translate3d(0,-6px,20px);
   box-shadow:
     0 40px 80px -30px rgba(0,0,0,.7),
     0 30px 60px -30px rgba(124,92,252,.5),
     0 0 0 1px rgba(255,255,255,.08) inset;
   border-color: rgba(167,139,250,.45);
 }
-.dx-price-card-premium {
-  animation: dx3d-tilt-idle 9s ease-in-out infinite;
-}
 .dx-price-card-premium:hover {
-  animation: none;
-  transform: perspective(1400px) rotateX(8deg) rotateY(-8deg) translate3d(0,-14px,60px) scale(1.03);
+  transform: perspective(1400px) rotateX(4deg) rotateY(-4deg) translate3d(0,-8px,30px) scale(1.02);
   box-shadow:
     0 50px 100px -30px rgba(0,0,0,.75),
     0 35px 70px -25px rgba(240,185,11,.4),
     0 0 0 1px rgba(240,185,11,.35) inset;
 }
-.dx-price-card-premium.featured {
-  animation: dx3d-glow-pulse 4s ease-in-out infinite, dx3d-tilt-idle 9s ease-in-out infinite;
-}
+
 
 /* Buttons — 3D press with glow layer */
 .dx-btn {
