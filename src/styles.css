@@ -2779,12 +2779,25 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
 
 .dx-nav-actions { display: flex; align-items: center; gap: 18px; }
 .dx-nav-login {
-  font-size: 14px; font-weight: 500;
-  color: rgba(226,232,240,0.72);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #e2e8f0;
   text-decoration: none;
-  transition: color 0.2s ease;
+  padding: 9px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(167,139,250,0.55);
+  background: rgba(167,139,250,0.08);
+  box-shadow: 0 0 12px rgba(167,139,250,0.25), inset 0 0 0 1px rgba(255,255,255,0.04);
+  transition: all 0.25s ease;
 }
-.dx-nav-login:hover { color: #f0b90b; }
+.dx-nav-login:hover {
+  color: #fff;
+  border-color: rgba(167,139,250,0.9);
+  background: rgba(167,139,250,0.18);
+  box-shadow: 0 0 22px rgba(167,139,250,0.55), 0 0 40px rgba(124,58,237,0.35);
+  transform: translateY(-1px);
+}
 
 /* Neon Get Started CTA */
 .dx-cta-premium {
