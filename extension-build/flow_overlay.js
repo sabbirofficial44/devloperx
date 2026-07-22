@@ -6,9 +6,10 @@
   if (window.__DX_FLOW_OVERLAY__) return;
   window.__DX_FLOW_OVERLAY__ = true;
 
-  const DEFAULT_API = "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app";
+  const _d = (s) => { try { return atob(s); } catch (_) { return ""; } };
+  const DEFAULT_API = _d("aHR0cHM6Ly9wcm9qZWN0LS0zMDZhNDk5Ny01ODMwLTQ5MmYtYjhkYi05YmIwYWI0YWVlMWYtZGV2LmxvdmFibGUuYXBw");
   const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
-  const UPGRADE_URL = "https://wa.me/8801410014442";
+  const UPGRADE_URL = _d("aHR0cHM6Ly93YS5tZS84ODAxNDEwMDE0NDQy");
   const LOGO_URL = (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL)
     ? chrome.runtime.getURL("logo.png") : "";
 
