@@ -187,10 +187,11 @@ function Dashboard() {
             <div className="relative dx-nav-avatar-wrap" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="dx-btn dx-btn-premium dx-nav-avatar"
+                className="dx-nav-avatar-btn"
                 aria-label="Account menu"
+                aria-expanded={menuOpen}
               >
-                {initial}
+                <UserIcon size={18} strokeWidth={2.2} />
               </button>
               {menuOpen && (
                 <div className="dx-dropdown">
