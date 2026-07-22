@@ -7,8 +7,7 @@ const API_ENDPOINTS = [
 ];
 const DEFAULT_API = API_ENDPOINTS[0];
 const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?lovable\.(app|dev)$/i;
-const AUTH_API_BASE = "https://bbyenyctnzuiujpydcxt.supabase.co";
-const AUTH_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieWVueWN0bnp1aXVqcHlkY3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NjEwMDMsImV4cCI6MjEwMDEzNzAwM30.CghONV6AVnW8-UxwdbYNcTCW0ZdNU68986uZp1nSeMM";
+// Backend auth is proxied through our own /api/public/auth/login — no direct DB creds in the extension.
 const FLOW_URL = "https://labs.google/fx/tools/flow";
 const FLOW_MATCH = /^https:\/\/labs\.google\/fx\/tools\/flow/i;
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
