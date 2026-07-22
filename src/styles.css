@@ -1030,18 +1030,61 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   color: var(--dx-red);
 }
 
+.dx-nav-avatar-btn {
+  width: 40px; height: 40px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(56,189,248,.18), rgba(139,92,246,.22));
+  color: #e2e8f0;
+  border: 1px solid rgba(148,163,184,.28);
+  cursor: pointer; flex-shrink: 0;
+  box-shadow: 0 6px 20px -8px rgba(56,189,248,.35), inset 0 1px 0 rgba(255,255,255,.08);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
+}
+.dx-nav-avatar-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(240,185,11,.55);
+  background: linear-gradient(135deg, rgba(240,185,11,.2), rgba(139,92,246,.28));
+  box-shadow: 0 10px 26px -8px rgba(240,185,11,.5), inset 0 1px 0 rgba(255,255,255,.14);
+  color: #fde68a;
+}
+.dx-nav-avatar-btn[aria-expanded="true"] {
+  border-color: rgba(240,185,11,.7);
+  color: #fde68a;
+}
+
 .dx-dropdown {
   position: absolute;
   right: 0;
-  top: calc(100% + 8px);
+  top: calc(100% + 14px);
   width: min(320px, calc(100vw - 32px));
   overflow: hidden;
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid var(--dx-border);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
-  z-index: 50;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(9,14,28,.98));
+  border: 1px solid rgba(148,163,184,.22);
+  box-shadow:
+    0 30px 90px -20px rgba(0,0,0,.7),
+    0 0 0 1px rgba(255,255,255,.04) inset,
+    0 -10px 40px -20px rgba(56,189,248,.35) inset;
+  backdrop-filter: blur(24px) saturate(160%);
+  z-index: 1000;
+  transform-origin: top right;
+  animation: dx-dropdown-in .22s cubic-bezier(.2,.9,.3,1.2);
 }
+.dx-dropdown::before {
+  content: "";
+  position: absolute; top: -7px; right: 18px;
+  width: 14px; height: 14px;
+  background: inherit;
+  border-left: 1px solid rgba(148,163,184,.22);
+  border-top: 1px solid rgba(148,163,184,.22);
+  transform: rotate(45deg);
+}
+@keyframes dx-dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.dx-nav-avatar-wrap { position: relative; }
+
 
 .dx-footer {
   text-align: center;
