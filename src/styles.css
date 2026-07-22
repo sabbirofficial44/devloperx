@@ -3059,14 +3059,15 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
 }
 
 .dx-upgrade-title {
-  font-size: clamp(28px, 4vw, 44px);
+  font-size: clamp(22px, 3vw, 32px);
   font-weight: 900; letter-spacing: -0.02em;
-  color: #fff; margin: 0 0 12px;
+  color: #fff; margin: 0 0 10px;
 }
 .dx-upgrade-sub {
-  color: #cbd5e1; max-width: 560px; margin: 0 auto 28px;
-  font-size: 15px; line-height: 1.6;
+  color: #cbd5e1; max-width: 520px; margin: 0 auto 20px;
+  font-size: 13.5px; line-height: 1.55;
 }
+
 
 .dx-upgrade-actions {
   display: grid;
