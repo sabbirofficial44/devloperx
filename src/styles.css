@@ -2831,7 +2831,7 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
 }
 .dx-cta-premium:hover .dx-cta-shimmer { transform: translateX(120%); }
 
-.dx-cta-glow {
+.dx-cta-premium-glow {
   position: absolute; inset: -8px;
   border-radius: 20px;
   background: conic-gradient(from 0deg, #00fff0, #7c3aed, #ec4899, #00fff0);
@@ -2840,7 +2840,7 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   z-index: -3;
   animation: dxNeonSpin 6s linear infinite;
 }
-.dx-cta-premium:hover .dx-cta-glow { opacity: 1; filter: blur(20px); }
+.dx-cta-premium:hover .dx-cta-premium-glow { opacity: 1; filter: blur(20px); }
 
 .dx-cta-label {
   display: inline-flex; align-items: center; gap: 8px;
