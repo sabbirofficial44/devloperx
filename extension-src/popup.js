@@ -152,12 +152,13 @@ async function fetchStatusForToken(userId, accessToken) {
     try {
       const headers = { "Content-Type": "application/json", "Accept": "application/json" };
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-      const res = await fetch(`${base}/api/public/extension/verify`, {
+      const res = await fetch(`${base}/api/public/extension/verify?_ts=${Date.now()}`, {
         method: "POST",
-        headers,
+        headers: { ...headers, "Cache-Control": "no-store, no-cache", "Pragma": "no-cache" },
         cache: "no-store",
-        body: JSON.stringify({ userId, accessToken }),
+        body: JSON.stringify({ userId, accessToken, _ts: Date.now() }),
       });
+
       const type = (res.headers.get("content-type") || "").toLowerCase();
       const data = type.includes("application/json") ? await res.json().catch(() => ({})) : { message: "Server returned app page instead of API" };
       last = { status: res.status, data };
