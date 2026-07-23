@@ -2452,15 +2452,13 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   line-height: 1.1;
 }
 .dx-price-card-premium .dx-plan-badge-top {
-  font-size: clamp(9px, .85vw, 11px) !important;
-  padding: 3px 8px !important;
-  top: 8px !important;
-  right: 8px !important;
+  font-size: clamp(9.5px, .9vw, 11px) !important;
+  padding: 5px 11px !important;
+  top: -10px !important;
+  right: 12px !important;
   white-space: nowrap;
-  max-width: calc(100% - 16px);
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
+
 
 /* Card button — never overflow, always wrap gracefully */
 .dx-price-card-premium .dx-btn {
