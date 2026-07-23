@@ -3527,3 +3527,216 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
     border: 1px solid rgba(167,139,250,.35) !important;
   }
 }
+
+/* =====================================================================
+   UNIFIED BUTTON SYSTEM (Glassmorphism) — final override pass
+   Applies to: .dx-btn variants, .dx-cta-premium (Get Started),
+   .dx-price-cta (pricing contacts), .dx-upgrade-btn, .dx-nav-login.
+   Goal: one cohesive premium button language across the site.
+   ===================================================================== */
+
+/* Kill the jumpy 3D hover from earlier pass */
+.dx-btn:hover,
+.dx-btn-gold:hover,
+.dx-btn-gold-premium:hover,
+.dx-btn-purple:hover,
+.dx-btn-premium:hover,
+.dx-btn-outline:hover,
+.dx-btn-danger:hover {
+  transform: translateY(-2px) !important;
+  filter: brightness(1.06);
+}
+.dx-btn:active,
+.dx-btn-gold:active,
+.dx-btn-gold-premium:active,
+.dx-btn-purple:active,
+.dx-btn-premium:active,
+.dx-btn-outline:active {
+  transform: translateY(0) !important;
+}
+
+/* Base — every .dx-btn is a soft glass surface unless it opts into a gradient variant */
+.dx-btn {
+  padding: 12px 22px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 8px 24px -14px rgba(0,0,0,0.6);
+  transition: transform .25s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease, filter .3s ease;
+}
+.dx-btn:hover {
+  border-color: rgba(255,255,255,0.22) !important;
+  background: rgba(255,255,255,0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    0 14px 36px -12px rgba(124,92,252,0.45);
+}
+
+/* Primary gradient — Start Free / Get Started style */
+.dx-btn-purple,
+.dx-btn-premium {
+  color: #fff !important;
+  background:
+    linear-gradient(135deg, #7c3aed 0%, #6366f1 55%, #06b6d4 100%) !important;
+  border: 1px solid rgba(167,139,250,0.55) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    0 10px 28px -10px rgba(124,92,252,0.55) !important;
+}
+.dx-btn-purple:hover,
+.dx-btn-premium:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.24),
+    0 18px 42px -12px rgba(124,92,252,0.7),
+    0 0 24px -6px rgba(6,182,212,0.45) !important;
+}
+
+/* Gold gradient — Start 12-Hour Free Trial etc. */
+.dx-btn-gold,
+.dx-btn-gold-premium {
+  color: #1a1200 !important;
+  text-shadow: none !important;
+  background: linear-gradient(135deg, #fde047 0%, #f0b90b 55%, #f97316 100%) !important;
+  border: 1px solid rgba(240,185,11,0.55) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    0 10px 28px -10px rgba(240,185,11,0.55) !important;
+}
+.dx-btn-gold:hover,
+.dx-btn-gold-premium:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    0 18px 42px -12px rgba(240,185,11,0.75),
+    0 0 22px -6px rgba(249,115,22,0.5) !important;
+}
+
+/* Secondary — glass outline (View Plans) */
+.dx-btn-outline {
+  color: rgba(240,244,255,0.92) !important;
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+}
+.dx-btn-outline:hover {
+  background: rgba(255,255,255,0.09) !important;
+  border-color: rgba(255,255,255,0.28) !important;
+  color: #fff !important;
+}
+
+/* Danger — soft red glass */
+.dx-btn-danger {
+  color: #fff !important;
+  background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+  border: 1px solid rgba(239,68,68,0.5) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 10px 26px -12px rgba(239,68,68,.55) !important;
+}
+
+/* Kill overly loud shine sweep pseudo on base btns for calm feel */
+.dx-btn::after { opacity: 0; }
+.dx-btn:hover::after { animation: none !important; opacity: 0; }
+
+/* --- Nav "Get Started" (dx-cta-premium) — align with primary gradient --- */
+.dx-cta-premium {
+  animation: none !important;
+  border: 1px solid rgba(167,139,250,0.55) !important;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 55%, #06b6d4 100%);
+  color: #fff !important;
+  text-shadow: none !important;
+  padding: 11px 22px;
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    0 10px 28px -10px rgba(124,92,252,0.55) !important;
+}
+.dx-cta-premium:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    0 18px 42px -12px rgba(124,92,252,0.7),
+    0 0 24px -6px rgba(6,182,212,0.45) !important;
+}
+.dx-cta-bg,
+.dx-cta-shimmer,
+.dx-cta-premium-glow { display: none !important; }
+.dx-cta-label { text-shadow: none; }
+.dx-cta-label svg { filter: none; }
+
+/* --- Nav login link --- */
+.dx-nav-login {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  transition: color .25s ease, background .25s ease, border-color .25s ease;
+}
+.dx-nav-login:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* --- Pricing CONTACT buttons — cleaner glass card style --- */
+.dx-price-cta {
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)) !important;
+  border: 1px solid color-mix(in oklab, var(--dx-cta-c1) 45%, rgba(255,255,255,0.08)) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 10px 24px -14px var(--dx-cta-glow) !important;
+}
+.dx-price-cta:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--dx-cta-c1) 75%, transparent) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    0 16px 34px -12px var(--dx-cta-glow),
+    0 0 22px -6px var(--dx-cta-glow) !important;
+}
+.dx-price-cta-row {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--dx-cta-c1) 90%, #fff 0%),
+    color-mix(in oklab, var(--dx-cta-c2) 90%, #000 0%)) !important;
+  box-shadow: 0 6px 16px -6px var(--dx-cta-glow);
+}
+.dx-price-cta-sub { font-size: 13.5px; }
+.dx-price-cta-sub::before { color: color-mix(in oklab, var(--dx-cta-c1) 70%, #fff 30%); }
+
+/* --- Upgrade section quick-contact tiles unified --- */
+.dx-upgrade-btn {
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 10px 24px -14px rgba(0,0,0,0.6);
+  transition: transform .25s ease, background .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
+.dx-upgrade-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(255,255,255,0.22) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    0 16px 34px -12px rgba(124,92,252,0.5);
+}
+
+/* Consistent focus ring for all interactive CTAs */
+.dx-btn:focus-visible,
+.dx-cta-premium:focus-visible,
+.dx-price-cta:focus-visible,
+.dx-upgrade-btn:focus-visible,
+.dx-nav-login:focus-visible {
+  outline: 2px solid rgba(167,139,250,0.85);
+  outline-offset: 3px;
+}
