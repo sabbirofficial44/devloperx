@@ -992,16 +992,21 @@ function UserRow({
       </div>
 
       <div className="ax-user-grid">
-        <label className="ax-user-cell">
-          <span className="ax-user-cell-label">Credits</span>
-          <input
-            type="number"
-            value={credits}
-            onChange={(e) => setCredits(e.target.value)}
-            className="ax-input ax-user-input"
+        <div className="ax-user-cell">
+          <span className="ax-user-cell-label">Access time</span>
+          <TimeInput
+            label=""
+            minutes={Number(credits) || 0}
+            onChange={(m) => setCredits(String(m))}
+            presets={[
+              { label: "+1h", m: 60 },
+              { label: "+1d", m: 1440 },
+              { label: "+7d", m: 10080 },
+            ]}
           />
           <span className="ax-user-cell-sub">{isUnlimited ? "unlimited" : `≈ ${minutesToLabel(currentCredits)} left`}</span>
-        </label>
+        </div>
+
 
         <label className="ax-user-cell">
           <span className="ax-user-cell-label">Plan</span>
