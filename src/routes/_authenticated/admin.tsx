@@ -185,7 +185,7 @@ function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [credits, setCredits] = useState("300");
+  const [credits, setCredits] = useState("720"); // minutes — default 12h trial
   const [plan, setPlan] = useState("basic");
   const [msg, setMsg] = useState("");
 
