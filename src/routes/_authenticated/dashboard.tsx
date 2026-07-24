@@ -6,12 +6,14 @@ import {
   Home, LogOut, Download, Sparkles, Play, Zap, Crown, Coins,
   Activity, TrendingUp, AlertTriangle, ShieldAlert, Wand2, Package,
   ChevronRight, User as UserIcon, History, Bell, BarChart3, Copy,
-  Trash2, ExternalLink, Cookie, MessageCircle, Clock, Flame, CheckCircle2,
+  Trash2, ExternalLink, MessageCircle, Clock, Flame, CheckCircle2,
+  Film, ShieldCheck,
 } from "lucide-react";
 import { getMyProfile } from "@/lib/flow-admin.functions";
 import { getSiteSettings } from "@/lib/site-settings.functions";
 import {
   getPromptHistory, savePrompt, deletePrompt, getAnnouncements, getUsageStats,
+  getVideoHistory, deleteVideo,
 } from "@/lib/user-dashboard.functions";
 import { supabase } from "@/integrations/supabase/client";
 
