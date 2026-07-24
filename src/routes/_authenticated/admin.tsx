@@ -1022,14 +1022,15 @@ function UserRow({
 
       <div className="ax-user-actions">
         <div className="ax-user-topups">
-          {QUICK_TOPUPS.map((n) => (
+          {QUICK_TOPUPS.map((t) => (
             <button
-              key={n}
-              onClick={() => topUp(n)}
-              title={`Add ${n} credits (${minutesToLabel(n)})`}
+              key={t.label}
+              onClick={() => topUp(t.m)}
+              title={`Add ${minutesToLabel(t.m)} access`}
               className="ax-btn ax-btn-ghost ax-user-topup"
-            >+{n >= 1000 ? `${n / 1000}k` : n}</button>
+            >{t.label}</button>
           ))}
+
         </div>
         <div className="ax-user-cta">
           <button disabled={!dirty} onClick={() => onSave({ credits: currentCredits, plan })} className="ax-btn ax-btn-primary ax-user-btn">Save</button>
