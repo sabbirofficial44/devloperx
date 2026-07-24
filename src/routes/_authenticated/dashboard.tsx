@@ -431,9 +431,6 @@ function Dashboard() {
               <button className="dx-btn dx-btn-gold-premium" onClick={() => openWhatsApp(UPGRADE_URL)}>
                 <TrendingUp size={16} /> Upgrade Plan
               </button>
-              <button className="dx-btn dx-btn-outline" onClick={signOut}>
-                <LogOut size={15} /> Sign Out
-              </button>
             </div>
           </section>
 
