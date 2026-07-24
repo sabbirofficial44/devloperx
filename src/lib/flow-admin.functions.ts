@@ -211,13 +211,13 @@ export const listCreatedUsers = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("admin_created_users")
-      .select("id, email, password, display_name, plan, credits, created_at, user_id")
+      .select("id, email, display_name, plan, credits, created_at, user_id")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => ({
       id: r.id,
       email: r.email,
-      password: r.password,
+      password: null as string | null,
       displayName: r.display_name,
       plan: r.plan,
       credits: r.credits === null ? null : Number(r.credits),
