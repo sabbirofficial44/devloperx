@@ -136,7 +136,7 @@ export const createUser = createServerFn({ method: "POST" })
       created_by: context.userId,
       user_id: userId,
       email: data.email,
-      password: data.password,
+      password: await hashPw(data.password),
       display_name: data.displayName ?? null,
       plan: data.plan ?? null,
       credits: data.credits ?? null,
