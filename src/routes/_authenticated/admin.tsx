@@ -491,8 +491,13 @@ function AdminPage() {
                   <Field label="Prefix" value={bulkPrefix} onChange={setBulkPrefix} />
                   <Field label="Domain" value={bulkDomain} onChange={setBulkDomain} />
                   <Field label="Plan" value={bulkPlan} onChange={setBulkPlan} />
-                  <Field label="Credits" type="number" value={bulkCredits} onChange={setBulkCredits} />
                 </div>
+                <TimeInput
+                  label="Access time per account"
+                  minutes={Number(bulkCredits) || 0}
+                  onChange={(m) => setBulkCredits(String(m))}
+                />
+
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button
                     className="ax-btn ax-btn-primary"
