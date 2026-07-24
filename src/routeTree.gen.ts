@@ -19,6 +19,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicCreditsRouteImport } from './routes/api/public/credits'
 import { Route as ApiPublicUserCookiesRouteImport } from './routes/api/public/user/cookies'
+import { Route as ApiPublicExtensionVideoSaveRouteImport } from './routes/api/public/extension/video-save'
 import { Route as ApiPublicExtensionVerifyRouteImport } from './routes/api/public/extension/verify'
 import { Route as ApiPublicExtensionIdentityRouteImport } from './routes/api/public/extension/identity'
 import { Route as ApiPublicExtensionGenerateRouteImport } from './routes/api/public/extension/generate'
@@ -81,6 +82,12 @@ const ApiPublicUserCookiesRoute = ApiPublicUserCookiesRouteImport.update({
   path: '/api/public/user/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicExtensionVideoSaveRoute =
+  ApiPublicExtensionVideoSaveRouteImport.update({
+    id: '/api/public/extension/video-save',
+    path: '/api/public/extension/video-save',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicExtensionVerifyRoute =
   ApiPublicExtensionVerifyRouteImport.update({
     id: '/api/public/extension/verify',
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
   '/api/public/extension/identity': typeof ApiPublicExtensionIdentityRoute
   '/api/public/extension/verify': typeof ApiPublicExtensionVerifyRoute
+  '/api/public/extension/video-save': typeof ApiPublicExtensionVideoSaveRoute
   '/api/public/user/cookies': typeof ApiPublicUserCookiesRoute
 }
 export interface FileRoutesByTo {
@@ -193,6 +201,7 @@ export interface FileRoutesByTo {
   '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
   '/api/public/extension/identity': typeof ApiPublicExtensionIdentityRoute
   '/api/public/extension/verify': typeof ApiPublicExtensionVerifyRoute
+  '/api/public/extension/video-save': typeof ApiPublicExtensionVideoSaveRoute
   '/api/public/user/cookies': typeof ApiPublicUserCookiesRoute
 }
 export interface FileRoutesById {
@@ -218,6 +227,7 @@ export interface FileRoutesById {
   '/api/public/extension/generate': typeof ApiPublicExtensionGenerateRoute
   '/api/public/extension/identity': typeof ApiPublicExtensionIdentityRoute
   '/api/public/extension/verify': typeof ApiPublicExtensionVerifyRoute
+  '/api/public/extension/video-save': typeof ApiPublicExtensionVideoSaveRoute
   '/api/public/user/cookies': typeof ApiPublicUserCookiesRoute
 }
 export interface FileRouteTypes {
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/api/public/extension/generate'
     | '/api/public/extension/identity'
     | '/api/public/extension/verify'
+    | '/api/public/extension/video-save'
     | '/api/public/user/cookies'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/api/public/extension/generate'
     | '/api/public/extension/identity'
     | '/api/public/extension/verify'
+    | '/api/public/extension/video-save'
     | '/api/public/user/cookies'
   id:
     | '__root__'
@@ -290,6 +302,7 @@ export interface FileRouteTypes {
     | '/api/public/extension/generate'
     | '/api/public/extension/identity'
     | '/api/public/extension/verify'
+    | '/api/public/extension/video-save'
     | '/api/public/user/cookies'
   fileRoutesById: FileRoutesById
 }
@@ -313,6 +326,7 @@ export interface RootRouteChildren {
   ApiPublicExtensionGenerateRoute: typeof ApiPublicExtensionGenerateRoute
   ApiPublicExtensionIdentityRoute: typeof ApiPublicExtensionIdentityRoute
   ApiPublicExtensionVerifyRoute: typeof ApiPublicExtensionVerifyRoute
+  ApiPublicExtensionVideoSaveRoute: typeof ApiPublicExtensionVideoSaveRoute
   ApiPublicUserCookiesRoute: typeof ApiPublicUserCookiesRoute
 }
 
@@ -386,6 +400,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/user/cookies'
       fullPath: '/api/public/user/cookies'
       preLoaderRoute: typeof ApiPublicUserCookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/extension/video-save': {
+      id: '/api/public/extension/video-save'
+      path: '/api/public/extension/video-save'
+      fullPath: '/api/public/extension/video-save'
+      preLoaderRoute: typeof ApiPublicExtensionVideoSaveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/extension/verify': {
@@ -508,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicExtensionGenerateRoute: ApiPublicExtensionGenerateRoute,
   ApiPublicExtensionIdentityRoute: ApiPublicExtensionIdentityRoute,
   ApiPublicExtensionVerifyRoute: ApiPublicExtensionVerifyRoute,
+  ApiPublicExtensionVideoSaveRoute: ApiPublicExtensionVideoSaveRoute,
   ApiPublicUserCookiesRoute: ApiPublicUserCookiesRoute,
 }
 export const routeTree = rootRouteImport

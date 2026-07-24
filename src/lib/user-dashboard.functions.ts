@@ -97,3 +97,38 @@ export const getUsageStats = createServerFn({ method: "GET" })
 
     return { buckets, total7d: total, today };
   });
+
+export const getVideoHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("video_history")
+      .select("id, prompt, video_url, thumbnail_url, model, status, created_at, external_id")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      prompt: r.prompt,
+      videoUrl: r.video_url,
+      thumbnailUrl: r.thumbnail_url,
+      model: r.model,
+      status: r.status,
+      externalId: r.external_id,
+      createdAt: r.created_at,
+    }));
+  });
+
+export const deleteVideo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("video_history")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
