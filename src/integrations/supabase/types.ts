@@ -311,6 +311,45 @@ export type Database = {
         }
         Relationships: []
       }
+      video_history: {
+        Row: {
+          created_at: string
+          external_id: string | null
+          id: string
+          model: string | null
+          prompt: string | null
+          source: string
+          status: string
+          thumbnail_url: string | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          model?: string | null
+          prompt?: string | null
+          source?: string
+          status?: string
+          thumbnail_url?: string | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          model?: string | null
+          prompt?: string | null
+          source?: string
+          status?: string
+          thumbnail_url?: string | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
