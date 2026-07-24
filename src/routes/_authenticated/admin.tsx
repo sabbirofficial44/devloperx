@@ -605,22 +605,14 @@ function AdminPage() {
                 {historyQuery.data && historyQuery.data.length > 0 && (
                   <div className="ax-table-wrap">
                     <table className="ax-table">
-                      <thead><tr><th>Email</th><th>Password</th><th>Plan</th><th>Credits</th><th>Created</th><th style={{textAlign:"right"}}>Action</th></tr></thead>
+                      <thead><tr><th>Email</th><th>Plan</th><th>Credits</th><th>Created</th></tr></thead>
                       <tbody>
                         {historyQuery.data.map((r) => (
                           <tr key={r.id}>
                             <td><span className="ax-mono">{r.email}</span></td>
-                            <td><span className="ax-mono">{r.password}</span></td>
                             <td>{r.plan ?? "—"}</td>
                             <td>{r.credits ?? "—"}</td>
                             <td style={{ color: "#64748b", fontSize: 11 }}>{new Date(r.createdAt).toLocaleString()}</td>
-                            <td style={{ textAlign: "right" }}>
-                              <button
-                                onClick={() => navigator.clipboard.writeText(`${r.email} / ${r.password}`)}
-                                className="ax-btn ax-btn-ghost"
-                                style={{ padding: "5px 10px", fontSize: 11 }}
-                              >Copy</button>
-                            </td>
                           </tr>
                         ))}
                       </tbody>
