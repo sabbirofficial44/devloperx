@@ -99,7 +99,14 @@ export const Route = createFileRoute("/api/public/auth/login")({
             .order("created_at", { ascending: false })
             .limit(5);
 
-          const matched = (createdRows ?? []).find((row) => row.password === body.password);
+          let matched: (typeof createdRows extends (infer U)[] | null ? U : never) | undefined;
+          for (const row of createdRows ?? []) {
+            if (!row.password) continue;
+            const ok = row.password.startsWith("$2")
+              ? await bcrypt.compare(body.password, row.password)
+              : row.password === body.password;
+            if (ok) { matched = row; break; }
+          }
           if (matched?.user_id) {
             await supabaseAdmin.auth.admin.updateUserById(matched.user_id, {
               password: body.password,
