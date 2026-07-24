@@ -230,7 +230,64 @@
     document.addEventListener("click", (e) => {
       if (!el.contains(e.target)) el.classList.remove("open");
     });
+
+    const injectBtn = el.querySelector("#dx-inject");
+    if (injectBtn) {
+      injectBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        triggerInject();
+      });
+    }
     return el;
+  }
+
+  function setInjectStatus(msg, color) {
+    const s = document.getElementById("dx-inject-status");
+    if (!s) return;
+    s.textContent = msg || "";
+    s.style.color = color || "#8b93a8";
+  }
+
+  let injecting = false;
+  async function triggerInject() {
+    if (injecting) return;
+    const btn = document.getElementById("dx-inject");
+    const store = await getStore();
+    if (!store.userId) {
+      setInjectStatus("Sign in via the extension popup first.", "#fbbf24");
+      return;
+    }
+    if (liveBase.blocked || (!liveBase.unlimited && liveBase.credits <= 0)) {
+      setInjectStatus("Credits exhausted — top up first.", "#f87171");
+      return;
+    }
+    injecting = true;
+    if (btn) btn.disabled = true;
+    setInjectStatus("🍪 Injecting fresh session…", "#c4b5fd");
+    try {
+      const res = await new Promise((resolve) => {
+        try {
+          chrome.runtime.sendMessage({ type: "INJECT_NOW" }, (r) => {
+            if (chrome.runtime.lastError) return resolve({ success: false, message: chrome.runtime.lastError.message });
+            resolve(r || { success: false });
+          });
+        } catch (err) { resolve({ success: false, message: String(err) }); }
+      });
+      if (!res || res.success === false) {
+        setInjectStatus("❌ " + (res?.message || "Injection failed"), "#f87171");
+        injecting = false;
+        if (btn) btn.disabled = false;
+        return;
+      }
+      setInjectStatus("✅ Session locked · reloading…", "#34d399");
+      setTimeout(() => {
+        try { location.reload(); } catch { window.location.href = "https://labs.google/fx/tools/flow"; }
+      }, 600);
+    } catch (e) {
+      setInjectStatus("❌ " + (e.message || "Injection failed"), "#f87171");
+      injecting = false;
+      if (btn) btn.disabled = false;
+    }
   }
 
   async function getStore() {
