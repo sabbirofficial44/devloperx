@@ -534,7 +534,67 @@ function Dashboard() {
             )}
           </section>
 
-
+          <section className="dx-main-card">
+            <h2><Film size={18} /> My Videos <span className="dx-pill">{videos.length}</span></h2>
+            <div style={{ color: "var(--dx-muted-soft)", fontSize: 12.5, marginTop: -4, marginBottom: 12 }}>
+              Every video you generate on Google Flow is auto-saved here.
+            </div>
+            {videos.length === 0 ? (
+              <div className="dx-empty">
+                <Film size={28} opacity={0.4} />
+                <div>No videos yet. Generate one on Google Flow and it will appear here automatically.</div>
+              </div>
+            ) : (
+              <div className="dx-video-grid">
+                {videos.map((v) => (
+                  <div key={v.id} className="dx-video-card">
+                    <div className="dx-video-thumb">
+                      {v.videoUrl ? (
+                        <video
+                          src={v.videoUrl}
+                          poster={v.thumbnailUrl ?? undefined}
+                          controls
+                          preload="metadata"
+                          playsInline
+                        />
+                      ) : v.thumbnailUrl ? (
+                        <img src={v.thumbnailUrl} alt="Video thumbnail" />
+                      ) : (
+                        <div className="dx-video-placeholder"><Film size={30} /></div>
+                      )}
+                    </div>
+                    <div className="dx-video-body">
+                      {v.prompt && <div className="dx-video-prompt">{v.prompt}</div>}
+                      <div className="dx-video-meta">
+                        <span><Clock size={11} /> {relTime(v.createdAt)}</span>
+                        {v.model && <span className="dx-video-model">{v.model}</span>}
+                      </div>
+                      <div className="dx-video-actions">
+                        {v.videoUrl && (
+                          <a className="dx-icon-btn" title="Open" href={v.videoUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink size={13} />
+                          </a>
+                        )}
+                        {v.videoUrl && (
+                          <a className="dx-icon-btn" title="Download" href={v.videoUrl} download>
+                            <Download size={13} />
+                          </a>
+                        )}
+                        <button
+                          className="dx-icon-btn dx-icon-danger"
+                          title="Delete"
+                          onClick={() => deleteVideoMutation.mutate(v.id)}
+                          disabled={deleteVideoMutation.isPending}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
           <section className="dx-main-card">
             <h2><Package size={18} /> DeveloperX Extension</h2>
