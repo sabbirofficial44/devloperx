@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
+
+async function hashPw(pw: string): Promise<string> {
+  return bcrypt.hash(pw, 10);
+}
 
 async function requireAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
