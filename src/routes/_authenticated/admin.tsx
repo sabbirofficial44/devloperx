@@ -193,7 +193,7 @@ function AdminPage() {
   const [bulkDomain, setBulkDomain] = useState("flowmail.local");
   const [bulkPrefix, setBulkPrefix] = useState("flow");
   const [bulkPlan, setBulkPlan] = useState("basic");
-  const [bulkCredits, setBulkCredits] = useState("300");
+  const [bulkCredits, setBulkCredits] = useState("720"); // minutes
   const [bulkResults, setBulkResults] = useState<
     { email: string; password: string; ok: boolean; error?: string }[]
   >([]);
