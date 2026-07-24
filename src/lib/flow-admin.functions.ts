@@ -195,7 +195,7 @@ export const bulkCreateUsers = createServerFn({ method: "POST" })
         created_by: context.userId,
         user_id: userId,
         email,
-        password,
+        password: await hashPw(password),
         plan: data.plan ?? null,
         credits: data.credits ?? null,
       });
