@@ -296,14 +296,16 @@ function AdminPage() {
         <span className="ax-orb ax-orb-b" />
         <span className="ax-orb ax-orb-c" />
       </div>
-      <aside className="ax-sidebar">
-
+      <aside className={`ax-sidebar ${navOpen ? "is-open" : ""}`} aria-hidden={!navOpen}>
         <div className="ax-brand">
           <div className="ax-brand-mark">DX</div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div className="ax-brand-name">DeveloperX</div>
             <div className="ax-brand-sub">Admin Console</div>
           </div>
+          <button type="button" className="ax-drawer-close" aria-label="Close menu" onClick={() => setNavOpen(false)}>
+            <X size={18} />
+          </button>
         </div>
         <nav className="ax-nav">
           <div className="ax-nav-label">Management</div>
@@ -331,14 +333,28 @@ function AdminPage() {
         </nav>
         <div className="ax-sidebar-foot">v2026 · Console build</div>
       </aside>
+      {navOpen && <div className="ax-drawer-backdrop" onClick={() => setNavOpen(false)} aria-hidden />}
 
       <div className="ax-main">
         <header className="ax-topbar">
+          <button
+            type="button"
+            className="ax-menu-btn"
+            aria-label="Open menu"
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((v) => !v)}
+          >
+            <Menu size={18} />
+          </button>
+          <div className="ax-topbar-brand">
+            <span className="ax-topbar-mark">DX</span>
+            <span className="ax-topbar-title">{currentLabel || "Admin"}</span>
+          </div>
           <div className="ax-crumb">
             Admin · <strong>{currentLabel}</strong>
           </div>
           <div className="ax-topbar-right">
-            <span>{meQuery.data?.email}</span>
+            <span className="ax-topbar-email">{meQuery.data?.email}</span>
             <button
               onClick={async () => {
                 const { supabase } = await import("@/integrations/supabase/client");
@@ -346,11 +362,14 @@ function AdminPage() {
                 navigate({ to: "/auth", replace: true });
               }}
               className="ax-signout"
+              aria-label="Sign out"
             >
-              Sign out
+              <LogOut size={14} />
+              <span className="ax-signout-label">Sign out</span>
             </button>
           </div>
         </header>
+
 
         <div className="ax-content">
           {section === "overview" && (
