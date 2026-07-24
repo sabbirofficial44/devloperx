@@ -131,6 +131,17 @@
           border-radius:8px; text-decoration:none; letter-spacing:.3px;
           box-shadow: 0 6px 14px rgba(37,211,102,.3);
         }
+        #dx-flow-overlay button.dx-inject {
+          display:block; width:100%; margin-top:9px; padding:8px; text-align:center;
+          font-size:11px; font-weight:800; letter-spacing:.4px; color:#fff;
+          background:linear-gradient(135deg,#7c5cfc,#22d3ee);
+          border:none; border-radius:8px; cursor:pointer;
+          box-shadow: 0 6px 16px rgba(124,92,252,.35);
+          transition: transform .15s ease, filter .15s ease;
+        }
+        #dx-flow-overlay button.dx-inject:hover { filter:brightness(1.1); transform:translateY(-1px); }
+        #dx-flow-overlay button.dx-inject:disabled { opacity:.6; cursor:wait; }
+        #dx-flow-overlay .dx-inject-status { margin-top:6px; font-size:10px; text-align:center; color:#8b93a8; min-height:12px; }
       </style>
       <div class="dx-logo-wrap" id="dx-toggle" title="DeveloperX — click for status">
         <div class="dx-ring"></div>
