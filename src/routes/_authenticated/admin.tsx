@@ -208,7 +208,7 @@ function AdminPage() {
     }) => createFn({ data: input }),
     onSuccess: () => {
       setEmail(""); setPassword(""); setDisplayName("");
-      setCredits("300"); setPlan("basic");
+      setCredits("720"); setPlan("basic");
       setMsg("✅ User created");
       qc.invalidateQueries({ queryKey: ["users"] });
       qc.invalidateQueries({ queryKey: ["created-users"] });
