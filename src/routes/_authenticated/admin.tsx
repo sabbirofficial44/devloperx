@@ -5,8 +5,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   LayoutDashboard, Users, UserPlus, Zap, Cookie, ScrollText,
   BarChart3, Settings, ArrowLeft, Home, RefreshCw, ChevronDown, ChevronRight,
-  Circle,
+  Circle, Menu, X, LogOut,
 } from "lucide-react";
+
 import {
   bulkCreateUsers,
   createUser,
@@ -79,6 +80,9 @@ function AdminPage() {
   const fetchCreated = useServerFn(listCreatedUsers);
 
   const [section, setSection] = useState<Section>("overview");
+  const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => { setNavOpen(false); }, [section]);
+
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => fetchMe() });
   const usersQuery = useQuery({
@@ -181,7 +185,7 @@ function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [credits, setCredits] = useState("300");
+  const [credits, setCredits] = useState("720"); // minutes — default 12h trial
   const [plan, setPlan] = useState("basic");
   const [msg, setMsg] = useState("");
 
@@ -189,7 +193,7 @@ function AdminPage() {
   const [bulkDomain, setBulkDomain] = useState("flowmail.local");
   const [bulkPrefix, setBulkPrefix] = useState("flow");
   const [bulkPlan, setBulkPlan] = useState("basic");
-  const [bulkCredits, setBulkCredits] = useState("300");
+  const [bulkCredits, setBulkCredits] = useState("720"); // minutes
   const [bulkResults, setBulkResults] = useState<
     { email: string; password: string; ok: boolean; error?: string }[]
   >([]);
@@ -204,7 +208,7 @@ function AdminPage() {
     }) => createFn({ data: input }),
     onSuccess: () => {
       setEmail(""); setPassword(""); setDisplayName("");
-      setCredits("300"); setPlan("basic");
+      setCredits("720"); setPlan("basic");
       setMsg("✅ User created");
       qc.invalidateQueries({ queryKey: ["users"] });
       qc.invalidateQueries({ queryKey: ["created-users"] });
@@ -292,14 +296,16 @@ function AdminPage() {
         <span className="ax-orb ax-orb-b" />
         <span className="ax-orb ax-orb-c" />
       </div>
-      <aside className="ax-sidebar">
-
+      <aside className={`ax-sidebar ${navOpen ? "is-open" : ""}`} aria-hidden={!navOpen}>
         <div className="ax-brand">
           <div className="ax-brand-mark">DX</div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div className="ax-brand-name">DeveloperX</div>
             <div className="ax-brand-sub">Admin Console</div>
           </div>
+          <button type="button" className="ax-drawer-close" aria-label="Close menu" onClick={() => setNavOpen(false)}>
+            <X size={18} />
+          </button>
         </div>
         <nav className="ax-nav">
           <div className="ax-nav-label">Management</div>
@@ -327,14 +333,28 @@ function AdminPage() {
         </nav>
         <div className="ax-sidebar-foot">v2026 · Console build</div>
       </aside>
+      {navOpen && <div className="ax-drawer-backdrop" onClick={() => setNavOpen(false)} aria-hidden />}
 
       <div className="ax-main">
         <header className="ax-topbar">
+          <button
+            type="button"
+            className="ax-menu-btn"
+            aria-label="Open menu"
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((v) => !v)}
+          >
+            <Menu size={18} />
+          </button>
+          <div className="ax-topbar-brand">
+            <span className="ax-topbar-mark">DX</span>
+            <span className="ax-topbar-title">{currentLabel || "Admin"}</span>
+          </div>
           <div className="ax-crumb">
             Admin · <strong>{currentLabel}</strong>
           </div>
           <div className="ax-topbar-right">
-            <span>{meQuery.data?.email}</span>
+            <span className="ax-topbar-email">{meQuery.data?.email}</span>
             <button
               onClick={async () => {
                 const { supabase } = await import("@/integrations/supabase/client");
@@ -342,11 +362,14 @@ function AdminPage() {
                 navigate({ to: "/auth", replace: true });
               }}
               className="ax-signout"
+              aria-label="Sign out"
             >
-              Sign out
+              <LogOut size={14} />
+              <span className="ax-signout-label">Sign out</span>
             </button>
           </div>
         </header>
+
 
         <div className="ax-content">
           {section === "overview" && (
@@ -434,8 +457,13 @@ function AdminPage() {
                   <Field label="Password" type="password" value={password} onChange={setPassword} />
                   <Field label="Display name" value={displayName} onChange={setDisplayName} />
                   <Field label="Plan" value={plan} onChange={setPlan} />
-                  <Field label="Credits" type="number" value={credits} onChange={setCredits} />
                 </div>
+                <TimeInput
+                  label="Access time"
+                  minutes={Number(credits) || 0}
+                  onChange={(m) => setCredits(String(m))}
+                />
+
                 <button
                   className="ax-btn ax-btn-primary"
                   disabled={createMut.isPending || !email || !password}
@@ -463,8 +491,13 @@ function AdminPage() {
                   <Field label="Prefix" value={bulkPrefix} onChange={setBulkPrefix} />
                   <Field label="Domain" value={bulkDomain} onChange={setBulkDomain} />
                   <Field label="Plan" value={bulkPlan} onChange={setBulkPlan} />
-                  <Field label="Credits" type="number" value={bulkCredits} onChange={setBulkCredits} />
                 </div>
+                <TimeInput
+                  label="Access time per account"
+                  minutes={Number(bulkCredits) || 0}
+                  onChange={(m) => setBulkCredits(String(m))}
+                />
+
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button
                     className="ax-btn ax-btn-primary"
@@ -770,18 +803,106 @@ function Field({
   );
 }
 
+/**
+ * Time-based input for granting access. Users don't see raw credit numbers —
+ * they set Days / Hours / Minutes. Internally 1 credit = 1 minute.
+ */
+function TimeInput({
+  label = "Access time",
+  minutes,
+  onChange,
+  presets = [
+    { label: "12h", m: 12 * 60 },
+    { label: "1d", m: 24 * 60 },
+    { label: "7d", m: 7 * 24 * 60 },
+    { label: "30d", m: 30 * 24 * 60 },
+  ],
+}: {
+  label?: string;
+  minutes: number;
+  onChange: (m: number) => void;
+  presets?: { label: string; m: number }[];
+}) {
+  const d = Math.floor(minutes / 1440);
+  const h = Math.floor((minutes % 1440) / 60);
+  const m = minutes % 60;
+  const commit = (nd: number, nh: number, nm: number) => {
+    const total = Math.max(0, nd * 1440 + nh * 60 + nm);
+    onChange(total);
+  };
+  return (
+    <div className="ax-time">
+      <label className="ax-label">{label}</label>
+      <div className="ax-time-row">
+        <div className="ax-time-cell">
+          <input
+            type="number" min={0}
+            value={d}
+            onChange={(e) => commit(Math.max(0, Number(e.target.value) || 0), h, m)}
+            className="ax-input"
+            inputMode="numeric"
+          />
+          <span className="ax-time-suffix">days</span>
+        </div>
+        <div className="ax-time-cell">
+          <input
+            type="number" min={0} max={23}
+            value={h}
+            onChange={(e) => commit(d, Math.max(0, Math.min(23, Number(e.target.value) || 0)), m)}
+            className="ax-input"
+            inputMode="numeric"
+          />
+          <span className="ax-time-suffix">hrs</span>
+        </div>
+        <div className="ax-time-cell">
+          <input
+            type="number" min={0} max={59}
+            value={m}
+            onChange={(e) => commit(d, h, Math.max(0, Math.min(59, Number(e.target.value) || 0)))}
+            className="ax-input"
+            inputMode="numeric"
+          />
+          <span className="ax-time-suffix">min</span>
+        </div>
+      </div>
+      <div className="ax-time-presets">
+        {presets.map((p) => (
+          <button
+            key={p.label}
+            type="button"
+            className="ax-btn ax-btn-ghost ax-time-preset"
+            onClick={() => onChange(p.m)}
+          >{p.label}</button>
+        ))}
+        <span className="ax-time-total">= {minutesToLabel(minutes)}</span>
+      </div>
+    </div>
+  );
+}
+
+
 const PLAN_OPTIONS = ["basic", "starter", "pro", "unlimited"];
 const UNLIMITED_PLAN_SET = new Set(["unlimited", "ultra", "lifetime"]);
-const QUICK_TOPUPS = [300, 600, 1500, 6000];
+const QUICK_TOPUPS: { label: string; m: number }[] = [
+  { label: "+1h", m: 60 },
+  { label: "+12h", m: 12 * 60 },
+  { label: "+1d", m: 24 * 60 },
+  { label: "+7d", m: 7 * 24 * 60 },
+  { label: "+30d", m: 30 * 24 * 60 },
+];
 
 function minutesToLabel(mins: number) {
   if (mins <= 0) return "0m";
-  const h = Math.floor(mins / 60);
+  const d = Math.floor(mins / 1440);
+  const h = Math.floor((mins % 1440) / 60);
   const m = mins % 60;
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0 && d === 0) parts.push(`${m}m`);
+  return parts.join(" ") || "0m";
 }
+
 
 function relativeTime(iso: string | null) {
   if (!iso) return "never";
@@ -871,16 +992,21 @@ function UserRow({
       </div>
 
       <div className="ax-user-grid">
-        <label className="ax-user-cell">
-          <span className="ax-user-cell-label">Credits</span>
-          <input
-            type="number"
-            value={credits}
-            onChange={(e) => setCredits(e.target.value)}
-            className="ax-input ax-user-input"
+        <div className="ax-user-cell">
+          <span className="ax-user-cell-label">Access time</span>
+          <TimeInput
+            label=""
+            minutes={Number(credits) || 0}
+            onChange={(m) => setCredits(String(m))}
+            presets={[
+              { label: "+1h", m: 60 },
+              { label: "+1d", m: 1440 },
+              { label: "+7d", m: 10080 },
+            ]}
           />
           <span className="ax-user-cell-sub">{isUnlimited ? "unlimited" : `≈ ${minutesToLabel(currentCredits)} left`}</span>
-        </label>
+        </div>
+
 
         <label className="ax-user-cell">
           <span className="ax-user-cell-label">Plan</span>
@@ -901,14 +1027,15 @@ function UserRow({
 
       <div className="ax-user-actions">
         <div className="ax-user-topups">
-          {QUICK_TOPUPS.map((n) => (
+          {QUICK_TOPUPS.map((t) => (
             <button
-              key={n}
-              onClick={() => topUp(n)}
-              title={`Add ${n} credits (${minutesToLabel(n)})`}
+              key={t.label}
+              onClick={() => topUp(t.m)}
+              title={`Add ${minutesToLabel(t.m)} access`}
               className="ax-btn ax-btn-ghost ax-user-topup"
-            >+{n >= 1000 ? `${n / 1000}k` : n}</button>
+            >{t.label}</button>
           ))}
+
         </div>
         <div className="ax-user-cta">
           <button disabled={!dirty} onClick={() => onSave({ credits: currentCredits, plan })} className="ax-btn ax-btn-primary ax-user-btn">Save</button>
