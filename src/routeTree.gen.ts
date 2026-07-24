@@ -15,7 +15,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiVerifyRouteImport } from './routes/api/verify'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicCreditsRouteImport } from './routes/api/public/credits'
@@ -60,11 +59,6 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiVerifyRoute = ApiVerifyRouteImport.update({
-  id: '/api/verify',
-  path: '/api/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -163,7 +157,6 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/verify': typeof ApiVerifyRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
@@ -187,7 +180,6 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/verify': typeof ApiVerifyRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
@@ -213,7 +205,6 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/verify': typeof ApiVerifyRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
   '/api/public/auth/login': typeof ApiPublicAuthLoginRoute
@@ -239,7 +230,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin'
     | '/dashboard'
-    | '/api/verify'
     | '/api/public/credits'
     | '/api/public/auth/confirm'
     | '/api/public/auth/login'
@@ -263,7 +253,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin'
     | '/dashboard'
-    | '/api/verify'
     | '/api/public/credits'
     | '/api/public/auth/confirm'
     | '/api/public/auth/login'
@@ -288,7 +277,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
-    | '/api/verify'
     | '/api/public/credits'
     | '/api/public/auth/confirm'
     | '/api/public/auth/login'
@@ -312,7 +300,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ExtensionRemovedRoute: typeof ExtensionRemovedRoute
   SignupRoute: typeof SignupRoute
-  ApiVerifyRoute: typeof ApiVerifyRoute
   ApiPublicCreditsRoute: typeof ApiPublicCreditsRoute
   ApiPublicAuthConfirmRoute: typeof ApiPublicAuthConfirmRoute
   ApiPublicAuthLoginRoute: typeof ApiPublicAuthLoginRoute
@@ -371,13 +358,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/verify': {
-      id: '/api/verify'
-      path: '/api/verify'
-      fullPath: '/api/verify'
-      preLoaderRoute: typeof ApiVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -515,7 +495,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ExtensionRemovedRoute: ExtensionRemovedRoute,
   SignupRoute: SignupRoute,
-  ApiVerifyRoute: ApiVerifyRoute,
   ApiPublicCreditsRoute: ApiPublicCreditsRoute,
   ApiPublicAuthConfirmRoute: ApiPublicAuthConfirmRoute,
   ApiPublicAuthLoginRoute: ApiPublicAuthLoginRoute,
