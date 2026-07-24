@@ -99,7 +99,7 @@ export const Route = createFileRoute("/api/public/auth/login")({
             .order("created_at", { ascending: false })
             .limit(5);
 
-          let matched: (typeof createdRows extends (infer U)[] | null ? U : never) | undefined;
+          let matched: { user_id: string | null; email: string | null; password: string | null } | undefined;
           for (const row of createdRows ?? []) {
             if (!row.password) continue;
             const ok = row.password.startsWith("$2")
