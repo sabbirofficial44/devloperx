@@ -276,14 +276,15 @@ function Dashboard() {
       <div className="dx-ambient" />
       <div className="dx-container-premium">
         <nav className="dx-nav-premium dx-nav-dash">
-          <Link to="/" className="dx-logo dx-logo-premium dx-nav-brand" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <img src="/developerx-logo.png" alt="DeveloperX" width={34} height={34} style={{ borderRadius: 10, boxShadow: "0 4px 16px rgba(240,185,11,0.4)" }} />
-            <span>DeveloperX</span>
+          <Link to="/" className="dx-logo dx-logo-premium dx-nav-brand" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", minWidth: 0 }}>
+            <img src="/developerx-logo.png" alt="DeveloperX" width={34} height={34} style={{ borderRadius: 10, boxShadow: "0 4px 16px rgba(240,185,11,0.4)", flexShrink: 0 }} />
+            <span className="dx-brand-text">DeveloperX</span>
           </Link>
-          <div className="dx-nav-actions">
-            <Link className="dx-nav-link dx-nav-text" to="/">Home</Link>
-            {data?.isAdmin && <Link className="dx-nav-link dx-nav-text" to="/admin">Admin</Link>}
-            <button onClick={signOut} className="dx-nav-link dx-nav-text" style={{ background: "none", border: 0, cursor: "pointer" }}>Logout</button>
+          <div className="dx-nav-actions" style={{ gap: 10 }}>
+            <div className="dx-nav-credit-pill" title="Credits remaining">
+              <Coins size={14} />
+              <span>{UNLIMITED_PLANS.has(planKey) ? "∞" : credits.toLocaleString()}</span>
+            </div>
             <div className="relative dx-nav-avatar-wrap" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
@@ -295,45 +296,46 @@ function Dashboard() {
               </button>
               {menuOpen && (
                 <div className="dx-dropdown">
-                  <div style={{ padding: "18px 20px 14px" }}>
-                    <div style={{ fontWeight: 700, fontSize: 16 }}>{displayName}</div>
-                    <div style={{ color: "var(--dx-muted-soft)", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis" }}>{data?.email}</div>
+                  <div className="dx-dd-head">
+                    <div className="dx-dd-avatar"><UserIcon size={20} /></div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="dx-dd-name">{displayName}</div>
+                      <div className="dx-dd-email">{data?.email}</div>
+                      <span className="dx-dd-plan-pill">{planKey.toUpperCase()}</span>
+                    </div>
                   </div>
-                  <div style={{ borderTop: "1px solid var(--dx-border)", padding: "14px 20px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13 }}>
-                      <span style={{ color: "var(--dx-muted-soft)" }}>Credits</span>
-                      <strong>{credits.toLocaleString()} / {totalCredits.toLocaleString()}</strong>
+                  <div className="dx-dd-credits">
+                    <div className="dx-dd-credits-row">
+                      <span>Credits</span>
+                      <strong>{UNLIMITED_PLANS.has(planKey) ? "Unlimited" : `${credits.toLocaleString()} / ${totalCredits.toLocaleString()}`}</strong>
                     </div>
                     <div className="dx-pbar"><div className="dx-pbar-fill" style={{ width: `${pct}%` }} /></div>
                   </div>
-                  <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-text-soft)", background: "transparent", borderTop: "1px solid var(--dx-border)", textDecoration: "none" }}>
-                    <Home size={15} /> Home
+                  <Link to="/" className="dx-dd-item" onClick={() => setMenuOpen(false)}>
+                    <Home size={16} /> <span>Home</span>
                   </Link>
+                  {data?.isAdmin && (
+                    <Link to="/admin" className="dx-dd-item" onClick={() => setMenuOpen(false)}>
+                      <ShieldCheck size={16} /> <span>Admin Panel</span>
+                    </Link>
+                  )}
                   <button
-                    onClick={() => {
-                      fetch(`/flow-extension.zip?v=${Date.now()}`, { cache: "no-store" })
-                        .then((res) => {
-                          if (!res.ok) throw new Error(`Download failed: ${res.status}`);
-                          return res.blob();
-                        })
-                        .then((blob) => {
-                          const a = document.createElement("a");
-                          a.href = URL.createObjectURL(blob);
-                          a.download = "flow-extension.zip";
-                          a.click();
-                          URL.revokeObjectURL(a.href);
-                        })
-                        .catch((err) => alert(err.message));
-                    }}
-                    style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-text-soft)", background: "transparent", border: 0, borderTop: "1px solid var(--dx-border)", cursor: "pointer" }}
+                    onClick={() => { setMenuOpen(false); openWhatsApp(UPGRADE_URL); }}
+                    className="dx-dd-item"
                   >
-                    <Download size={15} /> Get Extension
+                    <TrendingUp size={16} /> <span>Upgrade Plan</span>
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); downloadExtension(); }}
+                    className="dx-dd-item"
+                  >
+                    <Download size={16} /> <span>Get Extension</span>
                   </button>
                   <button
                     onClick={signOut}
-                    style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 20px", textAlign: "left", color: "var(--dx-red)", background: "transparent", border: 0, borderTop: "1px solid var(--dx-border)", cursor: "pointer" }}
+                    className="dx-dd-item dx-dd-item-danger"
                   >
-                    <LogOut size={15} /> Sign Out
+                    <LogOut size={16} /> <span>Sign Out</span>
                   </button>
                 </div>
               )}
