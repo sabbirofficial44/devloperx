@@ -883,16 +883,26 @@ function TimeInput({
 
 const PLAN_OPTIONS = ["basic", "starter", "pro", "unlimited"];
 const UNLIMITED_PLAN_SET = new Set(["unlimited", "ultra", "lifetime"]);
-const QUICK_TOPUPS = [300, 600, 1500, 6000];
+const QUICK_TOPUPS: { label: string; m: number }[] = [
+  { label: "+1h", m: 60 },
+  { label: "+12h", m: 12 * 60 },
+  { label: "+1d", m: 24 * 60 },
+  { label: "+7d", m: 7 * 24 * 60 },
+  { label: "+30d", m: 30 * 24 * 60 },
+];
 
 function minutesToLabel(mins: number) {
   if (mins <= 0) return "0m";
-  const h = Math.floor(mins / 60);
+  const d = Math.floor(mins / 1440);
+  const h = Math.floor((mins % 1440) / 60);
   const m = mins % 60;
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0 && d === 0) parts.push(`${m}m`);
+  return parts.join(" ") || "0m";
 }
+
 
 function relativeTime(iso: string | null) {
   if (!iso) return "never";
