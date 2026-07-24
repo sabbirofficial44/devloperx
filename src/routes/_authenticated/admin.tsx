@@ -5,8 +5,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   LayoutDashboard, Users, UserPlus, Zap, Cookie, ScrollText,
   BarChart3, Settings, ArrowLeft, Home, RefreshCw, ChevronDown, ChevronRight,
-  Circle,
+  Circle, Menu, X, LogOut,
 } from "lucide-react";
+
 import {
   bulkCreateUsers,
   createUser,
