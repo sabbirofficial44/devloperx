@@ -793,6 +793,84 @@ function Field({
   );
 }
 
+/**
+ * Time-based input for granting access. Users don't see raw credit numbers —
+ * they set Days / Hours / Minutes. Internally 1 credit = 1 minute.
+ */
+function TimeInput({
+  label = "Access time",
+  minutes,
+  onChange,
+  presets = [
+    { label: "12h", m: 12 * 60 },
+    { label: "1d", m: 24 * 60 },
+    { label: "7d", m: 7 * 24 * 60 },
+    { label: "30d", m: 30 * 24 * 60 },
+  ],
+}: {
+  label?: string;
+  minutes: number;
+  onChange: (m: number) => void;
+  presets?: { label: string; m: number }[];
+}) {
+  const d = Math.floor(minutes / 1440);
+  const h = Math.floor((minutes % 1440) / 60);
+  const m = minutes % 60;
+  const commit = (nd: number, nh: number, nm: number) => {
+    const total = Math.max(0, nd * 1440 + nh * 60 + nm);
+    onChange(total);
+  };
+  return (
+    <div className="ax-time">
+      <label className="ax-label">{label}</label>
+      <div className="ax-time-row">
+        <div className="ax-time-cell">
+          <input
+            type="number" min={0}
+            value={d}
+            onChange={(e) => commit(Math.max(0, Number(e.target.value) || 0), h, m)}
+            className="ax-input"
+            inputMode="numeric"
+          />
+          <span className="ax-time-suffix">days</span>
+        </div>
+        <div className="ax-time-cell">
+          <input
+            type="number" min={0} max={23}
+            value={h}
+            onChange={(e) => commit(d, Math.max(0, Math.min(23, Number(e.target.value) || 0)), m)}
+            className="ax-input"
+            inputMode="numeric"
+          />
+          <span className="ax-time-suffix">hrs</span>
+        </div>
+        <div className="ax-time-cell">
+          <input
+            type="number" min={0} max={59}
+            value={m}
+            onChange={(e) => commit(d, h, Math.max(0, Math.min(59, Number(e.target.value) || 0)))}
+            className="ax-input"
+            inputMode="numeric"
+          />
+          <span className="ax-time-suffix">min</span>
+        </div>
+      </div>
+      <div className="ax-time-presets">
+        {presets.map((p) => (
+          <button
+            key={p.label}
+            type="button"
+            className="ax-btn ax-btn-ghost ax-time-preset"
+            onClick={() => onChange(p.m)}
+          >{p.label}</button>
+        ))}
+        <span className="ax-time-total">= {minutesToLabel(minutes)}</span>
+      </div>
+    </div>
+  );
+}
+
+
 const PLAN_OPTIONS = ["basic", "starter", "pro", "unlimited"];
 const UNLIMITED_PLAN_SET = new Set(["unlimited", "ultra", "lifetime"]);
 const QUICK_TOPUPS = [300, 600, 1500, 6000];
