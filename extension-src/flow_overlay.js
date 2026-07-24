@@ -159,6 +159,8 @@
           <div class="timebox"><div class="time" id="dx-time">--:--:--</div></div>
           <div class="cr"><span class="t">Credits</span><b id="dx-credits">—</b></div>
           <div id="dx-msg" class="msg"></div>
+          <button id="dx-inject" class="dx-inject" type="button">🍪 Inject Flow · Reload</button>
+          <div id="dx-inject-status" class="dx-inject-status"></div>
           <a id="dx-buy" class="buy" href="${UPGRADE_URL}" target="_blank" style="display:none">💳 Buy more credits</a>
         </div>
       </div>
