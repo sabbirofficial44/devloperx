@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import type { Database } from "@/integrations/supabase/types";
 
 const corsHeaders = {
