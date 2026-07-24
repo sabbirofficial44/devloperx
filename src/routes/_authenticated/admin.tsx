@@ -80,6 +80,9 @@ function AdminPage() {
   const fetchCreated = useServerFn(listCreatedUsers);
 
   const [section, setSection] = useState<Section>("overview");
+  const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => { setNavOpen(false); }, [section]);
+
 
   const meQuery = useQuery({ queryKey: ["me"], queryFn: () => fetchMe() });
   const usersQuery = useQuery({
