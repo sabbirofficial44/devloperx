@@ -598,7 +598,7 @@ function AdminPage() {
           {section === "history" && (
             <>
               <h1 className="ax-page-title">Created accounts history</h1>
-              <p className="ax-page-sub">Every account you create is stored with its password for reuse in the extension.</p>
+              <p className="ax-page-sub">Passwords are hashed at rest and not shown here. Save the password shown at creation time.</p>
               <section className="ax-panel">
                 {historyQuery.isLoading && <div className="ax-empty">Loading…</div>}
                 {historyQuery.data && historyQuery.data.length === 0 && <div className="ax-empty">No accounts created yet.</div>}
