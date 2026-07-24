@@ -2924,21 +2924,25 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   .dx-cta-label svg { width: 14px; height: 14px; }
 }
 @media (max-width: 480px) {
-  .dx-nav-pill { padding: 8px 10px; gap: 8px; border-radius: 16px; }
+  .dx-nav-pill { padding: 7px 9px; gap: 8px; border-radius: 16px; }
   .dx-nav-brand { gap: 8px; }
-  .dx-nav-brand-text { font-size: 14px; }
-  .dx-nav-logo-ring { width: 30px; height: 30px; }
-  .dx-nav-actions { gap: 8px; }
-  .dx-nav-login { font-size: 12px; }
-  .dx-cta-premium { padding: 7px 12px; font-size: 12px; border-radius: 10px; letter-spacing: 0; }
-  .dx-cta-label { gap: 6px; }
+  .dx-nav-brand-text { font-size: 13px; }
+  .dx-nav-logo-ring { width: 28px; height: 28px; border-radius: 9px; }
+  .dx-nav-logo-ring img { border-radius: 7px; }
+  .dx-nav-actions { gap: 6px; }
+  .dx-nav-login { font-size: 12px; padding: 6px 8px; }
+  .dx-cta-premium { padding: 7px 11px; font-size: 11.5px; border-radius: 10px; letter-spacing: 0; }
+  .dx-cta-label { gap: 5px; }
   .dx-cta-label svg { width: 12px; height: 12px; }
 }
 @media (max-width: 380px) {
-  .dx-nav-brand-text { font-size: 13px; }
-  .dx-nav-login { font-size: 11px; }
-  .dx-cta-premium { padding: 6px 10px; font-size: 11px; }
+  .dx-nav-brand-text { font-size: 12px; }
+  .dx-nav-logo-ring { width: 26px; height: 26px; }
+  .dx-nav-login { font-size: 11px; padding: 5px 6px; }
+  .dx-cta-premium { padding: 6px 9px; font-size: 10.5px; }
+  .dx-cta-label svg { width: 11px; height: 11px; }
 }
+
 
 
 /* ================= Premium Sections Overhaul ================= */
