@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DeveloperX",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "DeveloperX — managed Google Flow access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
   "permissions": [
     "cookies",
@@ -71,7 +71,8 @@
       "js": [
         "flow_overlay.js",
         "model_lock.js",
-        "prompt_clear.js"
+        "prompt_clear.js",
+        "video_capture.js"
       ],
       "run_at": "document_idle"
     },
