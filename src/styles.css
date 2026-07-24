@@ -2914,13 +2914,32 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
     border-radius: 18px;
   }
   .dx-nav-capsule { display: none; }
-  .dx-nav-brand-text { font-size: 16px; }
-  .dx-nav-logo-ring { width: 34px; height: 34px; }
-  .dx-nav-actions { gap: 12px; }
+  .dx-nav-brand-text { font-size: 16px; white-space: nowrap; }
+  .dx-nav-logo-ring { width: 34px; height: 34px; flex-shrink: 0; }
+  .dx-nav-brand { min-width: 0; flex: 1 1 auto; overflow: hidden; }
+  .dx-nav-actions { gap: 10px; flex-shrink: 0; }
   .dx-nav-login { font-size: 13px; }
-  .dx-cta-premium { padding: 9px 16px; font-size: 13px; border-radius: 12px; }
+  .dx-cta-premium { padding: 9px 16px; font-size: 13px; border-radius: 12px; white-space: nowrap; }
+  .dx-cta-label { white-space: nowrap; }
   .dx-cta-label svg { width: 14px; height: 14px; }
 }
+@media (max-width: 480px) {
+  .dx-nav-pill { padding: 8px 10px; gap: 8px; border-radius: 16px; }
+  .dx-nav-brand { gap: 8px; }
+  .dx-nav-brand-text { font-size: 14px; }
+  .dx-nav-logo-ring { width: 30px; height: 30px; }
+  .dx-nav-actions { gap: 8px; }
+  .dx-nav-login { font-size: 12px; }
+  .dx-cta-premium { padding: 7px 12px; font-size: 12px; border-radius: 10px; letter-spacing: 0; }
+  .dx-cta-label { gap: 6px; }
+  .dx-cta-label svg { width: 12px; height: 12px; }
+}
+@media (max-width: 380px) {
+  .dx-nav-brand-text { font-size: 13px; }
+  .dx-nav-login { font-size: 11px; }
+  .dx-cta-premium { padding: 6px 10px; font-size: 11px; }
+}
+
 
 /* ================= Premium Sections Overhaul ================= */
 
