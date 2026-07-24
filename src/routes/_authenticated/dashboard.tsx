@@ -109,6 +109,17 @@ function Dashboard() {
     queryFn: () => fetchUsage(),
     refetchInterval: 30_000,
   });
+  const fetchVideos = useServerFn(getVideoHistory);
+  const deleteVideoFn = useServerFn(deleteVideo);
+  const { data: videos = [] } = useQuery({
+    queryKey: ["video-history"],
+    queryFn: () => fetchVideos(),
+    refetchInterval: 20_000,
+  });
+  const deleteVideoMutation = useMutation({
+    mutationFn: (id: string) => deleteVideoFn({ data: { id } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["video-history"] }),
+  });
 
   const saveMutation = useMutation({
     mutationFn: (p: string) => savePromptFn({ data: { prompt: p } }),
