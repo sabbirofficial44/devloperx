@@ -71,8 +71,7 @@
       "js": [
         "flow_overlay.js",
         "model_lock.js",
-        "prompt_clear.js",
-        "video_capture.js"
+        "prompt_clear.js"
       ],
       "run_at": "document_idle"
     },
