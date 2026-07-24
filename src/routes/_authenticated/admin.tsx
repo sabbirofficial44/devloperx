@@ -457,8 +457,13 @@ function AdminPage() {
                   <Field label="Password" type="password" value={password} onChange={setPassword} />
                   <Field label="Display name" value={displayName} onChange={setDisplayName} />
                   <Field label="Plan" value={plan} onChange={setPlan} />
-                  <Field label="Credits" type="number" value={credits} onChange={setCredits} />
                 </div>
+                <TimeInput
+                  label="Access time"
+                  minutes={Number(credits) || 0}
+                  onChange={(m) => setCredits(String(m))}
+                />
+
                 <button
                   className="ax-btn ax-btn-primary"
                   disabled={createMut.isPending || !email || !password}
