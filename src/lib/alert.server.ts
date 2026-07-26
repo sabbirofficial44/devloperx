@@ -47,12 +47,47 @@ export async function sendAlert(opts: {
     </div>
   `;
 
+  let emailOk = false;
   try {
     await sendGmail({ to, subject: `[DeveloperX Alert] ${opts.subject}`, html });
+    emailOk = true;
   } catch (e) {
-    console.error("alert send failed", e);
-    return { sent: false, reason: "smtp_error" };
+    console.error("alert email send failed", e);
   }
+
+  // Optional Slack webhook — set SLACK_ALERT_WEBHOOK_URL to enable.
+  // Uses Slack's Incoming Webhooks format; works with Discord-compatible webhooks too if payload keys match.
+  let slackOk: boolean | null = null;
+  const slackUrl = process.env.SLACK_ALERT_WEBHOOK_URL?.trim();
+  if (slackUrl) {
+    slackOk = false;
+    try {
+      const payload = {
+        text: `⚠️ *${opts.subject}*`,
+        blocks: [
+          { type: "header", text: { type: "plain_text", text: `⚠️ ${opts.subject}`.slice(0, 150) } },
+          { type: "section", text: { type: "mrkdwn", text: "```" + opts.message.slice(0, 2800) + "```" } },
+          {
+            type: "context",
+            elements: [
+              { type: "mrkdwn", text: `*Kind:* \`${opts.kind}\` · ${new Date().toISOString()} · DeveloperX monitoring` },
+            ],
+          },
+        ],
+      };
+      const r = await fetch(slackUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      slackOk = r.ok;
+      if (!r.ok) console.error("alert slack webhook failed", r.status, await r.text().catch(() => ""));
+    } catch (e) {
+      console.error("alert slack webhook error", e);
+    }
+  }
+
+  if (!emailOk && !slackOk) return { sent: false, reason: "all_channels_failed" };
 
   await supabaseAdmin.from("alert_log").insert({
     kind: opts.kind,
