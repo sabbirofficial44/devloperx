@@ -644,3 +644,25 @@ export const updateAdminCredentials = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export const listAlertLog = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("alert_log")
+      .select("id, kind, message, created_at, email_ok, slack_ok, subject" as any)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Array<{
+      id: string;
+      kind: string;
+      message: string | null;
+      created_at: string;
+      email_ok: boolean | null;
+      slack_ok: boolean | null;
+      subject: string | null;
+    }>;
+  });
