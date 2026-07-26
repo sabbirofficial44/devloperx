@@ -325,6 +325,10 @@ function AdminPage() {
             </button>
           ))}
           <div className="ax-nav-label">Shortcuts</div>
+          <Link to="/admin-alerts" className="ax-nav-item">
+            <span className="ax-nav-icon"><Bell size={16} /></span>
+            <span>Alert Log</span>
+          </Link>
           <Link to="/dashboard" className="ax-nav-item">
             <span className="ax-nav-icon"><ArrowLeft size={16} /></span>
             <span>User Dashboard</span>
