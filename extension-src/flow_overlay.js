@@ -383,8 +383,14 @@
     const dot = document.getElementById("dx-dot");
     const msg = document.getElementById("dx-msg");
     const buy = document.getElementById("dx-buy");
-    document.getElementById("dx-signed-out").style.display = liveBase.signedIn ? "none" : "";
-    document.getElementById("dx-signed-in").style.display = liveBase.signedIn ? "" : "none";
+    const outEl = document.getElementById("dx-signed-out");
+    const inEl = document.getElementById("dx-signed-in");
+    // If the SPA nuked our DOM mid-frame, bail quietly — the watchdog
+    // rebuilds the overlay on the next tick.
+    if (!timeEl || !credEl || !badge || !dot || !msg || !buy || !outEl || !inEl) return;
+    outEl.style.display = liveBase.signedIn ? "none" : "";
+    inEl.style.display = liveBase.signedIn ? "" : "none";
+
     if (!liveBase.signedIn) {
       badge.textContent = "signed out"; badge.className = "b";
       dot.className = "dx-dot warn";
