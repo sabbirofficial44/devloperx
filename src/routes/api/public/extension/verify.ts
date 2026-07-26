@@ -102,7 +102,7 @@ async function verifyFromRequest(request: Request) {
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("user_id, email, display_name, credits, user_plan, assigned_cookies")
+    .select("user_id, email, display_name, credits, user_plan, assigned_cookies, cookies_rotated_at")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -140,11 +140,14 @@ async function verifyFromRequest(request: Request) {
     ? (profile.assigned_cookies as unknown[])
     : [];
   const cookies = liveCookies.length > 0 ? liveCookies : assignedCookies;
+  const cookieUpdatedAt = liveCookies.length > 0
+    ? (cookieRow?.updated_at ?? null)
+    : (profile.cookies_rotated_at ?? null);
 
   return json({
     valid: true,
     cookies,
-    cookieUpdatedAt: cookieRow?.updated_at ?? null,
+    cookieUpdatedAt,
     user,
     encryptedCookies: null,
     disabled: false,

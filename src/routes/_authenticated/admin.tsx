@@ -121,12 +121,14 @@ function AdminPage() {
 
   const [cookieJson, setCookieJson] = useState("");
   const [cookieMsg, setCookieMsg] = useState("");
+  const [cookieReloadKey, setCookieReloadKey] = useState(0);
 
   const uploadCookiesMut = useMutation({
     mutationFn: (cookies: unknown[]) => uploadCookiesFn({ data: { cookies } }),
     onSuccess: (r) => {
       setCookieMsg(`✅ ${r.count} cookies activated`);
       setCookieJson("");
+      setCookieReloadKey((key) => key + 1);
       qc.invalidateQueries({ queryKey: ["session-cookie-sets"] });
     },
     onError: (e: Error) => setCookieMsg(`❌ ${e.message}`),
@@ -138,6 +140,7 @@ function AdminPage() {
       const emailStr = r.emails && r.emails.length > 0 ? ` — 📧 ${r.emails.join(", ")}` : "";
       setCookieMsg(`✅ Fetched ${r.count} live cookies from ${r.source}${emailStr}`);
       setCookieJson(r.cookiesJson);
+      setCookieReloadKey((key) => key + 1);
       qc.invalidateQueries({ queryKey: ["session-cookie-sets"] });
     },
     onError: (e: Error) => setCookieMsg(`❌ ${e.message}`),
@@ -570,6 +573,7 @@ function AdminPage() {
               <LiveCookiePanel
                 onSync={() => { setCookieMsg(""); fetchLiveMut.mutate(); }}
                 syncing={fetchLiveMut.isPending}
+                reloadKey={cookieReloadKey}
               />
 
               {cookieSetsQuery.data && cookieSetsQuery.data.length > 0 && (
@@ -1204,7 +1208,7 @@ function SettingsPanel() {
   );
 }
 
-function LiveCookiePanel({ onSync, syncing }: { onSync: () => void; syncing: boolean }) {
+function LiveCookiePanel({ onSync, syncing, reloadKey }: { onSync: () => void; syncing: boolean; reloadKey: number }) {
   const [data, setData] = useState<{ cookies: unknown[]; totalCookies: number; lastUpdated: string | null } | null>(null);
   const [resolvedEmails, setResolvedEmails] = useState<string[]>([]);
   const [resolvedAccounts, setResolvedAccounts] = useState<Array<{ email: string; status: "active" | "inactive"; source?: string; lastSeen?: string | null }>>([]);
@@ -1216,17 +1220,20 @@ function LiveCookiePanel({ onSync, syncing }: { onSync: () => void; syncing: boo
 
   const load = React.useCallback(async () => {
     try {
-      const r = await fetch("/api/public/user/cookies", { cache: "no-store" });
-      const j = await r.json();
-      setData({ cookies: j.cookies ?? [], totalCookies: j.totalCookies ?? 0, lastUpdated: j.lastUpdated ?? null });
-      setFetchedAt(Date.now());
-    } catch {}
-    try {
       const e = (await (resolveFn as unknown as () => Promise<{
         emails: string[];
         accounts?: Array<{ email: string; status: "active" | "inactive"; source?: string; lastSeen?: string | null }>;
         active?: boolean;
+        cookies?: unknown[];
+        totalCookies?: number;
+        lastUpdated?: string | null;
       }>)());
+      setData({
+        cookies: e.cookies ?? [],
+        totalCookies: e.totalCookies ?? e.cookies?.length ?? 0,
+        lastUpdated: e.lastUpdated ?? null,
+      });
+      setFetchedAt(Date.now());
       setResolvedEmails(e.emails ?? []);
       setResolvedAccounts(e.accounts ?? []);
       setServerActive(!!e.active);
@@ -1239,6 +1246,10 @@ function LiveCookiePanel({ onSync, syncing }: { onSync: () => void; syncing: boo
     const tick = setInterval(() => setNow(Date.now()), 1000);
     return () => { clearInterval(id); clearInterval(tick); };
   }, [load]);
+
+  useEffect(() => {
+    if (reloadKey > 0) load();
+  }, [reloadKey, load]);
 
   const cookies = (data?.cookies ?? []) as Array<{ name?: string; value?: string; domain?: string }>;
   const json = JSON.stringify(cookies, null, 2);

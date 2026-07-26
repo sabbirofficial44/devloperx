@@ -56,21 +56,21 @@ export const Route = createFileRoute("/api/public/auth/refresh")({
         try {
           refreshToken = refreshSchema.parse(await request.json()).refreshToken;
         } catch {
-          return json({ accessToken: "mock-refresh-token-xyz", refreshToken: "mock-refresh-token-xyz" });
+          return json({ message: "Invalid refresh token" }, 400);
         }
 
         const authClient = createPublicClient();
-        if (authClient) {
-          const { data } = await authClient.auth.refreshSession({ refresh_token: refreshToken });
-          if (data.session?.access_token) {
-            return json({
-              accessToken: data.session.access_token,
-              refreshToken: data.session.refresh_token ?? refreshToken,
-            });
-          }
+        if (!authClient) return json({ message: "Backend auth is not configured" }, 503);
+
+        const { data, error } = await authClient.auth.refreshSession({ refresh_token: refreshToken });
+        if (error || !data.session?.access_token) {
+          return json({ message: "Session expired. Please sign in again." }, 401);
         }
 
-        return json({ accessToken: "mock-refresh-token-xyz", refreshToken });
+        return json({
+          accessToken: data.session.access_token,
+          refreshToken: data.session.refresh_token ?? refreshToken,
+        });
       },
     },
   },
