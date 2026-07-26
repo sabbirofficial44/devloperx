@@ -50,6 +50,27 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_log: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          message: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          message?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string | null
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           active: boolean
