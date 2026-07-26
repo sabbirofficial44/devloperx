@@ -220,7 +220,7 @@ function Index() {
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
                   {plan.featured && <div className="dx-plan-badge-top">★ POPULAR</div>}
-                  {plan.free && <div className="dx-plan-badge-top" style={{ background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff" }}>FREE</div>}
+                  {plan.free && <div className="dx-plan-badge-top">FREE</div>}
                   <div className="dx-plan-name" style={{ color: plan.free ? "#4ade80" : plan.featured ? "#f0b90b" : "#a78bfa" }}>{plan.name}</div>
                   <div className="dx-plan-credits" style={{ fontSize: plan.credits.length > 5 ? 38 : 46, fontWeight: 800, margin: "8px 0 4px" }}>{plan.credits}</div>
                   <div className="dx-plan-duration">{plan.duration}</div>
