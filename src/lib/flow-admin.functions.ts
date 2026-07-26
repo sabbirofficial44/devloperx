@@ -510,7 +510,14 @@ export const resolveActiveCookieEmails = createServerFn({ method: "GET" })
       "https://accounts.google.com/CheckCookie?continue=https%3A%2F%2Fflow.google.com%2F&chtml=LoginDoneHtml",
       "https://labs.google/fx/api/auth/session",
     ];
+    // Hard-cap Google email resolution so a slow/hung endpoint never
+    // blocks the admin panel's status read. If all endpoints time out we
+    // still return `active` based on cookie presence — the panel keeps
+    // showing Active even if Gmail resolution is temporarily unavailable.
+    const perRequestTimeoutMs = 2500;
+    const totalDeadline = Date.now() + 5000;
     for (const url of endpoints) {
+      if (Date.now() > totalDeadline) break;
       try {
         const gr = await fetch(url, {
           headers: {
@@ -519,6 +526,7 @@ export const resolveActiveCookieEmails = createServerFn({ method: "GET" })
             Accept: "*/*",
             "Accept-Language": "en-US,en;q=0.9",
           },
+          signal: AbortSignal.timeout(perRequestTimeoutMs),
         });
         const txt = await gr.text();
         const re = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
