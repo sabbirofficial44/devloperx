@@ -66,17 +66,35 @@ async function handle(request: Request) {
     const { refreshCookiePool } = await import("@/lib/cookie-refresh.server");
     const result = await refreshCookiePool({ forceIfYoungerThanMs: STALE_ALERT_MS });
 
-    if (!result.ok || !result.inserted) {
+    // Re-read pool age AFTER self-heal to confirm whether the panel is still inactive.
+    const { data: after } = await supabaseAdmin
+      .from("session_cookies")
+      .select("updated_at, total_cookies")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const ageAfterMs = after?.updated_at
+      ? Date.now() - new Date(after.updated_at).getTime()
+      : Number.POSITIVE_INFINITY;
+    const stillStale = ageAfterMs > STALE_ALERT_MS;
+
+    if (stillStale) {
+      const mins = Math.round(ageAfterMs / 60000);
       await sendAlert({
-        kind: "pool_stale",
-        subject: "Cookie pool is STALE",
+        kind: "admin_inactive_5min",
+        subject: `Admin panel INACTIVE for ${mins}+ min (self-heal failed)`,
         message:
-          `Pool age: ${Math.round(ageMs / 1000)}s (threshold ${STALE_ALERT_MS / 1000}s)\n` +
-          `Self-heal attempt: ${JSON.stringify(result)}\n` +
-          `Total cookies in latest row: ${latest.total_cookies ?? "?"}`,
+          `The cookie pool has been stale for ${Math.round(ageAfterMs / 1000)}s ` +
+          `(threshold ${STALE_ALERT_MS / 1000}s). The extension /verify self-heal ` +
+          `was invoked but did NOT recover the pool.\n\n` +
+          `Self-heal result: ${JSON.stringify(result)}\n` +
+          `Pool age before self-heal: ${Math.round(ageMs / 1000)}s\n` +
+          `Pool age after self-heal:  ${Math.round(ageAfterMs / 1000)}s\n` +
+          `Latest row total_cookies:  ${after?.total_cookies ?? latest.total_cookies ?? "?"}\n\n` +
+          `Action: check upstream (veoly) availability and CRON_SECRET / cron job health.`,
       });
     }
-    return json({ ok: true, ageMs, selfHeal: result });
+    return json({ ok: true, ageMs, ageAfterMs, selfHeal: result, stillStale });
   }
 
   return json({ ok: true, ageMs, fresh: true });
