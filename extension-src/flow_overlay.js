@@ -408,7 +408,11 @@
     timeEl.textContent = fmtHMS(remainingMin);
     credEl.textContent = Math.max(0, Math.floor(remainingMin)).toLocaleString();
 
-    if (remainingMin <= 0 || liveBase.blocked) {
+    // Only show the hard blocker when the SERVER confirms credits are gone
+    // (liveBase.blocked). Never block based on the local ticking counter —
+    // a stale sync makes the counter drift to 0 and would falsely lock the
+    // page even when the user still has real credits on the backend.
+    if (liveBase.blocked) {
       badge.classList.add("danger");
       dot.className = "dx-dot danger";
       msg.textContent = "🚫 Credits exhausted — access blocked.";
