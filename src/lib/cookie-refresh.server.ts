@@ -45,7 +45,8 @@ export async function refreshCookiePool(opts: {
     const j = (await r.json()) as { cookies?: unknown[] };
     freshCookies = Array.isArray(j.cookies) ? j.cookies : [];
   } catch (e) {
-    return { ok: false, reason: "upstream_error", ageBeforeMs: ageMs };
+    const detail = String((e as { message?: string })?.message ?? e).slice(0, 200);
+    return { ok: false, reason: `upstream_error: ${detail}`, ageBeforeMs: ageMs };
   }
 
   if (freshCookies.length === 0) {

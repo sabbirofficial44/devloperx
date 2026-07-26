@@ -68,13 +68,20 @@ export const Route = createFileRoute("/api/public/auth/send-verification")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Look up user by email via admin listUsers
-        const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
-          page: 1,
-          perPage: 200,
-        });
+        // Rate limit first — this endpoint sends mail to an arbitrary address.
+        const { checkRateLimit, callerIp } = await import("@/lib/rate-limit.server");
+        const ip = callerIp(request);
+        const [byEmail, byIp] = await Promise.all([
+          checkRateLimit({ bucket: "verify:email", key: email, limit: 3, windowSec: 900 }),
+          checkRateLimit({ bucket: "verify:ip", key: ip, limit: 10, windowSec: 900 }),
+        ]);
+        if (!byEmail.allowed || !byIp.allowed)
+          return json({ ok: false, message: "Too many attempts. Please try again in a few minutes." }, 429);
+
+        // Look up user by email (paginated — page-1-only missed users past 200 accounts)
+        const { findUserByEmail } = await import("@/lib/find-user.server");
+        const { user, error: listErr } = await findUserByEmail(supabaseAdmin, email);
         if (listErr) return json({ ok: false, message: "Lookup failed" }, 500);
-        const user = list.users.find((u) => (u.email ?? "").toLowerCase() === email);
         if (!user) return json({ ok: true }); // silent success (don't leak existence)
 
         if (user.email_confirmed_at) {

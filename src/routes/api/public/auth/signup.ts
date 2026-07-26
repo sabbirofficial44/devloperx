@@ -79,9 +79,20 @@ export const Route = createFileRoute("/api/public/auth/signup")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Check duplicate
-        const { data: existing } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-        const dup = existing.users.find((u) => (u.email ?? "").toLowerCase() === email);
+        // Rate limit before any lookup / mail send (email bombing + SMTP quota guard)
+        const { checkRateLimit, callerIp } = await import("@/lib/rate-limit.server");
+        const ip = callerIp(request);
+        const [byEmail, byIp] = await Promise.all([
+          checkRateLimit({ bucket: "signup:email", key: email, limit: 3, windowSec: 900 }),
+          checkRateLimit({ bucket: "signup:ip", key: ip, limit: 10, windowSec: 900 }),
+        ]);
+        if (!byEmail.allowed || !byIp.allowed)
+          return json({ ok: false, message: "Too many attempts. Please try again in a few minutes." }, 429);
+
+        // Check duplicate (paginated: listUsers page 1 only missed users past 200 accounts)
+        const { findUserByEmail } = await import("@/lib/find-user.server");
+        const { user: dup, error: lookupErr } = await findUserByEmail(supabaseAdmin, email);
+        if (lookupErr) return json({ ok: false, message: "Lookup failed" }, 500);
         const origin = publicOrigin(request);
         const logoUrl = `${origin}/developerx-logo.png`;
 
