@@ -1646,6 +1646,25 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   .dx-price-card-premium:active .dx-plan-badge-top { transition: none; transform: none; animation: none; }
 }
 
+/* Auto reduced-motion mode: kill every glow/pulse animation site-wide.
+   Static glow states are preserved so the design still reads correctly. */
+@media (prefers-reduced-motion: reduce) {
+  .dx-glow-pulse,
+  .dx-plan-badge-top::after,
+  .dx-plan-badge-top::before,
+  .dx-upgrade-orb-1,
+  .dx-upgrade-orb-2,
+  [class*="dx-orb"],
+  [style*="dx-glow-pulse"] {
+    animation: none !important;
+    transform: none !important;
+  }
+  .dx-glow-pulse { opacity: .7 !important; }
+  .dx-upgrade-orb-1,
+  .dx-upgrade-orb-2 { opacity: .5 !important; }
+}
+
+
 /* Mobile: center the FREE / POPULAR badge and give it comfortable padding */
 @media (max-width: 640px) {
   .dx-price-card-premium { padding-top: 26px !important; overflow: visible !important; }
