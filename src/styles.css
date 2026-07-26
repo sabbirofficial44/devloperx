@@ -1563,15 +1563,23 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   font-size: 10px; font-weight: 800; letter-spacing: 1px;
   line-height: 1; white-space: nowrap; z-index: 5;
   border: 1px solid rgba(255,220,120,.55);
+  /* Static shadow — the animated part is the compositor-only ::after layer */
   box-shadow:
     0 0 0 1px rgba(255,220,120,.4) inset,
-    0 0 18px rgba(240,185,11,.55),
-    0 8px 22px -6px rgba(240,185,11,.75);
-  backdrop-filter: blur(8px);
+    0 6px 18px -6px rgba(240,185,11,.7);
   transform: translateY(0) scale(1);
-  transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s ease, filter .45s ease;
-  will-change: transform, box-shadow;
-  animation: dx-glow-pulse 2.8s ease-in-out infinite;
+  transition: transform .45s cubic-bezier(.2,.8,.2,1), filter .45s ease;
+  isolation: isolate;
+}
+/* Soft glow halo: only `opacity` animates, so it stays on the compositor —
+   no per-frame repaints, no flicker. */
+.dx-plan-badge-top::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 999px;
+  background: radial-gradient(60% 60% at 50% 50%, rgba(240,185,11,.75), rgba(240,185,11,0) 70%);
+  filter: blur(6px);
+  opacity: .45; z-index: -1; pointer-events: none;
+  will-change: opacity;
+  animation: dx-badge-halo 3.6s ease-in-out infinite;
 }
 .dx-price-card-premium:not(.featured) .dx-plan-badge-top {
   background: linear-gradient(135deg,#86efac,#22c55e 50%,#16a34a);
@@ -1579,33 +1587,22 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   border-color: rgba(134,239,172,.55);
   box-shadow:
     0 0 0 1px rgba(134,239,172,.4) inset,
-    0 0 18px rgba(34,197,94,.55),
-    0 8px 22px -6px rgba(34,197,94,.75);
-  animation: dx-glow-pulse-green 2.8s ease-in-out infinite;
+    0 6px 18px -6px rgba(34,197,94,.7);
+}
+.dx-price-card-premium:not(.featured) .dx-plan-badge-top::after {
+  background: radial-gradient(60% 60% at 50% 50%, rgba(34,197,94,.75), rgba(34,197,94,0) 70%);
 }
 .dx-price-card-premium:hover .dx-plan-badge-top {
   transform: translateY(-4px) scale(1.06);
-  filter: brightness(1.08);
-  box-shadow:
-    0 0 0 1px rgba(255,220,120,.5) inset,
-    0 0 28px rgba(240,185,11,.75),
-    0 14px 28px -8px rgba(240,185,11,.85);
+  filter: brightness(1.06);
 }
-.dx-price-card-premium:not(.featured):hover .dx-plan-badge-top {
-  box-shadow:
-    0 0 0 1px rgba(134,239,172,.5) inset,
-    0 0 28px rgba(34,197,94,.75),
-    0 14px 28px -8px rgba(34,197,94,.85);
+.dx-price-card-premium:hover .dx-plan-badge-top::after { opacity: .8; }
+/* Soft animated glow for the badges — opacity only */
+@keyframes dx-badge-halo {
+  0%, 100% { opacity: .38; }
+  50%      { opacity: .78; }
 }
-/* Soft animated glow for the badges */
-@keyframes dx-glow-pulse {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(255,220,120,.4) inset, 0 0 18px rgba(240,185,11,.55), 0 8px 22px -6px rgba(240,185,11,.75); }
-  50%      { box-shadow: 0 0 0 1px rgba(255,220,120,.5) inset, 0 0 30px rgba(240,185,11,.8), 0 10px 26px -5px rgba(240,185,11,.9); }
-}
-@keyframes dx-glow-pulse-green {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(134,239,172,.4) inset, 0 0 18px rgba(34,197,94,.55), 0 8px 22px -6px rgba(34,197,94,.75); }
-  50%      { box-shadow: 0 0 0 1px rgba(134,239,172,.5) inset, 0 0 30px rgba(34,197,94,.8), 0 10px 26px -5px rgba(34,197,94,.9); }
-}
+
 /* Touch feedback: tap on mobile animates the badge */
 @media (hover: none) and (pointer: coarse) {
   .dx-price-card-premium:active .dx-plan-badge-top {
@@ -1617,14 +1614,19 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 }
 @keyframes dx-badge-tap {
   0%   { transform: translateY(0) scale(1); filter: brightness(1); }
-  40%  { transform: translateY(-6px) scale(1.1); filter: brightness(1.18); box-shadow: 0 0 0 1px rgba(255,220,120,.5) inset, 0 0 36px rgba(240,185,11,.95), 0 18px 32px -8px rgba(240,185,11,.95); }
+  40%  { transform: translateY(-6px) scale(1.1); filter: brightness(1.18); }
   100% { transform: translateY(0) scale(1); filter: brightness(1); }
 }
 @keyframes dx-badge-tap-green {
   0%   { transform: translateY(0) scale(1); filter: brightness(1); }
-  40%  { transform: translateY(-6px) scale(1.1); filter: brightness(1.18); box-shadow: 0 0 0 1px rgba(134,239,172,.5) inset, 0 0 36px rgba(34,197,94,.95), 0 18px 32px -8px rgba(34,197,94,.95); }
+  40%  { transform: translateY(-6px) scale(1.1); filter: brightness(1.18); }
   100% { transform: translateY(0) scale(1); filter: brightness(1); }
 }
+/* Respect reduced-motion: keep a steady glow, no pulsing */
+@media (prefers-reduced-motion: reduce) {
+  .dx-plan-badge-top::after { animation: none; opacity: .55; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dx-plan-badge-top,
   .dx-price-card-premium:hover .dx-plan-badge-top,
