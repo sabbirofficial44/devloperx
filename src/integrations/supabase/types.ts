@@ -263,6 +263,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+          key: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: number
+          key: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: number
+          key?: string
+        }
+        Relationships: []
+      }
       session_cookies: {
         Row: {
           cookies: Json
