@@ -339,13 +339,14 @@ async function refreshLive() {
   try {
     const { data } = await fetchStatus(store.userId);
     if (data?.user) {
-      await chrome.storage.local.set({
+      const next = {
         creditsLeft: data.user.creditsLeft,
         userPlan: data.user.plan,
-        cookieData: Array.isArray(data.cookies) ? data.cookies : undefined,
-        cookieUpdatedAt: data.cookieUpdatedAt || undefined,
         lastLiveCookieSync: Date.now(),
-      });
+      };
+      if (Array.isArray(data.cookies)) next.cookieData = data.cookies;
+      if (data.cookieUpdatedAt) next.cookieUpdatedAt = data.cookieUpdatedAt;
+      await chrome.storage.local.set(next);
       renderStatus(data.user);
     }
   } catch { /* offline */ }
