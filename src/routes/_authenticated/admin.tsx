@@ -1244,7 +1244,19 @@ function LiveCookiePanel({ onSync, syncing, reloadKey }: { onSync: () => void; s
     load();
     const id = setInterval(load, 30_000);
     const tick = setInterval(() => setNow(Date.now()), 1000);
-    return () => { clearInterval(id); clearInterval(tick); };
+    // When admin tab comes back to foreground after being idle in the
+    // background, browsers throttle setInterval — so force an immediate
+    // reload on visibility / focus so the status is never stale.
+    const onVisible = () => { if (document.visibilityState === "visible") load(); };
+    const onFocus = () => load();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(id);
+      clearInterval(tick);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [load]);
 
   useEffect(() => {
