@@ -66,9 +66,20 @@ export const Route = createFileRoute("/api/public/auth/reset-request")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Look up user (silent success either way to prevent enumeration)
-        const { data: existing } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-        const user = existing.users.find((u) => (u.email ?? "").toLowerCase() === email);
+        // Rate limit first — this endpoint sends mail to an arbitrary address.
+        const { checkRateLimit, callerIp } = await import("@/lib/rate-limit.server");
+        const ip = callerIp(request);
+        const [byEmail, byIp] = await Promise.all([
+          checkRateLimit({ bucket: "reset:email", key: email, limit: 3, windowSec: 900 }),
+          checkRateLimit({ bucket: "reset:ip", key: ip, limit: 10, windowSec: 900 }),
+        ]);
+        if (!byEmail.allowed || !byIp.allowed)
+          return json({ ok: false, message: "Too many attempts. Please try again in a few minutes." }, 429);
+
+        // Look up user (silent success either way to prevent enumeration).
+        // Paginated: page-1-only lookup silently dropped resets past 200 accounts.
+        const { findUserByEmail } = await import("@/lib/find-user.server");
+        const { user } = await findUserByEmail(supabaseAdmin, email);
 
         if (user) {
           const origin = publicOrigin(request);

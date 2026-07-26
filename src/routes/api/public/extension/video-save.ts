@@ -48,6 +48,17 @@ export const Route = createFileRoute("/api/public/extension/video-save")({
         const userId = tokenData.user?.id ?? null;
         if (!userId) return json({ ok: false, error: "Unauthorized" }, 401);
 
+        // Per-user write throttle: a leaked token could otherwise flood the
+        // dashboard's video history with arbitrary rows.
+        const { checkRateLimit } = await import("@/lib/rate-limit.server");
+        const gate = await checkRateLimit({
+          bucket: "video-save",
+          key: userId,
+          limit: 60,
+          windowSec: 300,
+        });
+        if (!gate.allowed) return json({ ok: false, error: "Too many saves. Slow down." }, 429);
+
         const row = {
           user_id: userId,
           prompt: body.prompt ?? null,
@@ -58,6 +69,7 @@ export const Route = createFileRoute("/api/public/extension/video-save")({
           source: "flow",
           external_id: body.externalId ?? null,
         };
+
 
         // Upsert on (user_id, external_id) when external_id given, otherwise plain insert
         if (row.external_id) {
