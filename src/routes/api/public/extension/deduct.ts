@@ -32,13 +32,22 @@ export const Route = createFileRoute("/api/public/extension/deduct")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: profile, error: readErr } = await supabaseAdmin
           .from("profiles")
-          .select("credits")
+          .select("credits, user_plan")
           .eq("user_id", userId)
           .maybeSingle();
         if (readErr) return json({ error: readErr.message }, 500);
         if (!profile) return json({ error: "User not found" }, 404);
 
         const current = Number(profile.credits ?? 0);
+
+        // Unlimited-style plans are exempt from credit drain (mirrors /verify).
+        // Previously these users were still decremented, producing a misleading
+        // ledger and a dashboard "Used" stat that showed depletion.
+        const planName = String(profile.user_plan ?? "basic").toLowerCase();
+        if (["unlimited", "ultra", "lifetime"].includes(planName)) {
+          return json({ success: true, deducted: 0, unlimited: true, creditsLeft: current });
+        }
+
         if (current < amount) {
           await supabaseAdmin.from("credit_ledger").insert({
             user_id: userId,
