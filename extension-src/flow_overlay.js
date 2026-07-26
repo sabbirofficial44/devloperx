@@ -448,6 +448,10 @@
     const apiBase = (store.apiBase || DEFAULT_API).replace(/\/$/, "");
     if (!store.userId) { syncFromStore(store, null); return; }
     const live = await fetchLive(store.userId, apiBase, store.accessToken);
+    // If server unreachable (offline / transient network hiccup) keep the
+    // last known state — DO NOT drop credits to 0 or show blocker screens.
+    // That was making the page feel like it randomly disconnects / reloads.
+    if (!live) return;
     syncFromStore(store, live);
   }
 
