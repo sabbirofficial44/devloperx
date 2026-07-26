@@ -129,12 +129,52 @@ async function verifyFromRequest(request: Request) {
   // Admin panel live-fetch/upload creates a new row in session_cookies.
   // That latest pool must win over any old per-user assigned_cookies, otherwise
   // extensions keep injecting stale cookies until each user is manually rotated.
-  const { data: cookieRow } = await supabaseAdmin
+  let { data: cookieRow } = await supabaseAdmin
     .from("session_cookies")
     .select("cookies, updated_at")
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  // Self-healing live fetch: if the newest pool is older than 3 minutes
+  // (or missing entirely), pull straight from veoly ourselves so the
+  // extension keeps working even when no admin is sitting on the panel.
+  const STALE_MS = 3 * 60 * 1000;
+  const rowAgeMs = cookieRow?.updated_at
+    ? Date.now() - new Date(cookieRow.updated_at).getTime()
+    : Number.POSITIVE_INFINITY;
+  if (rowAgeMs > STALE_MS) {
+    try {
+      const r = await fetch("https://veoly.netlify.app/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: "admin", sessionToken: "admin:admin@developerx.dev" }),
+      });
+      if (r.ok) {
+        const j = (await r.json()) as { cookies?: unknown[] };
+        const freshCookies = Array.isArray(j.cookies) ? j.cookies : [];
+        if (freshCookies.length > 0) {
+          const { data: inserted } = await supabaseAdmin
+            .from("session_cookies")
+            .insert({ cookies: freshCookies as never, total_cookies: freshCookies.length })
+            .select("cookies, updated_at")
+            .maybeSingle();
+          if (inserted) cookieRow = inserted;
+          // Best-effort mirror onto profiles so legacy code paths still see fresh cookies.
+          await supabaseAdmin
+            .from("profiles")
+            .update({
+              assigned_cookies: freshCookies as never,
+              cookies_rotated_at: new Date().toISOString(),
+            })
+            .not("user_id", "is", null);
+        }
+      }
+    } catch {
+      // best-effort — fall back to whatever pool is currently stored
+    }
+  }
+
   const liveCookies = (cookieRow?.cookies as unknown[] | null) ?? [];
   const assignedCookies = Array.isArray(profile.assigned_cookies)
     ? (profile.assigned_cookies as unknown[])
