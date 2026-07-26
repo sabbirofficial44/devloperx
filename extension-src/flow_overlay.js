@@ -465,14 +465,39 @@
     syncFromStore(store, live);
   }
 
+  let watchdogTimer = null;
+
   function start() {
     ensureRoot();
     sync();
     if (syncTimer) clearInterval(syncTimer);
     if (paintTimer) clearInterval(paintTimer);
+    if (watchdogTimer) clearInterval(watchdogTimer);
     syncTimer = setInterval(sync, 15000);
     paintTimer = setInterval(paint, 1000);
+    // Flow is an SPA that re-renders (and sometimes wipes) the DOM on route
+    // changes. Re-create the floating badge whenever it disappears so the
+    // timer + Inject button are always reachable.
+    watchdogTimer = setInterval(() => {
+      try {
+        if (!document.getElementById("dx-flow-overlay")) {
+          ensureRoot();
+          paint();
+        }
+      } catch (_) {}
+    }, 1500);
   }
+
+  // SPA navigation hooks — re-assert the overlay right after route changes.
+  try {
+    const reassert = () => { try { ensureRoot(); paint(); } catch (_) {} };
+    const wrap = (fn) => function () { const r = fn.apply(this, arguments); setTimeout(reassert, 300); return r; };
+    history.pushState = wrap(history.pushState);
+    history.replaceState = wrap(history.replaceState);
+    window.addEventListener("popstate", () => setTimeout(reassert, 300));
+    window.addEventListener("focus", () => setTimeout(reassert, 100));
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) reassert(); });
+  } catch (_) {}
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && (changes.userId || changes.creditsLeft || changes.userPlan || changes.cookieUpdatedAt || changes.lastLiveCookieSync)) sync();
@@ -483,4 +508,7 @@
   } else {
     start();
   }
+  // Safety net: if something threw before start() ran, force it shortly after load.
+  setTimeout(() => { if (!document.getElementById("dx-flow-overlay")) start(); }, 2500);
+
 })();
