@@ -448,8 +448,10 @@ function buildCookieDetails(c) {
   };
   if (!isHost && domain.startsWith(".")) details.domain = domain;
 
-  const farFuture = Math.floor(Date.now() / 1000) + ONE_YEAR;
-  details.expirationDate = Math.max(Number(c.expirationDate || 0), farFuture);
+  const sourceExpiry = Number(c.expirationDate || 0);
+  if (sourceExpiry > Math.floor(Date.now() / 1000)) {
+    details.expirationDate = sourceExpiry;
+  }
   return details;
 }
 
