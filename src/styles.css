@@ -1571,15 +1571,20 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
   transition: transform .45s cubic-bezier(.2,.8,.2,1), filter .45s ease;
   isolation: isolate;
 }
-/* Soft glow halo: only `opacity` animates, so it stays on the compositor —
-   no per-frame repaints, no flicker. */
+/* Soft glow halo. Only `opacity` animates and the layer is pre-promoted, so
+   the pulse runs entirely on the compositor: no blur filter, no repaint,
+   no layout — near-zero CPU and minimal GPU cost. */
 .dx-plan-badge-top::after {
-  content: ""; position: absolute; inset: -6px; border-radius: 999px;
-  background: radial-gradient(60% 60% at 50% 50%, rgba(240,185,11,.75), rgba(240,185,11,0) 70%);
-  filter: blur(6px);
+  content: ""; position: absolute; inset: -10px; border-radius: 999px;
+  /* Pre-feathered gradient replaces the expensive filter: blur() */
+  background: radial-gradient(closest-side,
+    rgba(240,185,11,.55) 0%,
+    rgba(240,185,11,.28) 45%,
+    rgba(240,185,11,0) 100%);
   opacity: .45; z-index: -1; pointer-events: none;
-  will-change: opacity;
-  animation: dx-badge-halo 3.6s ease-in-out infinite;
+  transform: translateZ(0);
+  animation: dx-badge-halo 5s ease-in-out infinite;
+  transition: opacity .45s ease;
 }
 .dx-price-card-premium:not(.featured) .dx-plan-badge-top {
   background: linear-gradient(135deg,#86efac,#22c55e 50%,#16a34a);
@@ -1590,18 +1595,26 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
     0 6px 18px -6px rgba(34,197,94,.7);
 }
 .dx-price-card-premium:not(.featured) .dx-plan-badge-top::after {
-  background: radial-gradient(60% 60% at 50% 50%, rgba(34,197,94,.75), rgba(34,197,94,0) 70%);
+  background: radial-gradient(closest-side,
+    rgba(34,197,94,.55) 0%,
+    rgba(34,197,94,.28) 45%,
+    rgba(34,197,94,0) 100%);
 }
 .dx-price-card-premium:hover .dx-plan-badge-top {
   transform: translateY(-4px) scale(1.06);
   filter: brightness(1.06);
 }
-.dx-price-card-premium:hover .dx-plan-badge-top::after { opacity: .8; }
-/* Soft animated glow for the badges — opacity only */
+.dx-price-card-premium:hover .dx-plan-badge-top::after { opacity: .78; }
+/* Gentle, low-amplitude breathing — smooth easing avoids visible stepping */
 @keyframes dx-badge-halo {
-  0%, 100% { opacity: .38; }
-  50%      { opacity: .78; }
+  0%, 100% { opacity: .42; }
+  50%      { opacity: .72; }
 }
+/* Touch devices: hold a steady glow instead of animating — saves battery */
+@media (hover: none) and (pointer: coarse) {
+  .dx-plan-badge-top::after { animation-duration: 7s; }
+}
+
 
 /* Touch feedback: tap on mobile animates the badge */
 @media (hover: none) and (pointer: coarse) {
