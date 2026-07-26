@@ -33,18 +33,36 @@ async function handle(request: Request) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 
+  // When no secret is configured the endpoint is reachable by anyone, so throttle
+  // it: without this, a tight loop could race past the 90s freshness check and
+  // hammer the upstream provider with duplicate pulls.
+  if (!expected) {
+    const { checkRateLimit } = await import("@/lib/rate-limit.server");
+    const gate = await checkRateLimit({
+      bucket: "cron:refresh-cookies",
+      key: "global",
+      limit: 4,
+      windowSec: 60,
+    });
+    if (!gate.allowed) return json({ ok: false, error: "rate_limited" }, 429);
+  }
+
   const { refreshCookiePool } = await import("@/lib/cookie-refresh.server");
   const result = await refreshCookiePool();
 
   // Alert on real failures — 'fresh' (skipped because pool is young) is not a failure.
   if (!result.ok) {
+    const reason = result.reason ?? "unknown";
+    // Keep the alert `kind` low-cardinality so the 15-minute throttle works even
+    // when the reason string carries a variable error detail.
+    const kindKey = reason.split(":")[0].trim() || "unknown";
     const { sendAlert } = await import("@/lib/alert.server");
     await sendAlert({
-      kind: `refresh_fail_${result.reason ?? "unknown"}`,
-      subject: `Cookie refresh failed: ${result.reason ?? "unknown"}`,
+      kind: `refresh_fail_${kindKey}`,
+      subject: `Cookie refresh failed: ${kindKey}`,
       message:
         `Refresh endpoint could not update the pool.\n` +
-        `Reason: ${result.reason}\n` +
+        `Reason: ${reason}\n` +
         `Pool age before attempt: ${
           result.ageBeforeMs === Number.POSITIVE_INFINITY
             ? "no rows"
@@ -52,6 +70,7 @@ async function handle(request: Request) {
         }`,
     });
   }
+
 
   return json({ ...result, at: new Date().toISOString() });
 }
