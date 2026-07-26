@@ -267,7 +267,7 @@
     try {
       const res = await new Promise((resolve) => {
         try {
-          chrome.runtime.sendMessage({ type: "INJECT_NOW" }, (r) => {
+          chrome.runtime.sendMessage({ type: "DX_FORCE_LIVE_INJECT" }, (r) => {
             if (chrome.runtime.lastError) return resolve({ success: false, message: chrome.runtime.lastError.message });
             resolve(r || { success: false });
           });
@@ -298,14 +298,27 @@
 
   async function fetchLive(userId, apiBase, accessToken) {
     try {
-      const headers = { "Content-Type": "application/json" };
+      const headers = { "Content-Type": "application/json", "Accept": "application/json", "Cache-Control": "no-store, no-cache", "Pragma": "no-cache" };
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-      const res = await fetch(`${apiBase}/api/public/extension/verify`, {
+      const res = await fetch(`${apiBase}/api/public/extension/verify?_ts=${Date.now()}`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ userId, accessToken }),
+        cache: "no-store",
+        body: JSON.stringify({ userId, accessToken, _ts: Date.now() }),
       });
-      return await res.json();
+      const data = await res.json();
+      if (data && Array.isArray(data.cookies)) {
+        try {
+          await chrome.storage.local.set({
+            cookieData: data.cookies,
+            cookieUpdatedAt: data.cookieUpdatedAt || Date.now(),
+            lastLiveCookieSync: Date.now(),
+            creditsLeft: Number(data.user?.creditsLeft ?? 0),
+            userPlan: data.user?.plan || "basic",
+          });
+        } catch (_) {}
+      }
+      return data;
     } catch { return null; }
   }
 
@@ -401,7 +414,6 @@
       msg.textContent = "🚫 Credits exhausted — access blocked.";
       buy.style.display = "";
       ensureBlocker();
-      killSession();
     } else if (remainingMin <= 60) {
       badge.classList.add("warn");
       dot.className = "dx-dot warn";
@@ -449,7 +461,7 @@
   }
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && (changes.userId || changes.creditsLeft || changes.userPlan)) sync();
+    if (area === "local" && (changes.userId || changes.creditsLeft || changes.userPlan || changes.cookieUpdatedAt || changes.lastLiveCookieSync)) sync();
   });
 
   if (document.readyState === "loading") {

@@ -148,15 +148,16 @@ async function fetchStatusForToken(userId, accessToken) {
   const tryOrder = [preferred, ...API_ENDPOINTS.filter((u) => u !== preferred)];
   let last = { status: 0, data: { valid: false, message: "Cannot reach server" } };
   let authFail = null;
+  let currentToken = accessToken;
   for (const base of tryOrder) {
     try {
       const headers = { "Content-Type": "application/json", "Accept": "application/json" };
-      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+      if (currentToken) headers.Authorization = `Bearer ${currentToken}`;
       const res = await fetch(`${base}/api/public/extension/verify?_ts=${Date.now()}`, {
         method: "POST",
         headers: { ...headers, "Cache-Control": "no-store, no-cache", "Pragma": "no-cache" },
         cache: "no-store",
-        body: JSON.stringify({ userId, accessToken, _ts: Date.now() }),
+        body: JSON.stringify({ userId, accessToken: currentToken, _ts: Date.now() }),
       });
 
       const type = (res.headers.get("content-type") || "").toLowerCase();
@@ -165,6 +166,26 @@ async function fetchStatusForToken(userId, accessToken) {
       if (type.includes("application/json") && (res.ok || res.status === 402)) {
         await setApiBase(base);
         return last;
+      }
+      if (type.includes("application/json") && res.status === 401) {
+        const freshToken = await refreshAccessToken(base);
+        if (freshToken && freshToken !== currentToken) {
+          currentToken = freshToken;
+          const retryHeaders = { "Content-Type": "application/json", "Accept": "application/json", Authorization: `Bearer ${freshToken}` };
+          const retry = await fetch(`${base}/api/public/extension/verify?_ts=${Date.now()}`, {
+            method: "POST",
+            headers: { ...retryHeaders, "Cache-Control": "no-store, no-cache", "Pragma": "no-cache" },
+            cache: "no-store",
+            body: JSON.stringify({ userId, accessToken: freshToken, _ts: Date.now() }),
+          });
+          const retryType = (retry.headers.get("content-type") || "").toLowerCase();
+          const retryData = retryType.includes("application/json") ? await retry.json().catch(() => ({})) : { message: "Server returned app page instead of API" };
+          last = { status: retry.status, data: retryData };
+          if (retryType.includes("application/json") && (retry.ok || retry.status === 402)) {
+            await setApiBase(base);
+            return last;
+          }
+        }
       }
       // Do not stop on a 401 from a stale/cached app endpoint. Try every known
       // server first so a valid website login still reaches the current backend.
@@ -179,6 +200,33 @@ async function fetchStatusForToken(userId, accessToken) {
 async function fetchStatus(userId) {
   const { accessToken } = await chrome.storage.local.get("accessToken");
   return fetchStatusForToken(userId, accessToken);
+}
+
+function looksJwt(token) {
+  return typeof token === "string" && token.split(".").length === 3;
+}
+
+async function refreshAccessToken(base) {
+  try {
+    const { refreshToken } = await chrome.storage.local.get("refreshToken");
+    if (!refreshToken) return null;
+    const res = await fetch(`${base}/api/public/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json", "Cache-Control": "no-store" },
+      cache: "no-store",
+      body: JSON.stringify({ refreshToken }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !looksJwt(data.accessToken)) return null;
+    await chrome.storage.local.set({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken || refreshToken,
+      authRefreshedAt: Date.now(),
+    });
+    return data.accessToken;
+  } catch {
+    return null;
+  }
 }
 
 async function saveSession(payload) {
@@ -291,10 +339,14 @@ async function refreshLive() {
   try {
     const { data } = await fetchStatus(store.userId);
     if (data?.user) {
-      await chrome.storage.local.set({
+      const next = {
         creditsLeft: data.user.creditsLeft,
         userPlan: data.user.plan,
-      });
+        lastLiveCookieSync: Date.now(),
+      };
+      if (Array.isArray(data.cookies)) next.cookieData = data.cookies;
+      if (data.cookieUpdatedAt) next.cookieUpdatedAt = data.cookieUpdatedAt;
+      await chrome.storage.local.set(next);
       renderStatus(data.user);
     }
   } catch { /* offline */ }
