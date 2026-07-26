@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   LayoutDashboard, Users, UserPlus, Zap, Cookie, ScrollText,
   BarChart3, Settings, ArrowLeft, Home, RefreshCw, ChevronDown, ChevronRight,
-  Circle, Menu, X, LogOut,
+  Circle, Menu, X, LogOut, Bell,
 } from "lucide-react";
 
 import {
