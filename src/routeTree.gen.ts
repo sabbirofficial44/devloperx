@@ -26,6 +26,7 @@ import { Route as ApiPublicExtensionGenerateRouteImport } from './routes/api/pub
 import { Route as ApiPublicExtensionDeductRouteImport } from './routes/api/public/extension/deduct'
 import { Route as ApiPublicExtensionCookieVersionRouteImport } from './routes/api/public/extension/cookie-version'
 import { Route as ApiPublicCronRefreshCookiesRouteImport } from './routes/api/public/cron/refresh-cookies'
+import { Route as ApiPublicCronMonitorFreshnessRouteImport } from './routes/api/public/cron/monitor-freshness'
 import { Route as ApiPublicAuthSignupRouteImport } from './routes/api/public/auth/signup'
 import { Route as ApiPublicAuthSendVerificationRouteImport } from './routes/api/public/auth/send-verification'
 import { Route as ApiPublicAuthResetRequestRouteImport } from './routes/api/public/auth/reset-request'
@@ -125,6 +126,12 @@ const ApiPublicCronRefreshCookiesRoute =
     path: '/api/public/cron/refresh-cookies',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronMonitorFreshnessRoute =
+  ApiPublicCronMonitorFreshnessRouteImport.update({
+    id: '/api/public/cron/monitor-freshness',
+    path: '/api/public/cron/monitor-freshness',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAuthSignupRoute = ApiPublicAuthSignupRouteImport.update({
   id: '/api/public/auth/signup',
   path: '/api/public/auth/signup',
@@ -179,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/api/public/auth/reset-request': typeof ApiPublicAuthResetRequestRoute
   '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
   '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
+  '/api/public/cron/monitor-freshness': typeof ApiPublicCronMonitorFreshnessRoute
   '/api/public/cron/refresh-cookies': typeof ApiPublicCronRefreshCookiesRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
   '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
@@ -204,6 +212,7 @@ export interface FileRoutesByTo {
   '/api/public/auth/reset-request': typeof ApiPublicAuthResetRequestRoute
   '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
   '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
+  '/api/public/cron/monitor-freshness': typeof ApiPublicCronMonitorFreshnessRoute
   '/api/public/cron/refresh-cookies': typeof ApiPublicCronRefreshCookiesRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
   '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
@@ -231,6 +240,7 @@ export interface FileRoutesById {
   '/api/public/auth/reset-request': typeof ApiPublicAuthResetRequestRoute
   '/api/public/auth/send-verification': typeof ApiPublicAuthSendVerificationRoute
   '/api/public/auth/signup': typeof ApiPublicAuthSignupRoute
+  '/api/public/cron/monitor-freshness': typeof ApiPublicCronMonitorFreshnessRoute
   '/api/public/cron/refresh-cookies': typeof ApiPublicCronRefreshCookiesRoute
   '/api/public/extension/cookie-version': typeof ApiPublicExtensionCookieVersionRoute
   '/api/public/extension/deduct': typeof ApiPublicExtensionDeductRoute
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/reset-request'
     | '/api/public/auth/send-verification'
     | '/api/public/auth/signup'
+    | '/api/public/cron/monitor-freshness'
     | '/api/public/cron/refresh-cookies'
     | '/api/public/extension/cookie-version'
     | '/api/public/extension/deduct'
@@ -283,6 +294,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/reset-request'
     | '/api/public/auth/send-verification'
     | '/api/public/auth/signup'
+    | '/api/public/cron/monitor-freshness'
     | '/api/public/cron/refresh-cookies'
     | '/api/public/extension/cookie-version'
     | '/api/public/extension/deduct'
@@ -309,6 +321,7 @@ export interface FileRouteTypes {
     | '/api/public/auth/reset-request'
     | '/api/public/auth/send-verification'
     | '/api/public/auth/signup'
+    | '/api/public/cron/monitor-freshness'
     | '/api/public/cron/refresh-cookies'
     | '/api/public/extension/cookie-version'
     | '/api/public/extension/deduct'
@@ -334,6 +347,7 @@ export interface RootRouteChildren {
   ApiPublicAuthResetRequestRoute: typeof ApiPublicAuthResetRequestRoute
   ApiPublicAuthSendVerificationRoute: typeof ApiPublicAuthSendVerificationRoute
   ApiPublicAuthSignupRoute: typeof ApiPublicAuthSignupRoute
+  ApiPublicCronMonitorFreshnessRoute: typeof ApiPublicCronMonitorFreshnessRoute
   ApiPublicCronRefreshCookiesRoute: typeof ApiPublicCronRefreshCookiesRoute
   ApiPublicExtensionCookieVersionRoute: typeof ApiPublicExtensionCookieVersionRoute
   ApiPublicExtensionDeductRoute: typeof ApiPublicExtensionDeductRoute
@@ -465,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronRefreshCookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/monitor-freshness': {
+      id: '/api/public/cron/monitor-freshness'
+      path: '/api/public/cron/monitor-freshness'
+      fullPath: '/api/public/cron/monitor-freshness'
+      preLoaderRoute: typeof ApiPublicCronMonitorFreshnessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/auth/signup': {
       id: '/api/public/auth/signup'
       path: '/api/public/auth/signup'
@@ -545,6 +566,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAuthResetRequestRoute: ApiPublicAuthResetRequestRoute,
   ApiPublicAuthSendVerificationRoute: ApiPublicAuthSendVerificationRoute,
   ApiPublicAuthSignupRoute: ApiPublicAuthSignupRoute,
+  ApiPublicCronMonitorFreshnessRoute: ApiPublicCronMonitorFreshnessRoute,
   ApiPublicCronRefreshCookiesRoute: ApiPublicCronRefreshCookiesRoute,
   ApiPublicExtensionCookieVersionRoute: ApiPublicExtensionCookieVersionRoute,
   ApiPublicExtensionDeductRoute: ApiPublicExtensionDeductRoute,

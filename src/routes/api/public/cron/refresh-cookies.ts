@@ -35,6 +35,24 @@ async function handle(request: Request) {
 
   const { refreshCookiePool } = await import("@/lib/cookie-refresh.server");
   const result = await refreshCookiePool();
+
+  // Alert on real failures — 'fresh' (skipped because pool is young) is not a failure.
+  if (!result.ok) {
+    const { sendAlert } = await import("@/lib/alert.server");
+    await sendAlert({
+      kind: `refresh_fail_${result.reason ?? "unknown"}`,
+      subject: `Cookie refresh failed: ${result.reason ?? "unknown"}`,
+      message:
+        `Refresh endpoint could not update the pool.\n` +
+        `Reason: ${result.reason}\n` +
+        `Pool age before attempt: ${
+          result.ageBeforeMs === Number.POSITIVE_INFINITY
+            ? "no rows"
+            : `${Math.round((result.ageBeforeMs ?? 0) / 1000)}s`
+        }`,
+    });
+  }
+
   return json({ ...result, at: new Date().toISOString() });
 }
 
