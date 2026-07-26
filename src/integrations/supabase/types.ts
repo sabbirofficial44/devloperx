@@ -53,21 +53,30 @@ export type Database = {
       alert_log: {
         Row: {
           created_at: string
+          email_ok: boolean | null
           id: string
           kind: string
           message: string | null
+          slack_ok: boolean | null
+          subject: string | null
         }
         Insert: {
           created_at?: string
+          email_ok?: boolean | null
           id?: string
           kind: string
           message?: string | null
+          slack_ok?: boolean | null
+          subject?: string | null
         }
         Update: {
           created_at?: string
+          email_ok?: boolean | null
           id?: string
           kind?: string
           message?: string | null
+          slack_ok?: boolean | null
+          subject?: string | null
         }
         Relationships: []
       }
