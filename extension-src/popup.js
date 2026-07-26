@@ -487,7 +487,9 @@ async function verifyCookie(c) {
 
 async function getActiveTab() {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (!tab) [tab] = await chrome.tabs.query({ active: true });
     return tab || null;
   } catch { return null; }
 }
