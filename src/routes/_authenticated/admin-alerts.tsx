@@ -73,13 +73,13 @@ function AlertLogPage() {
           <div className="rounded-2xl bg-rose-500/10 p-6 text-rose-200 ring-1 ring-rose-500/30">
             {(q.error as Error).message}
           </div>
-        ) : !q.data?.length ? (
+        ) : !q.data?.rows.length ? (
           <div className="rounded-2xl bg-white/5 p-8 text-center text-white/60 ring-1 ring-white/10">
             No alerts recorded yet. 🎉
           </div>
         ) : (
           <ul className="space-y-3">
-            {q.data.map((a) => {
+            {q.data.rows.map((a) => {
               const dt = new Date(a.created_at);
               return (
                 <li
