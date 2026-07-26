@@ -222,10 +222,11 @@ function Index() {
                   {plan.featured && <div className="dx-plan-badge-top">★ POPULAR</div>}
                   {plan.free && <div className="dx-plan-badge-top">FREE</div>}
                   <div className="dx-plan-name" style={{ color: plan.free ? "#4ade80" : plan.featured ? "#f0b90b" : "#a78bfa" }}>{plan.name}</div>
-                  <div className="dx-plan-credits" style={{ fontSize: plan.credits.length > 5 ? 38 : 46, fontWeight: 800, margin: "8px 0 4px" }}>{plan.credits}</div>
+                  <div className="dx-plan-credits">{plan.credits}</div>
                   <div className="dx-plan-duration">{plan.duration}</div>
-                  <div className="dx-plan-price" style={{ margin: "18px 0 6px" }}>{plan.price}</div>
-                  <div style={{ fontSize: 12, color: "var(--dx-muted-soft,#94a3b8)", marginBottom: 18 }}>{plan.note}</div>
+                  <div className="dx-plan-price">{plan.price}</div>
+                  <div className="dx-plan-note">{plan.note}</div>
+
                   {plan.free ? (
                     <Link className="dx-price-cta dx-price-cta-free" to="/auth">
                       <span>{plan.cta ?? "Start Free"}</span>
