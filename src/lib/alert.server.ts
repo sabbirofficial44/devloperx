@@ -91,8 +91,13 @@ export async function sendAlert(opts: {
 
   await supabaseAdmin.from("alert_log").insert({
     kind: opts.kind,
+    subject: opts.subject.slice(0, 300),
     message: opts.message.slice(0, 2000),
-  });
+    email_ok: emailOk,
+    slack_ok: slackOk,
+  } as any);
+
+
 
   return { sent: true };
 }
