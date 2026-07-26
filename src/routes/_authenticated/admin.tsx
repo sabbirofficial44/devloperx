@@ -1216,17 +1216,20 @@ function LiveCookiePanel({ onSync, syncing }: { onSync: () => void; syncing: boo
 
   const load = React.useCallback(async () => {
     try {
-      const r = await fetch("/api/public/user/cookies", { cache: "no-store" });
-      const j = await r.json();
-      setData({ cookies: j.cookies ?? [], totalCookies: j.totalCookies ?? 0, lastUpdated: j.lastUpdated ?? null });
-      setFetchedAt(Date.now());
-    } catch {}
-    try {
       const e = (await (resolveFn as unknown as () => Promise<{
         emails: string[];
         accounts?: Array<{ email: string; status: "active" | "inactive"; source?: string; lastSeen?: string | null }>;
         active?: boolean;
+        cookies?: unknown[];
+        totalCookies?: number;
+        lastUpdated?: string | null;
       }>)());
+      setData({
+        cookies: e.cookies ?? [],
+        totalCookies: e.totalCookies ?? e.cookies?.length ?? 0,
+        lastUpdated: e.lastUpdated ?? null,
+      });
+      setFetchedAt(Date.now());
       setResolvedEmails(e.emails ?? []);
       setResolvedAccounts(e.accounts ?? []);
       setServerActive(!!e.active);

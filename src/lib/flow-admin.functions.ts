@@ -538,6 +538,7 @@ export const resolveActiveCookieEmails = createServerFn({ method: "GET" })
     return {
       emails,
       accounts,
+      cookies,
       active,
       totalCookies: Number(data?.total_cookies ?? cookies.length),
       lastUpdated: data?.updated_at ?? null,
