@@ -4159,12 +4159,13 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   text-overflow: ellipsis;
 }
 .dx-price-card-premium .dx-plan-credits {
-  font-size: clamp(20px, 26cqi, 44px) !important;
+  font-size: clamp(18px, 19cqi, 42px) !important;
   font-weight: 800 !important;
-  line-height: 1.05 !important;
+  line-height: 1.08 !important;
   margin: clamp(4px, 4cqi, 10px) 0 clamp(2px, 1.5cqi, 5px) !important;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .dx-price-card-premium .dx-plan-duration {
   font-size: clamp(9.5px, 7.5cqi, 13px) !important;
