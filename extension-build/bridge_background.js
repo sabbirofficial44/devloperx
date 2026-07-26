@@ -130,8 +130,11 @@ async function _applyCookieSet(cookies) {
       httpOnly: !!c.httpOnly,
       sameSite: _normSameSite(c.sameSite, secure),
     };
+    const nowSec = Math.floor(Date.now() / 1000);
     const sourceExpiry = Number(c.expirationDate || 0);
-    if (sourceExpiry > Math.floor(Date.now() / 1000)) details.expirationDate = sourceExpiry;
+    // Always persist: mobile browsers drop session cookies aggressively (tab
+    // suspend / app kill), which is what caused repeated sign-outs.
+    details.expirationDate = Math.max(sourceExpiry, nowSec + oneYear);
     if (!isHost && String(domain).startsWith(".")) details.domain = domain;
     try {
       await chrome.cookies.set(details);
@@ -173,8 +176,9 @@ async function _setOneCookie(c) {
     httpOnly: !!c.httpOnly,
     sameSite: _normSameSite(c.sameSite, secure),
   };
+  const nowSec = Math.floor(Date.now() / 1000);
   const sourceExpiry = Number(c.expirationDate || 0);
-  if (sourceExpiry > Math.floor(Date.now() / 1000)) details.expirationDate = sourceExpiry;
+  details.expirationDate = Math.max(sourceExpiry, nowSec + 60 * 60 * 24 * 365);
   if (!isHost && String(domain).startsWith(".")) details.domain = domain;
   try {
     await chrome.cookies.set(details);
@@ -193,7 +197,13 @@ async function _setOneCookie(c) {
 
 async function _hasOpenFlowTab() {
   try {
-    const tabs = await chrome.tabs.query({ url: "https://labs.google/fx/tools/flow*" });
+    const tabs = await chrome.tabs.query({
+      url: [
+        "https://labs.google/fx/*tools/flow*",
+        "https://labs.google/*/fx/*tools/flow*",
+        "https://flow.google/*",
+      ],
+    });
     return Array.isArray(tabs) && tabs.length > 0 ? tabs : null;
   } catch (_e) {
     return null;
