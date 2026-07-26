@@ -129,11 +129,9 @@ async function _applyCookieSet(cookies) {
       secure,
       httpOnly: !!c.httpOnly,
       sameSite: _normSameSite(c.sameSite, secure),
-      expirationDate: Math.max(
-        Number(c.expirationDate || 0),
-        Math.floor(Date.now() / 1000) + oneYear,
-      ),
     };
+    const sourceExpiry = Number(c.expirationDate || 0);
+    if (sourceExpiry > Math.floor(Date.now() / 1000)) details.expirationDate = sourceExpiry;
     if (!isHost && String(domain).startsWith(".")) details.domain = domain;
     try {
       await chrome.cookies.set(details);
@@ -174,8 +172,9 @@ async function _setOneCookie(c) {
     secure,
     httpOnly: !!c.httpOnly,
     sameSite: _normSameSite(c.sameSite, secure),
-    expirationDate: Math.max(Number(c.expirationDate || 0), Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365),
   };
+  const sourceExpiry = Number(c.expirationDate || 0);
+  if (sourceExpiry > Math.floor(Date.now() / 1000)) details.expirationDate = sourceExpiry;
   if (!isHost && String(domain).startsWith(".")) details.domain = domain;
   try {
     await chrome.cookies.set(details);
