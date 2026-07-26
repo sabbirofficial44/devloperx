@@ -645,24 +645,64 @@ export const updateAdminCredentials = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export type AlertLogRow = {
+  id: string;
+  kind: string;
+  message: string | null;
+  created_at: string;
+  email_ok: boolean | null;
+  slack_ok: boolean | null;
+  subject: string | null;
+};
+
 export const listAlertLog = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data?: {
+    page?: number;
+    pageSize?: number;
+    kind?: string;
+    sinceHours?: number;
+    email?: "ok" | "fail" | "na";
+    slack?: "ok" | "fail" | "na";
+  }) => data ?? {})
+  .handler(async ({ context, data }) => {
     await requireAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+
+    const page = Math.max(0, Number(data.page ?? 0));
+    const pageSize = Math.min(200, Math.max(5, Number(data.pageSize ?? 25)));
+
+    let q = supabaseAdmin
       .from("alert_log")
-      .select("id, kind, message, created_at, email_ok, slack_ok, subject" as any)
-      .order("created_at", { ascending: false })
-      .limit(100);
+      .select("id, kind, message, created_at, email_ok, slack_ok, subject" as any, { count: "exact" })
+      .order("created_at", { ascending: false });
+
+    if (data.kind) q = q.eq("kind", data.kind);
+    if (data.sinceHours && data.sinceHours > 0) {
+      q = q.gte("created_at", new Date(Date.now() - data.sinceHours * 3600_000).toISOString());
+    }
+    for (const [col, val] of [["email_ok", data.email], ["slack_ok", data.slack]] as const) {
+      if (val === "ok") q = q.eq(col, true);
+      else if (val === "fail") q = q.eq(col, false);
+      else if (val === "na") q = q.is(col, null);
+    }
+
+    const { data: rows, error, count } = await q.range(page * pageSize, page * pageSize + pageSize - 1);
     if (error) throw new Error(error.message);
-    return ((data ?? []) as unknown) as Array<{
-      id: string;
-      kind: string;
-      message: string | null;
-      created_at: string;
-      email_ok: boolean | null;
-      slack_ok: boolean | null;
-      subject: string | null;
-    }>;
+
+    const { data: kindRows } = await supabaseAdmin
+      .from("alert_log")
+      .select("kind")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    const kinds = Array.from(new Set(((kindRows ?? []) as Array<{ kind: string }>).map((k) => k.kind))).sort();
+
+    return {
+      rows: ((rows ?? []) as unknown) as AlertLogRow[],
+      total: count ?? 0,
+      page,
+      pageSize,
+      kinds,
+    };
   });
+
