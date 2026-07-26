@@ -4139,3 +4139,76 @@ h1, h2, h3, h4, p, span, a, div, li, td, th, summary, label {
   .dx-nav-credit-pill span { font-size: 11px; }
   .dx-nav-dash .dx-nav-brand img { width: 30px !important; height: 30px !important; }
 }
+
+/* ============================================================
+   Pricing cards — fully fluid typography (container-query based)
+   Every card scales its own text off its own width, so the same
+   rules hold from 320px phones up to ultrawide desktops.
+   ============================================================ */
+.dx-pricing-grid > .dx-price-card-premium {
+  container-type: inline-size;
+  container-name: dxplan;
+}
+
+.dx-price-card-premium .dx-plan-name {
+  font-size: clamp(9.5px, 9cqi, 15px) !important;
+  letter-spacing: .06em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dx-price-card-premium .dx-plan-credits {
+  font-size: clamp(20px, 26cqi, 44px) !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+  margin: clamp(4px, 4cqi, 10px) 0 clamp(2px, 1.5cqi, 5px) !important;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.dx-price-card-premium .dx-plan-duration {
+  font-size: clamp(9.5px, 7.5cqi, 13px) !important;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+.dx-price-card-premium .dx-plan-price {
+  font-size: clamp(16px, 15cqi, 27px) !important;
+  line-height: 1.15;
+  margin: clamp(8px, 8cqi, 18px) 0 clamp(3px, 2cqi, 6px) !important;
+}
+.dx-price-card-premium .dx-plan-note {
+  font-size: clamp(9px, 7cqi, 12.5px) !important;
+  color: var(--dx-muted-soft, #94a3b8);
+  line-height: 1.4;
+  margin-bottom: clamp(9px, 9cqi, 18px);
+  overflow-wrap: break-word;
+}
+.dx-price-card-premium .dx-plan-badge-top {
+  font-size: clamp(8px, 6cqi, 11px) !important;
+  padding: clamp(3px, 2.2cqi, 6px) clamp(7px, 5cqi, 12px) !important;
+}
+
+/* CTA buttons scale with the card too */
+.dx-price-card-premium .dx-price-cta,
+.dx-price-card-premium .dx-btn {
+  font-size: clamp(9.5px, 7.5cqi, 13px) !important;
+  padding: clamp(8px, 6cqi, 12px) clamp(7px, 5cqi, 14px) !important;
+  line-height: 1.2;
+}
+.dx-price-card-premium .dx-price-cta > span:first-child { font-size: clamp(9px, 7cqi, 12.5px) !important; }
+.dx-price-card-premium .dx-price-cta-sub { font-size: clamp(8.5px, 6.5cqi, 12px) !important; }
+.dx-price-card-premium .dx-price-cta-row { gap: clamp(4px, 3cqi, 8px); }
+.dx-price-card-premium .dx-price-cta-row svg {
+  width: clamp(11px, 8cqi, 16px);
+  height: clamp(11px, 8cqi, 16px);
+  flex: 0 0 auto;
+}
+
+/* Fallback for engines without container queries */
+@supports not (container-type: inline-size) {
+  .dx-price-card-premium .dx-plan-credits { font-size: clamp(20px, 5vw, 44px) !important; }
+  .dx-price-card-premium .dx-plan-price   { font-size: clamp(16px, 3.4vw, 27px) !important; }
+  .dx-price-card-premium .dx-plan-name    { font-size: clamp(9.5px, 2vw, 15px) !important; }
+  .dx-price-card-premium .dx-plan-duration,
+  .dx-price-card-premium .dx-plan-note    { font-size: clamp(9.5px, 1.7vw, 13px) !important; }
+}
