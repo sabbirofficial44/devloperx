@@ -656,7 +656,7 @@ export const listAlertLog = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
-    return (data ?? []) as Array<{
+    return ((data ?? []) as unknown) as Array<{
       id: string;
       kind: string;
       message: string | null;

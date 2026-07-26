@@ -16,6 +16,7 @@ import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAdminAlertsRouteImport } from './routes/_authenticated/admin-alerts'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicCreditsRouteImport } from './routes/api/public/credits'
 import { Route as ApiPublicUserCookiesRouteImport } from './routes/api/public/user/cookies'
@@ -69,6 +70,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAlertsRoute =
+  AuthenticatedAdminAlertsRouteImport.update({
+    id: '/admin-alerts',
+    path: '/admin-alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/extension-removed': typeof ExtensionRemovedRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/admin-alerts': typeof AuthenticatedAdminAlertsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
@@ -203,6 +211,7 @@ export interface FileRoutesByTo {
   '/extension-removed': typeof ExtensionRemovedRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/admin-alerts': typeof AuthenticatedAdminAlertsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
@@ -231,6 +240,7 @@ export interface FileRoutesById {
   '/extension-removed': typeof ExtensionRemovedRoute
   '/signup': typeof SignupRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin-alerts': typeof AuthenticatedAdminAlertsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/api/public/credits': typeof ApiPublicCreditsRoute
   '/api/public/auth/confirm': typeof ApiPublicAuthConfirmRoute
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/extension-removed'
     | '/signup'
     | '/admin'
+    | '/admin-alerts'
     | '/dashboard'
     | '/api/public/credits'
     | '/api/public/auth/confirm'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/extension-removed'
     | '/signup'
     | '/admin'
+    | '/admin-alerts'
     | '/dashboard'
     | '/api/public/credits'
     | '/api/public/auth/confirm'
@@ -312,6 +324,7 @@ export interface FileRouteTypes {
     | '/extension-removed'
     | '/signup'
     | '/_authenticated/admin'
+    | '/_authenticated/admin-alerts'
     | '/_authenticated/dashboard'
     | '/api/public/credits'
     | '/api/public/auth/confirm'
@@ -407,6 +420,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin-alerts': {
+      id: '/_authenticated/admin-alerts'
+      path: '/admin-alerts'
+      fullPath: '/admin-alerts'
+      preLoaderRoute: typeof AuthenticatedAdminAlertsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -540,11 +560,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminAlertsRoute: typeof AuthenticatedAdminAlertsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminAlertsRoute: AuthenticatedAdminAlertsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
 }
 
