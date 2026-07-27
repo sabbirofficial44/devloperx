@@ -25,9 +25,12 @@
 
   function ensureRoot() {
     let el = document.getElementById("dx-flow-overlay");
-    if (el) return el;
+    // If the SPA wiped our internals but left the shell, rebuild from scratch.
+    if (el && el.querySelector("#dx-time") && el.querySelector("#dx-inject")) return el;
+    if (el) { try { el.remove(); } catch (_) {} }
     el = document.createElement("div");
     el.id = "dx-flow-overlay";
+
     el.innerHTML = `
       <style>
         #dx-flow-overlay {
