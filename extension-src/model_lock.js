@@ -1,29 +1,33 @@
-/* DeveloperX — Flow single model lock v4.5
- * Real model: the Lite / Lower Priority option that Flow exposes.
- * Visible model: only "Veo 3.5 Pro".
+/* DeveloperX — Flow single model lock v5.0
  *
- * v4.5 fixes (deep debug pass):
- *  - Scan is scoped to the model dropdown/trigger instead of every button+li
- *    on the page (v4.4 hid ANY control whose text contained pro/fast/quality
- *    and thrashed layout every 900ms, which made typing/backspace laggy in
- *    the prompt box).
- *  - Heavy work is skipped while the user is typing.
- *  - Mutation handling is debounced.
+ * Backend model actually used  : the "Veo 3.1 … Lite / Lower priority" option.
+ * Front-end label the user sees: "Veo 3.5 Pro".
+ *
+ * v5.0 fixes:
+ *  - Reliable auto-select: polls for the option list after opening the
+ *    dropdown (Flow renders it async) instead of a fixed 200ms guess.
+ *  - Verifies the selection actually landed and retries (up to 6 times)
+ *    instead of silently leaving "Omni" selected.
+ *  - Never hides sibling options until the target is confirmed selected, so
+ *    the dropdown can't get stuck in an empty/unclickable state.
+ *  - Keyboard fallback (ArrowDown/Enter) when synthetic clicks are ignored.
+ *  - Typing guard kept so the prompt box stays responsive.
  */
 (function () {
-  if (window.__DX_MODEL_LOCK_V45__) return;
-  window.__DX_MODEL_LOCK_V45__ = true;
+  if (window.__DX_MODEL_LOCK_V5__) return;
+  window.__DX_MODEL_LOCK_V5__ = true;
 
   const DISPLAY_LABEL = "Veo 3.5 Pro";
   const MODEL_WORDS = /\b(omni|veo)\b/i;
-  const TARGET_WORDS = /lower\s*priority|low\s*priority|lite/i;
-  const MAX_TEXT = 140;
+  const TARGET_WORDS = /lower\s*priority|low\s*priority|\blite\b/i;
+  const MAX_TEXT = 160;
+  const MAX_ATTEMPTS = 6;
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
+  const clean = (v) => String(v || "").replace(/\s+/g, " ").trim();
   const textOf = (el) => clean(el?.textContent);
 
-  /* ---------- typing guard: never fight the prompt box ---------- */
+  /* ---------------- typing guard ---------------- */
   let lastTyped = 0;
   const markTyped = () => { lastTyped = Date.now(); };
   document.addEventListener("keydown", markTyped, true);
@@ -37,38 +41,48 @@
 
   function visible(el) {
     if (!el || !el.isConnected) return false;
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 4 || rect.height <= 4) return false;
+    const r = el.getBoundingClientRect();
+    if (r.width <= 4 || r.height <= 4) return false;
     const css = getComputedStyle(el);
     return css.display !== "none" && css.visibility !== "hidden";
   }
 
-  function isTargetText(text) {
-    const t = clean(text).toLowerCase();
-    if (!t || t.length > MAX_TEXT) return false;
-    return /veo/.test(t) && TARGET_WORDS.test(t);
-  }
-
-  function isModelText(text) {
-    const t = clean(text);
-    return !!t && t.length <= MAX_TEXT && MODEL_WORDS.test(t);
-  }
+  const isTargetText = (t) => {
+    const s = clean(t).toLowerCase();
+    if (!s || s.length > MAX_TEXT) return false;
+    return /veo/.test(s) && TARGET_WORDS.test(s);
+  };
+  const isModelText = (t) => {
+    const s = clean(t);
+    return !!s && s.length <= MAX_TEXT && MODEL_WORDS.test(s);
+  };
 
   function clickLikeUser(el) {
     if (!el) return false;
     try { el.scrollIntoView({ block: "center", inline: "center" }); } catch {}
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    for (const type of ["pointerover", "pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const opts = { bubbles: true, cancelable: true, composed: true, view: window, clientX: cx, clientY: cy, button: 0 };
+    for (const type of ["pointerover", "pointerenter", "pointermove", "mouseover", "mousemove", "pointerdown", "mousedown", "focus", "pointerup", "mouseup", "click"]) {
       try {
-        el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, composed: true, view: window, clientX: cx, clientY: cy, button: 0 }));
+        if (type === "focus") { el.focus?.({ preventScroll: true }); continue; }
+        const Ctor = type.startsWith("pointer") && window.PointerEvent ? PointerEvent : MouseEvent;
+        el.dispatchEvent(new Ctor(type, type.startsWith("pointer") ? { ...opts, pointerId: 1, isPrimary: true, pointerType: "mouse" } : opts));
       } catch {}
     }
     try { el.click(); } catch {}
     return true;
   }
 
+  function pressKey(el, key) {
+    const target = el || document.activeElement || document.body;
+    for (const type of ["keydown", "keyup"]) {
+      try { target.dispatchEvent(new KeyboardEvent(type, { key, code: key, bubbles: true, cancelable: true })); } catch {}
+    }
+  }
+
+  /* ---------------- label masking ---------------- */
   function ensureStyle() {
     if (document.getElementById("dx-model-lock-style")) return;
     const style = document.createElement("style");
@@ -131,29 +145,26 @@
     (document.head || document.documentElement).appendChild(style);
   }
 
-  function nearestClickable(el) {
-    if (!el) return null;
-    return el.closest('[role="option"], [role="menuitem"], [data-radix-collection-item], button, li') || el;
-  }
-
   function markLabel(el, kind) {
     if (!el || !visible(el)) return;
-    el.querySelectorAll?.('[data-dx-model-label="1"]').forEach((child) => {
-      if (child !== el) child.removeAttribute("data-dx-model-label");
-    });
+    try {
+      el.querySelectorAll('[data-dx-model-label="1"]').forEach((c) => {
+        if (c !== el) c.removeAttribute("data-dx-model-label");
+      });
+    } catch {}
     el.setAttribute("data-dx-model-label", "1");
     if (kind === "trigger") el.setAttribute("data-dx-model-trigger", "1");
   }
 
-  /* ---------- trigger: only real select-like controls ---------- */
+  /* ---------------- discovery ---------------- */
   function findModelTrigger() {
     const nodes = document.querySelectorAll(
-      'button[aria-haspopup="listbox"], button[aria-haspopup="menu"], [role="combobox"], [aria-haspopup="listbox"], [aria-haspopup="menu"]'
+      'button[aria-haspopup="listbox"], button[aria-haspopup="menu"], button[aria-haspopup="dialog"], [role="combobox"], [aria-haspopup="listbox"], [aria-haspopup="menu"], select'
     );
     let fallback = null;
     for (const el of nodes) {
       if (!visible(el)) continue;
-      const t = textOf(el);
+      const t = el.tagName === "SELECT" ? clean(el.selectedOptions?.[0]?.textContent) : textOf(el);
       if (!isModelText(t)) continue;
       if (isTargetText(t)) return el;
       if (!fallback) fallback = el;
@@ -161,11 +172,13 @@
     return fallback;
   }
 
-  /* ---------- options: only inside an OPEN popup ---------- */
+  const nearestClickable = (el) =>
+    el?.closest('[role="option"], [role="menuitem"], [role="menuitemradio"], [data-radix-collection-item], button, li') || el;
+
   function openPopups() {
     return [
       ...document.querySelectorAll(
-        '[role="listbox"], [role="menu"], [data-radix-popper-content-wrapper], [data-state="open"][role="dialog"]'
+        '[role="listbox"], [role="menu"], [data-radix-popper-content-wrapper], [data-state="open"][role="dialog"], [data-state="open"][role="menu"]'
       ),
     ].filter(visible);
   }
@@ -174,7 +187,7 @@
     const out = [];
     const seen = new Set();
     for (const popup of openPopups()) {
-      const nodes = popup.querySelectorAll('[role="option"], [role="menuitem"], [data-radix-collection-item], li');
+      const nodes = popup.querySelectorAll('[role="option"], [role="menuitem"], [role="menuitemradio"], [data-radix-collection-item], li, button');
       for (const n of nodes) {
         const el = nearestClickable(n);
         if (!el || seen.has(el) || !visible(el)) continue;
@@ -185,68 +198,106 @@
     return out;
   }
 
-  function findTargetOption(trigger) {
-    return optionCandidates().find((el) => el !== trigger && !el.contains(trigger) && isTargetText(textOf(el))) || null;
+  const findTargetOption = (trigger) =>
+    optionCandidates().find((el) => el !== trigger && !el.contains(trigger) && isTargetText(textOf(el))) || null;
+
+  function triggerIsTarget(trigger) {
+    if (!trigger) return false;
+    if (trigger.tagName === "SELECT") return isTargetText(clean(trigger.selectedOptions?.[0]?.textContent));
+    return isTargetText(textOf(trigger));
   }
 
-  function lockVisibleLabels() {
+  /* Rename the trigger, and prune sibling options only when the lock already
+     holds — never break an open menu we still need to click through. */
+  function lockVisibleLabels(prune) {
     const trigger = findModelTrigger();
     if (trigger) markLabel(trigger, "trigger");
 
     const options = optionCandidates();
-    // Only prune the list when the real target is actually present, so we
-    // never blank out an unrelated menu.
     const hasTarget = options.some((el) => isTargetText(textOf(el)));
     for (const option of options) {
       if (option === trigger) continue;
       if (isTargetText(textOf(option))) {
         option.setAttribute("data-dx-model-option", "target");
         markLabel(option, "option");
-      } else if (hasTarget) {
+      } else if (prune && hasTarget) {
         option.setAttribute("data-dx-model-option", "hidden");
+      } else {
+        option.removeAttribute("data-dx-model-option");
       }
     }
   }
 
+  /* ---------------- selection ---------------- */
   let selecting = false;
   let lastAttempt = 0;
+  let attempts = 0;
 
-  async function forceSelectLite() {
+  async function waitForOption(trigger, ms) {
+    const deadline = Date.now() + ms;
+    while (Date.now() < deadline) {
+      lockVisibleLabels(false);
+      const opt = findTargetOption(trigger);
+      if (opt) return opt;
+      await wait(120);
+    }
+    return null;
+  }
+
+  async function forceSelectLite(force) {
     if (selecting) return;
-    if (userIsTyping()) return;
+    if (!force && userIsTyping()) return;
     const now = Date.now();
-    if (now - lastAttempt < 900) return;
+    if (!force && now - lastAttempt < 1500) return;
     lastAttempt = now;
 
     const trigger = findModelTrigger();
     if (!trigger) return;
     markLabel(trigger, "trigger");
 
-    if (isTargetText(textOf(trigger))) {
-      lockVisibleLabels();
+    if (triggerIsTarget(trigger)) {
+      attempts = 0;
+      lockVisibleLabels(true);
       return;
     }
+    if (attempts >= MAX_ATTEMPTS) return;
+    attempts++;
 
     selecting = true;
     try {
-      clickLikeUser(trigger);
-      await wait(200);
-      lockVisibleLabels();
+      // Native <select> shortcut
+      if (trigger.tagName === "SELECT") {
+        const opt = [...trigger.options].find((o) => isTargetText(o.textContent));
+        if (opt) {
+          trigger.value = opt.value;
+          trigger.dispatchEvent(new Event("change", { bubbles: true }));
+          trigger.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        return;
+      }
 
-      let option = findTargetOption(trigger);
+      clickLikeUser(trigger);
+      let option = await waitForOption(trigger, 2200);
+
       if (!option) {
-        await wait(250);
-        lockVisibleLabels();
-        option = findTargetOption(trigger);
+        // Some builds only open on keyboard activation.
+        pressKey(trigger, "Enter");
+        option = await waitForOption(trigger, 1200);
       }
 
       if (option) {
         markLabel(option, "option");
         clickLikeUser(option);
-        await wait(200);
-        lockVisibleLabels();
+        await wait(350);
+        if (!triggerIsTarget(findModelTrigger())) {
+          // Fallback: keyboard activation on the option itself.
+          try { option.focus?.({ preventScroll: true }); } catch {}
+          pressKey(option, "Enter");
+          await wait(300);
+        }
+        lockVisibleLabels(triggerIsTarget(findModelTrigger()));
+        if (triggerIsTarget(findModelTrigger())) attempts = 0;
       } else {
-        // Close the menu we opened so we don't trap the user.
         try { document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); } catch {}
       }
     } finally {
@@ -254,6 +305,7 @@
     }
   }
 
+  /* ---------------- scheduling ---------------- */
   let debounceTimer = null;
   function schedule() {
     if (debounceTimer) return;
@@ -261,7 +313,7 @@
       debounceTimer = null;
       if (userIsTyping()) return;
       ensureStyle();
-      lockVisibleLabels();
+      lockVisibleLabels(triggerIsTarget(findModelTrigger()));
     }, 250);
   }
 
@@ -269,22 +321,31 @@
     ensureStyle();
     schedule();
 
-    [200, 600, 1200, 2400, 4000].forEach((ms) => setTimeout(forceSelectLite, ms));
+    [400, 1000, 2000, 3500, 6000, 9000].forEach((ms) => setTimeout(() => forceSelectLite(true), ms));
 
     new MutationObserver(schedule).observe(document.documentElement, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["aria-expanded", "data-state"],
+      attributeFilter: ["aria-expanded", "data-state", "aria-selected"],
     });
 
     setInterval(() => {
       if (userIsTyping()) return;
       ensureStyle();
-      lockVisibleLabels();
       const trigger = findModelTrigger();
-      if (trigger && !isTargetText(textOf(trigger))) forceSelectLite();
-    }, 2000);
+      lockVisibleLabels(triggerIsTarget(trigger));
+      if (trigger && !triggerIsTarget(trigger)) forceSelectLite(false);
+    }, 2500);
+
+    // Fresh page / SPA route → allow the retry budget again.
+    const reset = () => { attempts = 0; setTimeout(() => forceSelectLite(true), 800); };
+    try {
+      const wrap = (fn) => function () { const r = fn.apply(this, arguments); reset(); return r; };
+      history.pushState = wrap(history.pushState);
+      history.replaceState = wrap(history.replaceState);
+      window.addEventListener("popstate", reset);
+    } catch {}
   }
 
   if (document.readyState === "loading") {
