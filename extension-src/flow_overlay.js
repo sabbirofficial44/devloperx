@@ -25,9 +25,12 @@
 
   function ensureRoot() {
     let el = document.getElementById("dx-flow-overlay");
-    if (el) return el;
+    // If the SPA wiped our internals but left the shell, rebuild from scratch.
+    if (el && el.querySelector("#dx-time") && el.querySelector("#dx-inject")) return el;
+    if (el) { try { el.remove(); } catch (_) {} }
     el = document.createElement("div");
     el.id = "dx-flow-overlay";
+
     el.innerHTML = `
       <style>
         #dx-flow-overlay {
@@ -480,13 +483,23 @@
     // timer + Inject button are always reachable.
     watchdogTimer = setInterval(() => {
       try {
-        if (!document.getElementById("dx-flow-overlay")) {
+        const root = document.getElementById("dx-flow-overlay");
+        if (!root || !root.isConnected || !root.querySelector("#dx-time") || !root.querySelector("#dx-inject")) {
           ensureRoot();
           paint();
         }
       } catch (_) {}
-    }, 1500);
+    }, 1200);
+
+    // Also react instantly when the SPA detaches our node.
+    try {
+      new MutationObserver(() => {
+        const root = document.getElementById("dx-flow-overlay");
+        if (!root || !root.querySelector("#dx-time")) { ensureRoot(); paint(); }
+      }).observe(document.documentElement, { childList: true, subtree: false });
+    } catch (_) {}
   }
+
 
   // SPA navigation hooks — re-assert the overlay right after route changes.
   try {
