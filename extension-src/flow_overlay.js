@@ -483,13 +483,23 @@
     // timer + Inject button are always reachable.
     watchdogTimer = setInterval(() => {
       try {
-        if (!document.getElementById("dx-flow-overlay")) {
+        const root = document.getElementById("dx-flow-overlay");
+        if (!root || !root.isConnected || !root.querySelector("#dx-time") || !root.querySelector("#dx-inject")) {
           ensureRoot();
           paint();
         }
       } catch (_) {}
-    }, 1500);
+    }, 1200);
+
+    // Also react instantly when the SPA detaches our node.
+    try {
+      new MutationObserver(() => {
+        const root = document.getElementById("dx-flow-overlay");
+        if (!root || !root.querySelector("#dx-time")) { ensureRoot(); paint(); }
+      }).observe(document.documentElement, { childList: true, subtree: false });
+    } catch (_) {}
   }
+
 
   // SPA navigation hooks — re-assert the overlay right after route changes.
   try {
