@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DeveloperX",
-  "version": "1.1.1",
-  "description": "DeveloperX \u2014 managed Google Flow access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
+  "version": "1.0.0",
+  "description": "DeveloperX — managed Google Flow access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
   "permissions": [
     "cookies",
     "tabs",
@@ -30,20 +30,19 @@
   "content_scripts": [
     {
       "matches": [
-        "https://labs.google/*api/auth/signout*",
-        "https://*.labs.google/*api/auth/signout*"
+        "https://labs.google/fx/*api/auth/signout*",
+        "https://labs.google/*/fx/*api/auth/signout*"
       ],
       "js": [
         "persistent_lock.js"
       ],
       "run_at": "document_start",
-      "world": "MAIN",
-      "all_frames": false
+      "world": "MAIN"
     },
     {
       "matches": [
-        "https://labs.google/*",
-        "https://*.labs.google/*",
+        "https://labs.google/fx/*tools/flow*",
+        "https://labs.google/*/fx/*tools/flow*",
         "https://flow.google/*",
         "https://*.flow.google/*"
       ],
@@ -51,39 +50,36 @@
         "ext_watchdog_main.js"
       ],
       "run_at": "document_start",
-      "world": "MAIN",
-      "all_frames": false
+      "world": "MAIN"
     },
     {
       "matches": [
-        "https://labs.google/*",
-        "https://*.labs.google/*",
+        "https://labs.google/fx/*tools/flow*",
+        "https://labs.google/*/fx/*tools/flow*",
         "https://flow.google/*",
         "https://*.flow.google/*"
       ],
       "js": [
         "ext_watchdog_iso.js"
       ],
-      "run_at": "document_start",
-      "all_frames": false
+      "run_at": "document_start"
     },
     {
       "matches": [
-        "https://labs.google/*",
-        "https://*.labs.google/*",
+        "https://labs.google/fx/*tools/flow*",
+        "https://labs.google/*/fx/*tools/flow*",
         "https://flow.google/*",
         "https://*.flow.google/*"
       ],
       "js": [
         "content.js"
       ],
-      "run_at": "document_idle",
-      "all_frames": false
+      "run_at": "document_idle"
     },
     {
       "matches": [
-        "https://labs.google/*",
-        "https://*.labs.google/*",
+        "https://labs.google/fx/*tools/flow*",
+        "https://labs.google/*/fx/*tools/flow*",
         "https://flow.google/*",
         "https://*.flow.google/*"
       ],
@@ -93,31 +89,28 @@
         "prompt_clear.js",
         "auto_retry.js"
       ],
-      "run_at": "document_idle",
-      "all_frames": false
+      "run_at": "document_idle"
     },
     {
       "matches": [
-        "https://labs.google/*api/auth/signout*",
-        "https://*.labs.google/*api/auth/signout*"
+        "https://labs.google/fx/*api/auth/signout*",
+        "https://labs.google/*/fx/*api/auth/signout*"
       ],
       "js": [
         "auto_signout.js"
       ],
       "run_at": "document_start",
-      "world": "MAIN",
-      "all_frames": false
+      "world": "MAIN"
     },
     {
       "matches": [
-        "https://labs.google/*api/auth/signout*",
-        "https://*.labs.google/*api/auth/signout*"
+        "https://labs.google/fx/*api/auth/signout*",
+        "https://labs.google/*/fx/*api/auth/signout*"
       ],
       "js": [
         "auto_signout.js"
       ],
-      "run_at": "document_end",
-      "all_frames": false
+      "run_at": "document_end"
     },
     {
       "matches": [
