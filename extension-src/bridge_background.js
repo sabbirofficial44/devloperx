@@ -377,7 +377,7 @@ try {
   chrome.tabs.onActivated.addListener(async (info) => {
     try {
       const tab = await chrome.tabs.get(info.tabId);
-      if (tab && tab.url && /^https:\/\/(labs\.google\/(.*\/)?fx\/.*tools\/flow|([a-z0-9-]+\.)?flow\.google\/)/i.test(tab.url)) {
+      if (tab && tab.url && /^https:\/\/labs\.google\/fx\/tools\/flow/i.test(tab.url)) {
         runLiveCookieSync("tab-activated");
       }
     } catch (_e) {}
