@@ -1,3 +1,4 @@
+try { importScripts("integrity_guard.js"); } catch (_) {}
 try {
   importScripts("background.js");
 } catch (_e) {
