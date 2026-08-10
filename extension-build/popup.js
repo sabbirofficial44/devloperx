@@ -249,6 +249,8 @@ async function saveSession(payload) {
 async function clearSession() {
   await chrome.storage.local.remove([
     "userId","userName","userEmail","userPlan","creditsLeft","accessToken","refreshToken","loggedInAt",
+    "cookieData","cookieUpdatedAt","cookieHealth","cookieHealthDetail","lastCookieApplyAt",
+    "lastCookieApplyCount","lastLiveCookieSync","lastCreditSyncAt",
   ]);
   try { chrome.runtime.sendMessage({ type: "DX_SESSION_CLEARED" }); } catch {}
 }
