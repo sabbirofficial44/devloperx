@@ -243,6 +243,8 @@ async function _runLiveCookieSync(reason) {
       "accessToken",
       "refreshToken",
       "userId",
+      "creditsLeft",
+      "userPlan",
       "cookieUpdatedAt",
       "lastCookieApplyAt",
       "lastCookieApplyCount",
