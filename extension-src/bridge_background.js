@@ -40,7 +40,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (Array.isArray(data.cookies)) nextState.cookieData = data.cookies;
   if (data.cookieUpdatedAt) nextState.cookieUpdatedAt = data.cookieUpdatedAt;
 
-  chrome.storage.local.set(nextState, async () => {
+  chrome.storage.local.get(["userId"], async (previous) => {
+    // A different website account must never inherit the previous account's
+    // cached cookie pool while its own live verification is in flight.
+    if (previous?.userId && previous.userId !== nextState.userId) {
+      await chrome.storage.local.remove([
+        "cookieData", "cookieUpdatedAt", "lastCookieApplyAt", "lastCookieApplyCount",
+        "cookieHealth", "cookieHealthDetail",
+      ]);
+    }
+    chrome.storage.local.set(nextState, async () => {
     if (chrome.runtime.lastError) {
       sendResponse?.({ ok: false });
       return;
@@ -72,7 +81,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     } catch (_e) {
       // Popup injection still pulls live cookies directly, so this bridge sync is best-effort.
     }
-    sendResponse?.({ ok: true });
+      sendResponse?.({ ok: true });
+    });
   });
   return true;
 });
@@ -234,6 +244,7 @@ async function _runLiveCookieSync(reason) {
       "userId",
       "cookieUpdatedAt",
       "lastCookieApplyAt",
+      "lastCookieApplyCount",
     ]);
     if (!store.accessToken || !store.userId) return { success: false, message: "Sign in required" };
     await chrome.storage.local.set({ cookieHealth: "syncing", cookieHealthDetail: "Checking latest session…" });
