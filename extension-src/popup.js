@@ -11,7 +11,7 @@ const DEFAULT_API = API_ENDPOINTS[0];
 const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?lovable\.(app|dev)$/i;
 // Backend auth is proxied through our own /api/public/auth/login — no direct DB creds in the extension.
 const FLOW_URL = "https://labs.google/fx/tools/flow";
-const FLOW_MATCH = /^https:\/\/labs\.google\/(?:[^/]+\/)?fx\/tools\/flow/i;
+const FLOW_MATCH = /^(?:https:\/\/labs\.google\/(?:[^/]+\/)?fx\/tools\/flow|https:\/\/(?:[^.]+\.)?flow\.google\/)/i;
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
 
 const $ = (id) => document.getElementById(id);

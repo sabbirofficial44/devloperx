@@ -227,6 +227,7 @@ async function _hasOpenFlowTab() {
         "https://labs.google/fx/*tools/flow*",
         "https://labs.google/*/fx/*tools/flow*",
         "https://flow.google/*",
+        "https://*.flow.google/*",
       ],
     });
     return Array.isArray(tabs) && tabs.length > 0 ? tabs : null;
@@ -291,8 +292,8 @@ async function _runLiveCookieSync(reason) {
       accessToken: activeToken || store.accessToken,
       cookieData: fresh.cookies,
       cookieUpdatedAt: nextStamp,
-      creditsLeft: Number(fresh.user?.creditsLeft ?? 0),
-      userPlan: fresh.user?.plan || "basic",
+      creditsLeft: Number(fresh.user?.creditsLeft ?? store.creditsLeft ?? 0),
+      userPlan: fresh.user?.plan || store.userPlan || "basic",
       lastLiveCookieSync: now,
       lastLiveCookieReason: reason || "alarm",
     });
