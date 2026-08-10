@@ -168,6 +168,12 @@
 
   .hidden { display:none !important; }
   .status-note { font-size:10px; color:#8a94ad; margin-top:8px; min-height:12px; text-align:center; position:relative; z-index:1; overflow-wrap:anywhere;}
+  .cookie-health { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; padding:8px 9px; border-radius:10px; background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.075); font-size:9.5px; color:#9aacbf; }
+  .cookie-health strong { display:inline-flex; align-items:center; gap:5px; color:#fbbf24; font-size:9.5px; }
+  .cookie-health strong::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; box-shadow:0 0 8px currentColor; }
+  .cookie-health strong.ok { color:#34d399; }
+  .cookie-health strong.danger { color:#f87171; }
+  .cookie-health span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .live { display:inline-flex; align-items:center; gap:5px; font-size:8.5px; color:#34d399; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
   .live .dot { width:6px; height:6px; border-radius:50%; background:#34d399; box-shadow:0 0 10px #34d399; animation: soft-pulse 2s ease-in-out infinite; }
@@ -222,6 +228,10 @@
         </div>
       </div>
       <div class="pbar"><i id="s-bar"></i></div>
+      <div class="cookie-health">
+        <strong id="cookie-state">Checking</strong>
+        <span id="cookie-detail">Session status…</span>
+      </div>
 
       <div id="s-alert" class="err" style="color:#fbbf24"></div>
 

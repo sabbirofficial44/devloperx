@@ -75,9 +75,8 @@ if (!bridge.includes(GUARD_FILE)) {
 const MAN = join(SRC, "manifest.json");
 const man = JSON.parse(readFileSync(MAN, "utf8"));
 man.permissions = Array.from(new Set([...(man.permissions || []), "alarms"]));
-// Keep the public/site-facing extension version stable. Changing it after the
-// guard is generated can create a false tamper mismatch on normal unzip/load.
-man.version = "1.0.0";
+// Never rewrite the manifest version here. Chrome refuses packages whose
+// version is lower than the currently installed extension.
 writeFileSync(MAN, JSON.stringify(man, null, 2));
 
 // 5. Re-hash bridge_background.js + manifest.json + guard AFTER edits so
