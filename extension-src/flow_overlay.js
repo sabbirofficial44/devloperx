@@ -310,10 +310,12 @@
       const data = await res.json();
       if (data && Array.isArray(data.cookies)) {
         try {
+          const syncedAt = Date.now();
           await chrome.storage.local.set({
             cookieData: data.cookies,
             cookieUpdatedAt: data.cookieUpdatedAt || Date.now(),
-            lastLiveCookieSync: Date.now(),
+            lastLiveCookieSync: syncedAt,
+            lastCreditSyncAt: syncedAt,
             creditsLeft: Number(data.user?.creditsLeft ?? 0),
             userPlan: data.user?.plan || "basic",
           });
