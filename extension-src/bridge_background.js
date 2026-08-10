@@ -88,6 +88,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 const DX_SYNC_ALARM = "dx-live-cookie-sync";
 const DX_SYNC_PERIOD_MIN = 1.5; // ~90 seconds
 const DX_SYNC_MIN_APPLY_MS = 60 * 1000;
+let _syncInFlight = null;
 const DX_API_FALLBACKS = [
   "https://project--306a4997-5830-492f-b8db-9bb0ab4aee1f-dev.lovable.app",
   "https://devloperx.lovable.app",
@@ -160,6 +161,19 @@ async function _applyCookieSet(cookies) {
   return ok;
 }
 
+async function _verifyCriticalCookieSet(cookies) {
+  const critical = cookies.filter((c) => /^(SID|HSID|SSID|APISID|SAPISID|SIDCC|LSID|OSID|ACCOUNT_CHOOSER|__Secure-|__Host-)/i.test(String(c?.name || "")));
+  if (critical.length === 0) return { checked: 0, missing: 0 };
+  let missing = 0;
+  for (const c of critical) {
+    try {
+      const found = await chrome.cookies.get({ url: _cookieDomainUrl(c), name: String(c.name || "") });
+      if (!found || found.value !== String(c.value ?? "")) missing++;
+    } catch (_e) { missing++; }
+  }
+  return { checked: critical.length, missing };
+}
+
 async function _setOneCookie(c) {
   const name = String((c && c.name) || "");
   if (!name) return false;
@@ -211,7 +225,7 @@ async function _hasOpenFlowTab() {
   }
 }
 
-async function runLiveCookieSync(reason) {
+async function _runLiveCookieSync(reason) {
   try {
     const store = await chrome.storage.local.get([
       "apiBase",
@@ -221,7 +235,8 @@ async function runLiveCookieSync(reason) {
       "cookieUpdatedAt",
       "lastCookieApplyAt",
     ]);
-    if (!store.accessToken || !store.userId) return;
+    if (!store.accessToken || !store.userId) return { success: false, message: "Sign in required" };
+    await chrome.storage.local.set({ cookieHealth: "syncing", cookieHealthDetail: "Checking latest session…" });
     const bases = _candidateApiBases(store.apiBase);
     let fresh = null;
     let activeBase = "";
@@ -246,7 +261,14 @@ async function runLiveCookieSync(reason) {
         break;
       }
     }
-    if (!fresh || !Array.isArray(fresh.cookies) || fresh.cookies.length === 0) return;
+    if (!fresh || !Array.isArray(fresh.cookies) || fresh.cookies.length === 0) {
+      const cached = await chrome.storage.local.get(["cookieData"]);
+      if (!Array.isArray(cached.cookieData) || cached.cookieData.length === 0) {
+        await chrome.storage.local.set({ cookieHealth: "missing", cookieHealthDetail: "No live or saved cookies" });
+        return { success: false, message: "No session cookies available" };
+      }
+      fresh = { cookies: cached.cookieData, cookieUpdatedAt: store.cookieUpdatedAt, user: null };
+    }
 
     const prevStamp = store.cookieUpdatedAt || 0;
     const nextStamp = fresh.cookieUpdatedAt || Date.now();
@@ -268,18 +290,46 @@ async function runLiveCookieSync(reason) {
     // changed AND a Flow tab is open — never touch cookies unprompted on
     // idle sessions (that's what caused the mid-session logouts).
     const flowTabs = await _hasOpenFlowTab();
-    if (!flowTabs) return;
+    if (!flowTabs && reason !== "manual-inject") {
+      await chrome.storage.local.set({ cookieHealth: "saved", cookieHealthDetail: `${fresh.cookies.length} cookies ready` });
+      return { success: true, count: fresh.cookies.length, applied: 0, saved: true };
+    }
     const forceApply = reason && reason !== "alarm";
     const dueApply = now - Number(store.lastCookieApplyAt || 0) > DX_SYNC_MIN_APPLY_MS;
-    if (!changed && !forceApply && !dueApply) return;
+    if (!changed && !forceApply && !dueApply) {
+      return { success: true, count: fresh.cookies.length, applied: Number(store.lastCookieApplyCount || 0), unchanged: true };
+    }
+
+    // Abort if another website login replaced the extension identity while
+    // this network request was running. This prevents cross-account races.
+    const current = await chrome.storage.local.get("userId");
+    if (current.userId !== store.userId) return { success: false, message: "Account changed during sync" };
 
     const applied = await _applyCookieSet(fresh.cookies);
-    await chrome.storage.local.set({ lastCookieApplyAt: Date.now(), lastCookieApplyCount: applied });
+    const verified = await _verifyCriticalCookieSet(fresh.cookies);
+    const healthy = applied > 0 && verified.missing === 0;
+    await chrome.storage.local.set({
+      lastCookieApplyAt: Date.now(),
+      lastCookieApplyCount: applied,
+      cookieHealth: healthy ? "active" : "error",
+      cookieHealthDetail: healthy
+        ? `${applied}/${fresh.cookies.length} applied · ${verified.checked} auth verified`
+        : `${applied}/${fresh.cookies.length} applied · ${verified.missing} auth missing`,
+    });
     // Do NOT reload the tab — a hard reload during an active generate
     // kicks the Google session. Cookies are already replaced in-place.
+    return { success: healthy, count: fresh.cookies.length, applied, missing: verified.missing };
   } catch (_e) {
-    // best-effort — retry on next alarm tick
+    const message = String(_e?.message || "Cookie sync failed");
+    try { await chrome.storage.local.set({ cookieHealth: "error", cookieHealthDetail: message, lastCookieSyncErrorAt: Date.now() }); } catch (_) {}
+    return { success: false, message };
   }
+}
+
+function runLiveCookieSync(reason) {
+  if (_syncInFlight) return _syncInFlight;
+  _syncInFlight = _runLiveCookieSync(reason).finally(() => { _syncInFlight = null; });
+  return _syncInFlight;
 }
 
 function _candidateApiBases(preferred) {
@@ -338,13 +388,7 @@ try {
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || (message.type !== "DX_FORCE_LIVE_SYNC" && message.type !== "DX_FORCE_LIVE_INJECT")) return false;
     runLiveCookieSync(message.type === "DX_FORCE_LIVE_INJECT" ? "manual-inject" : "manual-sync")
-      .then(() => chrome.storage.local.get(["cookieData", "lastCookieApplyCount", "lastLiveCookieSync"]))
-      .then((store) => sendResponse?.({
-        success: Array.isArray(store.cookieData) && store.cookieData.length > 0,
-        count: Array.isArray(store.cookieData) ? store.cookieData.length : 0,
-        applied: Number(store.lastCookieApplyCount || 0),
-        syncedAt: store.lastLiveCookieSync || null,
-      }))
+      .then((result) => sendResponse?.(result || { success: false, message: "Sync returned no result" }))
       .catch((e) => sendResponse?.({ success: false, message: String(e?.message || e) }));
     return true;
   });
@@ -378,7 +422,7 @@ try {
   chrome.tabs.onActivated.addListener(async (info) => {
     try {
       const tab = await chrome.tabs.get(info.tabId);
-      if (tab && tab.url && /^https:\/\/labs\.google\/fx\/tools\/flow/i.test(tab.url)) {
+      if (tab && tab.url && (/^https:\/\/labs\.google\/(?:[^/]+\/)?fx\/tools\/flow/i.test(tab.url) || /^https:\/\/(?:[^.]+\.)?flow\.google\//i.test(tab.url))) {
         runLiveCookieSync("tab-activated");
       }
     } catch (_e) {}

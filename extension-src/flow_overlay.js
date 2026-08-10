@@ -281,7 +281,8 @@
       }
       setInjectStatus("✅ Session locked · reloading…", "#34d399");
       setTimeout(() => {
-        try { location.reload(); } catch { window.location.href = "https://labs.google/fx/tools/flow"; }
+        // Reload the actual Flow page, not the extension/content-script context.
+        try { window.location.reload(); } catch { window.location.href = "https://labs.google/fx/tools/flow"; }
       }, 600);
     } catch (e) {
       setInjectStatus("❌ " + (e.message || "Injection failed"), "#f87171");
@@ -292,7 +293,7 @@
 
   async function getStore() {
     return new Promise((res) => chrome.storage.local.get(
-      ["userId","userName","userEmail","userPlan","creditsLeft","apiBase","accessToken"], res
+      ["userId","userName","userEmail","userPlan","creditsLeft","apiBase","accessToken","lastCreditSyncAt"], res
     ));
   }
 
@@ -439,7 +440,7 @@
       unlimited: UNLIMITED.has(plan),
       credits: Number(user.creditsLeft ?? 0),
       blocked: !!(live?.blocked || live?.disabled),
-      syncedAt: Date.now(),
+      syncedAt: Number(live?.user ? Date.now() : store.lastCreditSyncAt || Date.now()),
     };
     paint();
   }
