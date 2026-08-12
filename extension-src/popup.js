@@ -199,9 +199,9 @@ async function fetchStatusForToken(userId, accessToken) {
   return authFail || last;
 }
 
-async function fetchStatus(userId) {
+async function fetchStatus(userId, opts = {}) {
   const { accessToken } = await chrome.storage.local.get("accessToken");
-  return fetchStatusForToken(userId, accessToken);
+  return fetchStatusForToken(userId, accessToken, opts);
 }
 
 function looksJwt(token) {
