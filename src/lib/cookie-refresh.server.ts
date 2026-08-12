@@ -15,6 +15,7 @@ const STALE_MS_DEFAULT = 90 * 1000; // 90s — well under the 3-min drain window
 
 export async function refreshCookiePool(opts: {
   forceIfYoungerThanMs?: number;
+  force?: boolean;
 } = {}): Promise<RefreshResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const stale = opts.forceIfYoungerThanMs ?? STALE_MS_DEFAULT;
@@ -30,7 +31,7 @@ export async function refreshCookiePool(opts: {
     ? Date.now() - new Date(latest.updated_at).getTime()
     : Number.POSITIVE_INFINITY;
 
-  if (ageMs < stale) {
+  if (!opts.force && ageMs < stale) {
     return { ok: true, inserted: false, ageBeforeMs: ageMs, reason: "fresh" };
   }
 
