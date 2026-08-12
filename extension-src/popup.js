@@ -145,21 +145,22 @@ function normalizeLoginPayload(payload, typedEmail) {
 }
 
 
-async function fetchStatusForToken(userId, accessToken) {
+async function fetchStatusForToken(userId, accessToken, opts = {}) {
   const preferred = await getApiBase();
   const tryOrder = [preferred, ...API_ENDPOINTS.filter((u) => u !== preferred)];
   let last = { status: 0, data: { valid: false, message: "Cannot reach server" } };
   let authFail = null;
   let currentToken = accessToken;
+  const forceParam = opts.force ? "&force=1" : "";
   for (const base of tryOrder) {
     try {
       const headers = { "Content-Type": "application/json", "Accept": "application/json" };
       if (currentToken) headers.Authorization = `Bearer ${currentToken}`;
-      const res = await fetch(`${base}/api/public/extension/verify?_ts=${Date.now()}`, {
+      const res = await fetch(`${base}/api/public/extension/verify?_ts=${Date.now()}${forceParam}`, {
         method: "POST",
         headers: { ...headers, "Cache-Control": "no-store, no-cache", "Pragma": "no-cache" },
         cache: "no-store",
-        body: JSON.stringify({ userId, accessToken: currentToken, _ts: Date.now() }),
+        body: JSON.stringify({ userId, accessToken: currentToken, force: !!opts.force, _ts: Date.now() }),
       });
 
       const type = (res.headers.get("content-type") || "").toLowerCase();
