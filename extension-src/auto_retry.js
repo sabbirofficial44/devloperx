@@ -1,71 +1,87 @@
-/* DeveloperX — auto retry failed generations (v1.1)
- * Watches Google Flow for failure states and clicks the retry control
- * automatically, with backoff + per-card attempt limits.
+/* DeveloperX — auto retry failed generations (v1.2)
+ * Watches Google Flow for failed generations and clicks the card's own
+ * retry control, with cooldown + per-button attempt limits.
+ *
+ * v1.2 safety: only genuine retry/regenerate controls are clicked (no
+ * generic "refresh" icon guessing), the search is scoped to the smallest
+ * ancestor that owns the failure text, and it never fires while the user
+ * is typing.
  */
 (function () {
-  if (window.__DX_AUTO_RETRY_V11__) return;
-  window.__DX_AUTO_RETRY_V11__ = true;
+  if (window.__DX_AUTO_RETRY_V12__) return;
+  window.__DX_AUTO_RETRY_V12__ = true;
 
   const MAX_ATTEMPTS = 5;
-  const COOLDOWN_MS = 12000;
-  const SCAN_MS = 2500;
+  const COOLDOWN_MS = 15000;
+  const SCAN_MS = 3000;
 
   const attempts = new WeakMap();
   const lastClick = new WeakMap();
 
   const FAIL_RE =
-    /(failed|failure|something went wrong|couldn'?t (be )?(generate|create)|try again|error occurred|unable to generate|generation failed)/i;
+    /(generation failed|failed to generate|video failed|something went wrong|couldn'?t (be )?(generated|created)|unable to generate|an error occurred|\bfailed\b)/i;
+  const RETRY_RE = /^(retry|try again|regenerate|re-generate|retry generation)$/i;
+  const RETRY_LOOSE_RE = /retry|try again|regenerate/i;
 
   function isVisible(el) {
-    if (!el) return false;
+    if (!el || !el.isConnected) return false;
     const r = el.getBoundingClientRect();
     if (r.width < 4 || r.height < 4) return false;
     const st = getComputedStyle(el);
     return st.visibility !== "hidden" && st.display !== "none" && st.opacity !== "0";
   }
 
-  function findRetryButton(scope) {
-    const nodes = scope.querySelectorAll('button, [role="button"], a[role="button"]');
-    for (const b of nodes) {
-      if (!isVisible(b) || b.disabled) continue;
-      const label = (
-        (b.getAttribute("aria-label") || "") +
-        " " +
-        (b.getAttribute("title") || "") +
-        " " +
-        (b.textContent || "")
-      ).toLowerCase();
-      if (/retry|try again|regenerate|re-generate|refresh/.test(label)) return b;
-      // Icon-only retry buttons often use a refresh/rotate icon.
-      const icon = b.querySelector('svg [d*="A9"], svg, i, span[class*="refresh" i], span[class*="retry" i]');
-      if (icon && /refresh|retry|rotate|replay/i.test(b.className || "")) return b;
-    }
-    return null;
+  function labelOf(b) {
+    return (
+      (b.getAttribute("aria-label") || "") + " " +
+      (b.getAttribute("title") || "") + " " +
+      (b.textContent || "")
+    ).replace(/\s+/g, " ").trim();
   }
 
-  function failureCards() {
+  function findRetryButton(scope) {
+    const nodes = scope.querySelectorAll('button, [role="button"]');
+    let loose = null;
+    for (const b of nodes) {
+      if (!isVisible(b) || b.disabled || b.getAttribute("aria-disabled") === "true") continue;
+      const label = labelOf(b);
+      if (!label) continue;
+      if (RETRY_RE.test(label)) return b;
+      if (!loose && label.length <= 40 && RETRY_LOOSE_RE.test(label)) loose = b;
+    }
+    return loose;
+  }
+
+  function userIsTyping() {
+    const a = document.activeElement;
+    return !!a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT" || a.isContentEditable === true);
+  }
+
+  function failureScopes() {
     const out = [];
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const root = document.body;
+    if (!root) return out;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let n;
     while ((n = walker.nextNode())) {
       const t = (n.nodeValue || "").trim();
       if (!t || t.length > 160) continue;
       if (!FAIL_RE.test(t)) continue;
-      let el = n.parentElement;
-      let card = el;
+      let card = n.parentElement;
       for (let i = 0; i < 6 && card?.parentElement; i++) {
-        card = card.parentElement;
         if (findRetryButton(card)) break;
+        card = card.parentElement;
       }
-      if (card && isVisible(card)) out.push(card);
+      if (card && isVisible(card) && findRetryButton(card)) out.push(card);
     }
     return out;
   }
 
   function tick() {
+    if (userIsTyping()) return;
     let cards;
     try {
-      cards = failureCards();
+      cards = failureScopes();
     } catch {
       return;
     }
@@ -80,12 +96,11 @@
       lastClick.set(btn, now);
       try {
         btn.click();
-        console.debug("[DeveloperX] auto-retry fired", used + 1);
       } catch {}
-      break; // one retry per tick to avoid rate limits
+      break; // one retry per tick — avoids rate limiting
     }
   }
 
   setInterval(tick, SCAN_MS);
-  setTimeout(tick, 3000);
+  setTimeout(tick, 4000);
 })();

@@ -11,7 +11,9 @@ const DEFAULT_API = API_ENDPOINTS[0];
 const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?lovable\.(app|dev)$/i;
 // Backend auth is proxied through our own /api/public/auth/login — no direct DB creds in the extension.
 const FLOW_URL = "https://labs.google/fx/tools/flow";
-const FLOW_MATCH = /^(?:https:\/\/labs\.google\/(?:[^/]+\/)?fx\/tools\/flow|https:\/\/(?:[^.]+\.)?flow\.google\/)/i;
+// Google serves Flow from several shapes: /fx/tools/flow, locale-prefixed
+// /<lang>/fx/tools/flow, and the newer flow.google domain.
+const FLOW_MATCH = /^https:\/\/(labs\.google\/(.*\/)?fx\/.*tools\/flow|([a-z0-9-]+\.)?flow\.google\/)/i;
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
 
 const $ = (id) => document.getElementById(id);
@@ -249,8 +251,6 @@ async function saveSession(payload) {
 async function clearSession() {
   await chrome.storage.local.remove([
     "userId","userName","userEmail","userPlan","creditsLeft","accessToken","refreshToken","loggedInAt",
-    "cookieData","cookieUpdatedAt","cookieHealth","cookieHealthDetail","lastCookieApplyAt",
-    "lastCookieApplyCount","lastLiveCookieSync","lastCreditSyncAt",
   ]);
   try { chrome.runtime.sendMessage({ type: "DX_SESSION_CLEARED" }); } catch {}
 }
@@ -258,7 +258,6 @@ async function clearSession() {
 /* ---------------- live countdown ---------------- */
 let liveTimer = null;
 let liveState = { credits: 0, unlimited: false, total: 1, syncedAt: 0 };
-let refreshTimer = null;
 
 function stopLive() { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } }
 
@@ -293,7 +292,7 @@ function tickLive() {
 }
 
 /* ---------------- render ---------------- */
-function renderStatus(user, persistedSyncAt) {
+function renderStatus(user) {
   $("view-login").classList.add("hidden");
   $("view-status").classList.remove("hidden");
   $("s-name").textContent = user.name || user.email || "User";
@@ -309,7 +308,7 @@ function renderStatus(user, persistedSyncAt) {
     credits,
     unlimited: isUnlimited,
     total,
-    syncedAt: Number(persistedSyncAt || Date.now()),
+    syncedAt: Date.now(),
   };
 
   const alertEl = $("s-alert");
@@ -346,36 +345,13 @@ async function refreshLive() {
         creditsLeft: data.user.creditsLeft,
         userPlan: data.user.plan,
         lastLiveCookieSync: Date.now(),
-        lastCreditSyncAt: Date.now(),
       };
       if (Array.isArray(data.cookies)) next.cookieData = data.cookies;
       if (data.cookieUpdatedAt) next.cookieUpdatedAt = data.cookieUpdatedAt;
       await chrome.storage.local.set(next);
-      renderStatus(data.user, next.lastCreditSyncAt);
-      renderCookieHealth(await chrome.storage.local.get(["cookieHealth","cookieHealthDetail","lastLiveCookieSync","cookieData"]));
+      renderStatus(data.user);
     }
-  } catch {
-    renderCookieHealth({ cookieHealth: "offline", cookieHealthDetail: "Using saved session" });
-  }
-}
-
-function relativeAge(value) {
-  const age = Date.now() - Number(value || 0);
-  if (!Number.isFinite(age) || age < 0) return "just now";
-  if (age < 60_000) return `${Math.max(1, Math.floor(age / 1000))}s ago`;
-  if (age < 3_600_000) return `${Math.floor(age / 60_000)}m ago`;
-  return `${Math.floor(age / 3_600_000)}h ago`;
-}
-
-function renderCookieHealth(store) {
-  const state = $("cookie-state");
-  const detail = $("cookie-detail");
-  if (!state || !detail) return;
-  const count = Array.isArray(store.cookieData) ? store.cookieData.length : 0;
-  const health = store.cookieHealth || (count > 0 ? "saved" : "missing");
-  state.className = health === "active" ? "ok" : health === "missing" || health === "error" || health === "expired" ? "danger" : "";
-  state.textContent = health === "active" ? "Cookie active" : health === "saved" || health === "offline" ? "Saved session" : health === "syncing" ? "Syncing" : "Needs inject";
-  detail.textContent = store.cookieHealthDetail || (count > 0 ? `${count} cookies · ${relativeAge(store.lastLiveCookieSync)}` : "No cookie session found");
+  } catch { /* offline */ }
 }
 
 /* ---------------- init ---------------- */
@@ -383,15 +359,14 @@ async function init() {
   const base = await getApiBase();
   $("api-base").value = base;
 
-  const store = await chrome.storage.local.get(["userId","userEmail","userName","userPlan","creditsLeft","lastCreditSyncAt","cookieHealth","cookieHealthDetail","lastLiveCookieSync","cookieData"]);
+  const store = await chrome.storage.local.get(["userId","userEmail","userName","userPlan","creditsLeft"]);
   if (store.userId) {
     renderStatus({
       id: store.userId, name: store.userName, email: store.userEmail,
       plan: store.userPlan, creditsLeft: store.creditsLeft,
-    }, store.lastCreditSyncAt);
-    renderCookieHealth(store);
+    });
     refreshLive();
-    refreshTimer = setInterval(refreshLive, 15000);
+    setInterval(refreshLive, 15000);
   }
 
   $("login-btn").addEventListener("click", async () => {
@@ -404,12 +379,9 @@ async function init() {
     try {
       const payload = await login(email, password);
       await saveSession(payload);
-      const now = Date.now();
-      await chrome.storage.local.set({ lastCreditSyncAt: now });
-      renderStatus(normalizeLoginPayload(payload, email).user, now);
+      renderStatus(normalizeLoginPayload(payload, email).user);
       refreshLive();
-      if (refreshTimer) clearInterval(refreshTimer);
-      refreshTimer = setInterval(refreshLive, 15000);
+      setInterval(refreshLive, 15000);
     } catch (e) {
       errEl.textContent = e.message || "Login failed";
     } finally {
@@ -420,7 +392,6 @@ async function init() {
   $("logout-btn").addEventListener("click", async () => {
     await clearSession();
     stopLive();
-    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
     $("view-status").classList.add("hidden");
     $("view-login").classList.remove("hidden");
   });
@@ -479,9 +450,10 @@ function buildCookieDetails(c) {
   };
   if (!isHost && domain.startsWith(".")) details.domain = domain;
 
-  const nowSec = Math.floor(Date.now() / 1000);
   const sourceExpiry = Number(c.expirationDate || 0);
-  details.expirationDate = Math.max(sourceExpiry, nowSec + ONE_YEAR);
+  if (sourceExpiry > Math.floor(Date.now() / 1000)) {
+    details.expirationDate = sourceExpiry;
+  }
   return details;
 }
 
@@ -546,10 +518,7 @@ async function injectAndOpenFlow() {
       cookieData: data.cookies,
       cookieUpdatedAt: data.cookieUpdatedAt || Date.now(),
       lastLiveCookieSync: Date.now(),
-      cookieHealth: "syncing",
-      cookieHealthDetail: `Applying ${data.cookies.length} cookies`,
     });
-    renderCookieHealth(await chrome.storage.local.get(["cookieHealth","cookieHealthDetail","lastLiveCookieSync","cookieData"]));
 
     const plan = (data.user?.plan || "basic").toLowerCase();
     const credits = Number(data.user?.creditsLeft ?? 0);
@@ -589,22 +558,8 @@ async function injectAndOpenFlow() {
       }
     }
 
-    const health = missing === 0 && ok > 0 ? "active" : "error";
-    const healthDetail = missing === 0
-      ? `${ok}/${total} applied · verified now`
-      : `${ok}/${total} applied · ${missing} auth missing`;
-    const now = Date.now();
-    await chrome.storage.local.set({
-      creditsLeft: data.user?.creditsLeft,
-      userPlan: data.user?.plan,
-      lastCreditSyncAt: now,
-      cookieHealth: health,
-      cookieHealthDetail: healthDetail,
-      lastCookieApplyAt: now,
-      lastCookieApplyCount: ok,
-    });
-    renderStatus(data.user, now);
-    renderCookieHealth(await chrome.storage.local.get(["cookieHealth","cookieHealthDetail","lastLiveCookieSync","cookieData"]));
+    await chrome.storage.local.set({ creditsLeft: data.user?.creditsLeft, userPlan: data.user?.plan });
+    renderStatus(data.user);
 
     const okMsg = missing > 0
       ? `⚠ Injected ${ok}/${total} (${missing} missed) — reloading…`
