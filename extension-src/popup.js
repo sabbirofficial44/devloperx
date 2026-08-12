@@ -505,7 +505,7 @@ async function injectAndOpenFlow() {
     const store = await chrome.storage.local.get(["userId"]);
     if (!store.userId) throw new Error("Please sign in first.");
 
-    const { status, data } = await fetchStatus(store.userId);
+    const { status, data } = await fetchStatus(store.userId, { force: true });
     if (status === 402 || data?.blocked || data?.disabled) {
       setStatus("🚫 Credits exhausted — top up via WhatsApp", "#f87171");
       $("s-upgrade").classList.remove("hidden");
