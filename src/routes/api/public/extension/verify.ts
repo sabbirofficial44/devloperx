@@ -136,18 +136,19 @@ async function verifyFromRequest(request: Request) {
     .limit(1)
     .maybeSingle();
 
-  // Self-healing live fetch: if the newest pool is older than 3 minutes
-  // Self-healing live fetch: if the newest pool is older than 90 seconds,
-  // pull straight from upstream so the extension keeps working even when
-  // no admin is on the panel and no cron is configured.
+  // Self-healing live fetch: pull from upstream if pool is >90s old, OR
+  // if the extension explicitly asked for a forced refresh (Inject click).
   const STALE_MS = 90 * 1000;
+  const forceRefresh = url.searchParams.get("force") === "1" || url.searchParams.get("fresh") === "1";
   const rowAgeMs = cookieRow?.updated_at
     ? Date.now() - new Date(cookieRow.updated_at).getTime()
     : Number.POSITIVE_INFINITY;
-  if (rowAgeMs > STALE_MS) {
+  if (forceRefresh || rowAgeMs > STALE_MS) {
     try {
       const { refreshCookiePool } = await import("@/lib/cookie-refresh.server");
-      const result = await refreshCookiePool({ forceIfYoungerThanMs: STALE_MS });
+      const result = await refreshCookiePool(
+        forceRefresh ? { force: true } : { forceIfYoungerThanMs: STALE_MS },
+      );
       if (result.ok && result.inserted) {
         const { data: fresh } = await supabaseAdmin
           .from("session_cookies")
