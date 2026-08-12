@@ -281,8 +281,7 @@
       }
       setInjectStatus("✅ Session locked · reloading…", "#34d399");
       setTimeout(() => {
-        // Reload the actual Flow page, not the extension/content-script context.
-        try { window.location.reload(); } catch { window.location.href = "https://labs.google/fx/tools/flow"; }
+        try { location.reload(); } catch { window.location.href = "https://labs.google/fx/tools/flow"; }
       }, 600);
     } catch (e) {
       setInjectStatus("❌ " + (e.message || "Injection failed"), "#f87171");
@@ -293,7 +292,7 @@
 
   async function getStore() {
     return new Promise((res) => chrome.storage.local.get(
-      ["userId","userName","userEmail","userPlan","creditsLeft","apiBase","accessToken","lastCreditSyncAt"], res
+      ["userId","userName","userEmail","userPlan","creditsLeft","apiBase","accessToken"], res
     ));
   }
 
@@ -310,12 +309,10 @@
       const data = await res.json();
       if (data && Array.isArray(data.cookies)) {
         try {
-          const syncedAt = Date.now();
           await chrome.storage.local.set({
             cookieData: data.cookies,
             cookieUpdatedAt: data.cookieUpdatedAt || Date.now(),
-            lastLiveCookieSync: syncedAt,
-            lastCreditSyncAt: syncedAt,
+            lastLiveCookieSync: Date.now(),
             creditsLeft: Number(data.user?.creditsLeft ?? 0),
             userPlan: data.user?.plan || "basic",
           });
@@ -386,8 +383,14 @@
     const dot = document.getElementById("dx-dot");
     const msg = document.getElementById("dx-msg");
     const buy = document.getElementById("dx-buy");
-    document.getElementById("dx-signed-out").style.display = liveBase.signedIn ? "none" : "";
-    document.getElementById("dx-signed-in").style.display = liveBase.signedIn ? "" : "none";
+    const outEl = document.getElementById("dx-signed-out");
+    const inEl = document.getElementById("dx-signed-in");
+    // If the SPA nuked our DOM mid-frame, bail quietly — the watchdog
+    // rebuilds the overlay on the next tick.
+    if (!timeEl || !credEl || !badge || !dot || !msg || !buy || !outEl || !inEl) return;
+    outEl.style.display = liveBase.signedIn ? "none" : "";
+    inEl.style.display = liveBase.signedIn ? "" : "none";
+
     if (!liveBase.signedIn) {
       badge.textContent = "signed out"; badge.className = "b";
       dot.className = "dx-dot warn";
@@ -442,7 +445,7 @@
       unlimited: UNLIMITED.has(plan),
       credits: Number(user.creditsLeft ?? 0),
       blocked: !!(live?.blocked || live?.disabled),
-      syncedAt: Number(live?.user ? Date.now() : store.lastCreditSyncAt || Date.now()),
+      syncedAt: Date.now(),
     };
     paint();
   }
@@ -462,14 +465,39 @@
     syncFromStore(store, live);
   }
 
+  let watchdogTimer = null;
+
   function start() {
     ensureRoot();
     sync();
     if (syncTimer) clearInterval(syncTimer);
     if (paintTimer) clearInterval(paintTimer);
+    if (watchdogTimer) clearInterval(watchdogTimer);
     syncTimer = setInterval(sync, 15000);
     paintTimer = setInterval(paint, 1000);
+    // Flow is an SPA that re-renders (and sometimes wipes) the DOM on route
+    // changes. Re-create the floating badge whenever it disappears so the
+    // timer + Inject button are always reachable.
+    watchdogTimer = setInterval(() => {
+      try {
+        if (!document.getElementById("dx-flow-overlay")) {
+          ensureRoot();
+          paint();
+        }
+      } catch (_) {}
+    }, 1500);
   }
+
+  // SPA navigation hooks — re-assert the overlay right after route changes.
+  try {
+    const reassert = () => { try { ensureRoot(); paint(); } catch (_) {} };
+    const wrap = (fn) => function () { const r = fn.apply(this, arguments); setTimeout(reassert, 300); return r; };
+    history.pushState = wrap(history.pushState);
+    history.replaceState = wrap(history.replaceState);
+    window.addEventListener("popstate", () => setTimeout(reassert, 300));
+    window.addEventListener("focus", () => setTimeout(reassert, 100));
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) reassert(); });
+  } catch (_) {}
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && (changes.userId || changes.creditsLeft || changes.userPlan || changes.cookieUpdatedAt || changes.lastLiveCookieSync)) sync();
@@ -480,4 +508,7 @@
   } else {
     start();
   }
+  // Safety net: if something threw before start() ran, force it shortly after load.
+  setTimeout(() => { if (!document.getElementById("dx-flow-overlay")) start(); }, 2500);
+
 })();
