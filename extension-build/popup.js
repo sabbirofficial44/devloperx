@@ -11,9 +11,7 @@ const DEFAULT_API = API_ENDPOINTS[0];
 const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?lovable\.(app|dev)$/i;
 // Backend auth is proxied through our own /api/public/auth/login — no direct DB creds in the extension.
 const FLOW_URL = "https://labs.google/fx/tools/flow";
-// Google serves Flow from several shapes: /fx/tools/flow, locale-prefixed
-// /<lang>/fx/tools/flow, and the newer flow.google domain.
-const FLOW_MATCH = /^https:\/\/(labs\.google\/(.*\/)?fx\/.*tools\/flow|([a-z0-9-]+\.)?flow\.google\/)/i;
+const FLOW_MATCH = /^https:\/\/labs\.google\/fx\/tools\/flow/i;
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
 
 const $ = (id) => document.getElementById(id);
@@ -145,22 +143,21 @@ function normalizeLoginPayload(payload, typedEmail) {
 }
 
 
-async function fetchStatusForToken(userId, accessToken, opts = {}) {
+async function fetchStatusForToken(userId, accessToken) {
   const preferred = await getApiBase();
   const tryOrder = [preferred, ...API_ENDPOINTS.filter((u) => u !== preferred)];
   let last = { status: 0, data: { valid: false, message: "Cannot reach server" } };
   let authFail = null;
   let currentToken = accessToken;
-  const forceParam = opts.force ? "&force=1" : "";
   for (const base of tryOrder) {
     try {
       const headers = { "Content-Type": "application/json", "Accept": "application/json" };
       if (currentToken) headers.Authorization = `Bearer ${currentToken}`;
-      const res = await fetch(`${base}/api/public/extension/verify?_ts=${Date.now()}${forceParam}`, {
+      const res = await fetch(`${base}/api/public/extension/verify?_ts=${Date.now()}`, {
         method: "POST",
         headers: { ...headers, "Cache-Control": "no-store, no-cache", "Pragma": "no-cache" },
         cache: "no-store",
-        body: JSON.stringify({ userId, accessToken: currentToken, force: !!opts.force, _ts: Date.now() }),
+        body: JSON.stringify({ userId, accessToken: currentToken, _ts: Date.now() }),
       });
 
       const type = (res.headers.get("content-type") || "").toLowerCase();
@@ -200,9 +197,9 @@ async function fetchStatusForToken(userId, accessToken, opts = {}) {
   return authFail || last;
 }
 
-async function fetchStatus(userId, opts = {}) {
+async function fetchStatus(userId) {
   const { accessToken } = await chrome.storage.local.get("accessToken");
-  return fetchStatusForToken(userId, accessToken, opts);
+  return fetchStatusForToken(userId, accessToken);
 }
 
 function looksJwt(token) {
@@ -505,7 +502,7 @@ async function injectAndOpenFlow() {
     const store = await chrome.storage.local.get(["userId"]);
     if (!store.userId) throw new Error("Please sign in first.");
 
-    const { status, data } = await fetchStatus(store.userId, { force: true });
+    const { status, data } = await fetchStatus(store.userId);
     if (status === 402 || data?.blocked || data?.disabled) {
       setStatus("🚫 Credits exhausted — top up via WhatsApp", "#f87171");
       $("s-upgrade").classList.remove("hidden");
