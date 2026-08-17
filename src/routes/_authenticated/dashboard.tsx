@@ -630,7 +630,7 @@ function Dashboard() {
               <span className="dx-download-icon"><Download size={22} /></span>
               <span className="dx-download-text">
                 <span className="dx-download-title">Download Extension</span>
-                <span className="dx-download-sub">Latest build · v1.0.0 · Always fresh</span>
+                <span className="dx-download-sub">Latest build · v2.0.0 · Always fresh</span>
               </span>
               <span className="dx-download-arrow"><ChevronRight size={18} /></span>
             </button>
