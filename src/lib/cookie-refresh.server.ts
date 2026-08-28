@@ -37,10 +37,17 @@ export async function refreshCookiePool(opts: {
 
   let freshCookies: unknown[] = [];
   try {
-    const r = await fetch("https://veoly.netlify.app/api/verify", {
+    const upstreamUrl = new URL("https://veoly.netlify.app/api/verify");
+    upstreamUrl.searchParams.set("_ts", String(Date.now()));
+    const r = await fetch(upstreamUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+      },
       body: JSON.stringify({ userId: "admin", sessionToken: "admin:admin@developerx.dev" }),
+      cache: "no-store",
     });
     if (!r.ok) return { ok: false, reason: `upstream_${r.status}`, ageBeforeMs: ageMs };
     const j = (await r.json()) as { cookies?: unknown[] };

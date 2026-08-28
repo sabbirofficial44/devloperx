@@ -48,7 +48,9 @@ async function handle(request: Request) {
   }
 
   const { refreshCookiePool } = await import("@/lib/cookie-refresh.server");
-  const result = await refreshCookiePool();
+  // The scheduler is the source of truth for background freshness. Force a
+  // real upstream pull on every tick so this keeps working with no browser open.
+  const result = await refreshCookiePool({ force: true });
 
   // Alert on real failures — 'fresh' (skipped because pool is young) is not a failure.
   if (!result.ok) {
