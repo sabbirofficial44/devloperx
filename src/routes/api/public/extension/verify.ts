@@ -37,6 +37,7 @@ function buildUser(profile: {
   display_name: string | null;
   credits: number | null;
   user_plan: string | null;
+  session_expires_at?: string | null;
 }) {
   const credits = Number(profile.credits ?? 0);
   const plan = (profile.user_plan ?? "basic").toLowerCase();
@@ -49,6 +50,12 @@ function buildUser(profile: {
     creditsUsed: 0,
     creditsLeft: credits,
     unlimited: UNLIMITED_PLANS.has(plan),
+    // Authoritative, server-side session clock. The extension must render this
+    // instead of any locally computed countdown, so logout/login, a cleared
+    // browser or a reinstall can never restart the granted time.
+    sessionExpiresAt: profile.session_expires_at
+      ? new Date(profile.session_expires_at).getTime()
+      : null,
   };
 }
 
@@ -102,7 +109,7 @@ async function verifyFromRequest(request: Request) {
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("user_id, email, display_name, credits, user_plan, assigned_cookies, cookies_rotated_at")
+    .select("user_id, email, display_name, credits, user_plan, assigned_cookies, cookies_rotated_at, session_expires_at")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -175,6 +182,7 @@ async function verifyFromRequest(request: Request) {
 
   return json({
     valid: true,
+    sessionExpiresAt: user.sessionExpiresAt,
     cookies,
     cookieUpdatedAt,
     user,
