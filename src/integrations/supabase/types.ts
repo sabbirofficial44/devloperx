@@ -209,6 +209,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           last_tick_at: string
+          session_expires_at: string | null
           trial_started_at: string | null
           updated_at: string
           user_id: string
@@ -222,6 +223,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           last_tick_at?: string
+          session_expires_at?: string | null
           trial_started_at?: string | null
           updated_at?: string
           user_id: string
@@ -235,6 +237,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           last_tick_at?: string
+          session_expires_at?: string | null
           trial_started_at?: string | null
           updated_at?: string
           user_id?: string
@@ -420,6 +423,7 @@ export type Database = {
           credits: number
           last_tick_at: string
           plan: string
+          session_expires_at: string
         }[]
       }
     }
