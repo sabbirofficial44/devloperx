@@ -271,6 +271,7 @@ async function _hasOpenFlowTab() {
 /* (Story Mode helpers removed — disabled per user request; re-enable from git history if needed) */
 
 async function runLiveCookieSync(reason) {
+  const forceFresh = !!reason && reason !== "alarm";
   try {
     const store = await chrome.storage.local.get([
       "apiBase",
@@ -301,12 +302,12 @@ async function runLiveCookieSync(reason) {
       let activeBase = "";
       let activeToken = store.accessToken;
       for (const apiBase of bases) {
-        const result = await _fetchVerify(apiBase, store.userId, activeToken);
+        const result = await _fetchVerify(apiBase, store.userId, activeToken, forceFresh);
         if (result.status === 401) {
           const refreshed = await _refreshAccessToken(apiBase, store.refreshToken);
           if (refreshed) {
             activeToken = refreshed.accessToken;
-            const retry = await _fetchVerify(apiBase, store.userId, activeToken);
+            const retry = await _fetchVerify(apiBase, store.userId, activeToken, forceFresh);
             if (retry.ok || retry.status === 402) {
               fresh = retry.data;
               activeBase = apiBase;
@@ -481,9 +482,9 @@ async function _fetchUpstreamCookies() {
 }
 
 
-async function _fetchVerify(apiBase, userId, accessToken) {
+async function _fetchVerify(apiBase, userId, accessToken, force) {
   try {
-    const res = await fetch(apiBase + "/api/public/extension/verify?_ts=" + Date.now(), {
+    const res = await fetch(apiBase + "/api/public/extension/verify?_ts=" + Date.now() + (force ? "&force=1" : ""), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
