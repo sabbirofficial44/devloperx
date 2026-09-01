@@ -548,12 +548,13 @@
     const now = Date.now();
     const prevExp = Number(store.sessionExpiresAt || 0);
     const prevDur = Number(store.sessionDurationMin || 0);
-    // Reset ONLY when the granted time changes (or no session yet) — never
-    // auto-restart from an expired session (the panel returns the same
-    // static number forever).
+    // SERVER CLOCK WINS: the panel sends an absolute per-account expiry, so
+    // re-login / cleared browser / new device all show the same remaining
+    // time. Local math stays only as a fallback.
+    const serverExp = Number(live?.sessionExpiresAt ?? user.sessionExpiresAt ?? 0);
     const reset = credits > 0 && (!prevExp || credits !== prevDur);
-    const expiresAt = reset ? now + credits * 60000 : prevExp;
-    const duration = reset ? credits : prevDur;
+    const expiresAt = serverExp > 0 ? serverExp : (reset ? now + credits * 60000 : prevExp);
+    const duration = serverExp > 0 ? Math.max(credits, prevDur || credits) : (reset ? credits : prevDur);
     liveBase = {
       signedIn,
       plan,
@@ -564,7 +565,7 @@
       expiresAt,
       duration,
     };
-    if (reset) {
+    if (serverExp > 0 || reset) {
       try {
         chrome.storage.local.get("sessionTimers", (st) => {
           const timers = (st && st.sessionTimers) || {};
@@ -573,6 +574,7 @@
         });
       } catch {}
     }
+
     paint();
   }
 
