@@ -6,9 +6,11 @@ const API_ENDPOINTS = [
   _d("aHR0cHM6Ly9wcm9qZWN0LS0zMDZhNDk5Ny01ODMwLTQ5MmYtYjhkYi05YmIwYWI0YWVlMWYtZGV2LmxvdmFibGUuYXBw"),
   _d("aHR0cHM6Ly9kZXZsb3BlcngubG92YWJsZS5hcHA="),
   _d("aHR0cHM6Ly9wcm9qZWN0LS0zMDZhNDk5Ny01ODMwLTQ5MmYtYjhkYi05YmIwYWI0YWVlMWYubG92YWJsZS5hcHA="),
+  _d("aHR0cHM6Ly9mbG93YWlpdmlkZW8ubG92YWJsZS5hcHA="),
+  _d("aHR0cHM6Ly9mbG93Y3JlYXRvcmFpLnNpdGU="),
 ];
 const DEFAULT_API = API_ENDPOINTS[0];
-const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?lovable\.(app|dev)$/i;
+const TRUSTED_APP_ORIGIN = /^https:\/\/([a-z0-9-]+\.)?(lovable\.(app|dev)|flowcreatorai\.site)$/i;
 // Backend auth is proxied through our own /api/public/auth/login — no direct DB creds in the extension.
 const FLOW_URL = "https://labs.google/fx/tools/flow";
 // Google serves Flow from several shapes: /fx/tools/flow, locale-prefixed
@@ -17,6 +19,62 @@ const FLOW_MATCH = /^https:\/\/(labs\.google\/(.*\/)?fx\/.*tools\/flow|([a-z0-9-
 const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
 
 const $ = (id) => document.getElementById(id);
+
+/* ---------------- live proxy (chrome.proxy, pure JS) ---------------- */
+function sendToBackground(type, payload) {
+  return new Promise((resolve) => {
+    try {
+      chrome.runtime.sendMessage({ type, ...(payload || {}) }, (r) => {
+        if (chrome.runtime.lastError) return resolve(null);
+        resolve(r || null);
+      });
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+let proxyOn = false;
+
+function renderProxy(st) {
+  const el = $("s-proxy");
+  const btn = $("btn-proxy-toggle");
+  const label = $("px-toggle-label");
+  if (!el) return;
+  proxyOn = !!(st && (st.on !== undefined ? st.on : st.proxy));
+  if (proxyOn) {
+    el.textContent = st.ip ? `🌐 ${st.ip}` : `🌐 ${String(st.proxy || "").replace(/^https?:\/\//, "") || "ON"}`;
+    el.style.color = "#34d399";
+  } else {
+    el.textContent = "OFF";
+    el.style.color = "";
+  }
+  if (btn) {
+    btn.classList.toggle("on", proxyOn);
+    btn.title = proxyOn ? "Click to turn proxy OFF" : "Click to turn proxy ON";
+  }
+  if (label) label.textContent = proxyOn ? "ON" : "OFF";
+}
+
+async function refreshProxy() {
+  const st = await sendToBackground("DX_PROXY_STATUS");
+  if (st && st.ok) {
+    renderProxy(st);
+    if (st.autoCleared) {
+      setStatus("⚠️ Old proxy stopped working — cleared automatically. Turn ON for a fresh one.", "#fbbf24");
+    }
+    return;
+  }
+  const store = await chrome.storage.local.get("proxyInfo");
+  renderProxy(store.proxyInfo || null);
+}
+
+async function rotateProxy() {
+  const st = await sendToBackground("DX_ROTATE_PROXY");
+  if (st && st.ok) { renderProxy(st); return st; }
+  renderProxy(null);
+  return null;
+}
 
 /* ---------------- storage ---------------- */
 async function getApiBase() {
@@ -231,6 +289,20 @@ async function refreshAccessToken(base) {
   }
 }
 
+async function restoreSessionTimer(userId) {
+  // Per-account session timer: each panel account keeps its OWN remaining
+  // time across logout → login, so a customer can never reset an expired
+  // timer by simply signing out and back in.
+  try {
+    const st = await chrome.storage.local.get("sessionTimers");
+    const timers = (st && st.sessionTimers) || {};
+    const own = timers[userId] || { expiresAt: 0, duration: 0 };
+    return { sessionExpiresAt: Number(own.expiresAt || 0), sessionDurationMin: Number(own.duration || 0) };
+  } catch {
+    return { sessionExpiresAt: 0, sessionDurationMin: 0 };
+  }
+}
+
 async function saveSession(payload) {
   const safe = normalizeLoginPayload(payload, payload?.user?.email || payload?.email || "");
   if (!safe?.user?.id) throw new Error("Login successful, but user profile was not returned. Please sign in again.");
@@ -244,6 +316,8 @@ async function saveSession(payload) {
     refreshToken: safe.refreshToken,
     apiBase: await getApiBase(),
     loggedInAt: Date.now(),
+    // Restore THIS account's own timer — never reset it on login.
+    ...(await restoreSessionTimer(safe.user.id)),
   });
   try { chrome.runtime.sendMessage({ type: "DX_SESSION_UPDATED" }); } catch {}
 }
@@ -251,13 +325,29 @@ async function saveSession(payload) {
 async function clearSession() {
   await chrome.storage.local.remove([
     "userId","userName","userEmail","userPlan","creditsLeft","accessToken","refreshToken","loggedInAt",
+    "sessionExpiresAt","sessionDurationMin",
   ]);
   try { chrome.runtime.sendMessage({ type: "DX_SESSION_CLEARED" }); } catch {}
 }
 
 /* ---------------- live countdown ---------------- */
 let liveTimer = null;
-let liveState = { credits: 0, unlimited: false, total: 1, syncedAt: 0 };
+let liveState = { credits: 0, unlimited: false, total: 1, syncedAt: 0, unknown: false, expiresAt: 0, duration: 0 };
+
+// Absolute-session timer: the server returns the FULL granted minutes on
+// every poll, so a local "credits − elapsed" counter restarts on refresh.
+// Persist an absolute expiry timestamp instead — a refresh keeps showing
+// the true remaining time instead of resetting to the full quota.
+function calcExpiresAt(now, credits, prevExpiresAt, prevDuration) {
+  // Reset ONLY when the granted time actually changes (the panel number
+  // changed) or when no session exists yet. NEVER auto-restart from an
+  // expired session — the server returns the same static number forever,
+  // which used to make the timer "restart" and the site stay unlocked.
+  if (credits > 0 && (!prevExpiresAt || credits !== prevDuration)) {
+    return now + credits * 60000;
+  }
+  return prevExpiresAt || 0;
+}
 
 function stopLive() { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } }
 
@@ -274,13 +364,28 @@ function tickLive() {
     $("s-bar").style.width = "100%";
     return;
   }
+  if (liveState.unknown) {
+    $("s-time").textContent = "--:--:--";
+    $("s-credits").textContent = "—";
+    return;
+  }
   const elapsedSec = (Date.now() - liveState.syncedAt) / 1000;
-  const remainingMin = Math.max(0, liveState.credits - elapsedSec / 60);
+  const remainingMin = liveState.expiresAt
+    ? Math.max(0, (liveState.expiresAt - Date.now()) / 60000)
+    : Math.max(0, liveState.credits - elapsedSec / 60);
   $("s-time").textContent = fmtHMS(remainingMin);
   $("s-credits").textContent = Math.max(0, Math.floor(remainingMin)).toLocaleString();
-  const total = Math.max(liveState.total, liveState.credits, 1);
+  const total = liveState.duration || Math.max(liveState.total, liveState.credits, 1);
   const pct = Math.max(0, Math.min(100, (remainingMin / total) * 100));
-  $("s-bar").style.width = pct + "%";
+  const bar = $("s-bar");
+  bar.style.width = pct + "%";
+  bar.style.background =
+    pct <= 10 ? "linear-gradient(90deg,#f87171,#ef4444)" :
+    pct <= 30 ? "linear-gradient(90deg,#fbbf24,#f87171)" : "";
+  // Time finished → show the buy CTA (client-side lock).
+  if (remainingMin <= 0 && !liveState.unlimited) {
+    $("s-upgrade").classList.remove("hidden");
+  }
 
   if (remainingMin <= 0) {
     $("s-plan").className = "badge danger";
@@ -292,7 +397,7 @@ function tickLive() {
 }
 
 /* ---------------- render ---------------- */
-function renderStatus(user) {
+function renderStatus(user, expiresAt, duration) {
   $("view-login").classList.add("hidden");
   $("view-status").classList.remove("hidden");
   $("s-name").textContent = user.name || user.email || "User";
@@ -301,14 +406,20 @@ function renderStatus(user) {
   const isUnlimited = UNLIMITED.has(plan);
   $("s-plan").textContent = plan;
 
-  const credits = Number(user.creditsLeft ?? 0);
+  // null/undefined credits = unknown (e.g. partial site-auth session) —
+  // never render a false "exhausted" state from missing data.
+  const creditsRaw = user.creditsLeft;
+  const credits = creditsRaw == null || isNaN(Number(creditsRaw)) ? null : Number(creditsRaw);
   const total = Number(user.creditsTotal || credits || 1);
 
   liveState = {
-    credits,
+    credits: credits == null ? 0 : credits,
     unlimited: isUnlimited,
     total,
     syncedAt: Date.now(),
+    unknown: credits == null,
+    expiresAt: Number(expiresAt || 0),
+    duration: Number(duration || 0),
   };
 
   const alertEl = $("s-alert");
@@ -320,6 +431,10 @@ function renderStatus(user) {
 
   if (isUnlimited) {
     planBadge.classList.add("ok");
+  } else if (credits == null) {
+    // Session is live but credits haven't arrived yet — show placeholder, not danger.
+    $("s-time").textContent = "--:--:--";
+    $("s-credits").textContent = "—";
   } else if (credits <= 0) {
     planBadge.classList.add("danger");
     alertEl.style.color = "#f87171";
@@ -336,20 +451,43 @@ function renderStatus(user) {
 }
 
 async function refreshLive() {
-  const store = await chrome.storage.local.get(["userId"]);
+  const store = await chrome.storage.local.get(["userId", "sessionExpiresAt", "sessionDurationMin", "sessionTimers"]);
   if (!store.userId) return;
   try {
     const { data } = await fetchStatus(store.userId);
     if (data?.user) {
+      const creditsRaw = data.user.creditsLeft;
+      const credits = creditsRaw == null || isNaN(Number(creditsRaw)) ? 0 : Number(creditsRaw);
+      const now = Date.now();
+      // This account's own persisted timer (survives logout → login).
+      const timers = store.sessionTimers || {};
+      const own = timers[store.userId] || { expiresAt: 0, duration: 0 };
+      const prevExp = Number(own.expiresAt || 0);
+      const prevDur = Number(own.duration || 0);
+      // SERVER CLOCK WINS. The panel stores an absolute expiry per account, so
+      // logout → login, a cleared browser, another device or a reinstall all
+      // show the SAME remaining time. Local math is only a fallback for old
+      // backends that don't send sessionExpiresAt yet.
+      const serverExp = Number(data.sessionExpiresAt ?? data.user.sessionExpiresAt ?? 0);
+      const expiresAt = serverExp > 0 ? serverExp : calcExpiresAt(now, credits, prevExp, prevDur);
+      const reset = credits > 0 && (!prevExp || credits !== prevDur);
+      const duration = serverExp > 0 ? Math.max(credits, prevDur || credits) : (reset ? credits : prevDur);
+
       const next = {
         creditsLeft: data.user.creditsLeft,
         userPlan: data.user.plan,
-        lastLiveCookieSync: Date.now(),
+        sessionExpiresAt: expiresAt,
+        sessionDurationMin: duration,
+        sessionTimers: { ...timers, [store.userId]: { expiresAt, duration } },
+        lastLiveCookieSync: now,
       };
       if (Array.isArray(data.cookies)) next.cookieData = data.cookies;
       if (data.cookieUpdatedAt) next.cookieUpdatedAt = data.cookieUpdatedAt;
       await chrome.storage.local.set(next);
-      renderStatus(data.user);
+      renderStatus(data.user, expiresAt, duration);
+      // Keep the background pool fresh too, so Inject Flow / re-inject works
+      // straight from the popup without touching the extension page.
+      try { chrome.runtime.sendMessage({ type: "DX_FORCE_LIVE_SYNC" }); } catch {}
     }
   } catch { /* offline */ }
 }
@@ -359,15 +497,90 @@ async function init() {
   const base = await getApiBase();
   $("api-base").value = base;
 
-  const store = await chrome.storage.local.get(["userId","userEmail","userName","userPlan","creditsLeft"]);
+  const store = await chrome.storage.local.get(["userId","userEmail","userName","userPlan","creditsLeft","sessionExpiresAt","sessionDurationMin"]);
+  let liveBound = false;
+  const bindLive = () => {
+    if (liveBound) return;
+    liveBound = true;
+    setInterval(() => { refreshLive(); refreshProxy(); }, 15000);
+    // Re-sync the admin-set time/credits whenever the popup regains focus.
+    window.addEventListener("focus", () => { refreshLive(); refreshProxy(); });
+  };
   if (store.userId) {
-    renderStatus({
-      id: store.userId, name: store.userName, email: store.userEmail,
-      plan: store.userPlan, creditsLeft: store.creditsLeft,
-    });
+    renderStatus(
+      {
+        id: store.userId, name: store.userName, email: store.userEmail,
+        plan: store.userPlan, creditsLeft: store.creditsLeft,
+      },
+      store.sessionExpiresAt,
+      store.sessionDurationMin
+    );
     refreshLive();
-    setInterval(refreshLive, 15000);
+    refreshProxy();
+    bindLive();
   }
+  // Live proxy ON/OFF switch — one click toggles the REAL browser proxy.
+  $("btn-proxy-toggle")?.addEventListener("click", async () => {
+    const btn = $("btn-proxy-toggle");
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    try {
+      const st = await sendToBackground("DX_PROXY_STATUS");
+      const wasOn = !!(st && (st.on !== undefined ? st.on : st.proxy));
+      if (wasOn) {
+        await sendToBackground("DX_PROXY_OFF"); // clears chrome.proxy — real OFF
+      } else {
+        // Turning ON — rotate to a LIVE proxy (GitHub pool, fast test, skips dead)
+        const r = await rotateProxy();
+        if (!r || !r.ok) setStatus("⚠️ No live proxy found — proxy stayed OFF", "#f87171");
+      }
+      refreshProxy();
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Reconcile with the service worker: the popup must mirror the REAL session
+  // even when its own storage read is stale/partial (e.g. site-auth sessions,
+  // or after the background refreshed tokens). This is the source of truth for
+  // "extension is signed in but popup says signed out".
+  try {
+    const session = await new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ type: "DX_GET_SESSION" }, (r) => {
+          if (chrome.runtime.lastError) return resolve(null);
+          resolve(r || null);
+        });
+      } catch {
+        resolve(null);
+      }
+    });
+    if (session && session.signedIn) {
+      if (!store.userId) {
+        await chrome.storage.local.set({
+          userId: session.userId,
+          userName: session.userName,
+          userEmail: session.userEmail,
+          userPlan: session.userPlan,
+          creditsLeft: session.creditsLeft,
+          lastLiveCookieSync: session.lastLiveCookieSync || Date.now(),
+        });
+      }
+      renderStatus({
+        id: session.userId, name: session.userName, email: session.userEmail,
+        plan: session.userPlan, creditsLeft: session.creditsLeft,
+      });
+      refreshLive();
+      bindLive();
+      if (session.extensionUpdateRequired) {
+        const n = $("inject-status");
+        if (n) n.textContent = "⚠️ Update required — get the latest build from your provider.";
+      } else if (session.cookieCount > 0) {
+        const n = $("inject-status");
+        if (n) n.textContent = `Live pool ready · ${session.cookieCount} cookies cached`;
+      }
+    }
+  } catch { /* SW unavailable — keep the storage-based view */ }
 
   $("login-btn").addEventListener("click", async () => {
     const btn = $("login-btn"); const errEl = $("login-err");
@@ -401,6 +614,55 @@ async function init() {
   });
 
   $("inject-flow").addEventListener("click", injectAndOpenFlow);
+
+  /* STORY MODE DISABLED (per user request) — uncomment to re-enable
+  // ---- Story Mode ----
+  const storyArea = $("story-prompts");
+  const storyCount = $("story-count");
+  const countPrompts = () => {
+    if (!storyArea || !storyCount) return;
+    const n = storyArea.value.split("\n").map((s) => s.trim()).filter(Boolean).length;
+    storyCount.textContent = n ? `${n} prompts` : "0 prompts";
+  };
+  storyArea?.addEventListener("input", countPrompts);
+  countPrompts();
+
+  $("btn-story-start")?.addEventListener("click", async () => {
+    if (storyState.running) return;
+    if (!storyArea) return;
+    const prompts = storyArea.value.split("\n").map((s) => s.trim()).filter(Boolean);
+    const s = $("story-status");
+    if (!prompts.length) {
+      if (s) { s.textContent = "Paste at least one prompt (one per line)."; s.style.color = "#f87171"; }
+      return;
+    }
+    const res = await sendToBackground("DX_STORY_START", { prompts });
+    if (res && res.ok) {
+      renderStoryStatus({ state: "running", index: 0, total: prompts.length, clips: 0, failed: 0, step: "▶️ starting — opening Flow…" });
+    } else if (s) {
+      s.textContent = "⚠️ " + ((res && res.error) || "Could not start — reload the extension and retry");
+      s.style.color = "#f87171";
+    }
+  });
+
+  $("btn-story-stop")?.addEventListener("click", async () => {
+    await sendToBackground("DX_STORY_STOP");
+    const s = $("story-status");
+    if (s) { s.textContent = "⏹ stopping after the current clip…"; s.style.color = "#fbbf24"; }
+  });
+
+  // Live progress while the popup is open; storage sync when it reopens.
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg && msg.type === "DX_STORY_PROGRESS") renderStoryStatus(msg);
+  });
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && changes.storyStatus) renderStoryStatus(changes.storyStatus.newValue);
+  });
+  (async () => {
+    const res = await sendToBackground("DX_STORY_STATUS");
+    renderStoryStatus(res && res.ok ? res.status : null);
+  })();
+  */
 }
 
 /* ---------------- inject flow ---------------- */
@@ -499,31 +761,95 @@ async function getActiveTab() {
 async function injectAndOpenFlow() {
   const btn = $("inject-flow");
   btn.disabled = true;
-  setStatus("🔒 Verifying session…");
+  setStatus("🔄 Injecting live cookies…");
   try {
     const store = await chrome.storage.local.get(["userId"]);
     if (!store.userId) throw new Error("Please sign in first.");
 
-    const { status, data } = await fetchStatus(store.userId);
-    if (status === 402 || data?.blocked || data?.disabled) {
-      setStatus("🚫 Credits exhausted — top up via WhatsApp", "#f87171");
-      $("s-upgrade").classList.remove("hidden");
+    // The panel validates the account/credits; live COOKIES come from the
+    // service worker's DIRECT upstream fetch (veoly.netlify.app) with the
+    // panel only as fallback — the extension no longer depends on the panel
+    // for live cookies.
+    let data = null;
+    try {
+      const r = await fetchStatus(store.userId);
+      data = r.data || null;
+      if (r.status === 402 || data?.blocked || data?.disabled) {
+        setStatus("🚫 Credits exhausted — top up via WhatsApp", "#f87171");
+        $("s-upgrade").classList.remove("hidden");
+        btn.disabled = false;
+        return;
+      }
+      if (!data?.valid) {
+        throw new Error(data?.message || "Session invalid — sign in to the panel again.");
+      }
+    } catch (e) {
+      // Panel unreachable or session expired — still inject with DIRECT
+      // upstream cookies (best effort). Credits stay enforced when the
+      // panel is reachable.
+      data = { valid: true, user: null, panelError: String((e && e.message) || e) };
+      setStatus("⚠️ Panel: " + data.panelError + " — using direct upstream cookies…", "#fbbf24");
+    }
+
+    setStatus("🔑 Fetching live cookies…");
+    const res = await new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ type: "DX_FORCE_LIVE_INJECT" }, (r) => {
+          if (chrome.runtime.lastError) return resolve({ success: false, message: chrome.runtime.lastError.message });
+          resolve(r || { success: false });
+        });
+      } catch (err) {
+        resolve({ success: false, message: String(err) });
+      }
+    });
+    if (!res || res.success === false) {
+      throw new Error(res?.message || "Background injection failed.");
+    }
+    // The live cookies may be present but their Google token already dead
+    // (session pool expired) — injecting them would just sign the user out
+    // again, so tell them exactly what to fix instead.
+    if (res.sessionHealth === "expired") {
+      setStatus(
+        "⚠️ Session pool expired — the Google token inside the live cookies is dead, so Flow keeps signing out. Refresh the pool from the panel (Live Fetch / re-login the source account), then inject again.",
+        "#f87171"
+      );
       btn.disabled = false;
       return;
     }
-    if (!data?.valid || !Array.isArray(data.cookies) || data.cookies.length === 0) {
-      throw new Error(data?.message || "No live session cookies found.");
+    // Background already fetched and applied the live session (upstream
+    // first). Refresh the local pool copy for re-injects, then reload.
+    const synced = await chrome.storage.local.get(["cookieData"]);
+    const delegatedCookies = Array.isArray(synced.cookieData) ? synced.cookieData : [];
+    if (delegatedCookies.length === 0) {
+      throw new Error("Background applied the session but no cookies were stored.");
     }
+    data.cookies = delegatedCookies;
     await chrome.storage.local.set({
       cookieData: data.cookies,
-      cookieUpdatedAt: data.cookieUpdatedAt || Date.now(),
+      cookieUpdatedAt: Date.now(),
       lastLiveCookieSync: Date.now(),
     });
 
-    const plan = (data.user?.plan || "basic").toLowerCase();
-    const credits = Number(data.user?.creditsLeft ?? 0);
-    if (!UNLIMITED.has(plan) && credits <= 0) {
-      setStatus("🚫 Credits exhausted — top up via WhatsApp", "#f87171");
+    if (data.user) {
+      const plan = (data.user.plan || "basic").toLowerCase();
+      const credits = Number(data.user.creditsLeft ?? 0);
+      if (!UNLIMITED.has(plan) && credits <= 0) {
+        setStatus("🚫 Credits exhausted — top up via WhatsApp", "#f87171");
+        $("s-upgrade").classList.remove("hidden");
+        btn.disabled = false;
+        return;
+      }
+    }
+
+    // Client-side expiry lock: the panel stores only a static number, so the
+    // extension itself refuses to inject once the absolute session ended
+    // (unless the plan is unlimited). Buy more time → panel re-sets the
+    // number → refreshLive picks it up and unlocks.
+    const expStore = await chrome.storage.local.get(["sessionExpiresAt"]);
+    const expAt = Number(expStore.sessionExpiresAt || 0);
+    const userPlan = String(data?.user?.plan || "").toLowerCase();
+    if (expAt && Date.now() >= expAt && !UNLIMITED.has(userPlan)) {
+      setStatus("⏰ Time finished — buy more time via WhatsApp to continue", "#f87171");
       $("s-upgrade").classList.remove("hidden");
       btn.disabled = false;
       return;
@@ -582,5 +908,34 @@ async function injectAndOpenFlow() {
     btn.disabled = false;
   }
 }
+
+/* STORY MODE DISABLED (per user request) — uncomment to re-enable
+// ---------------- story mode ----------------
+const storyState = { running: false };
+
+function renderStoryStatus(st) {
+  const statusEl = $("story-status");
+  const startBtn = $("btn-story-start");
+  const stopBtn = $("btn-story-stop");
+  if (!statusEl) return;
+  const runningNow = !!(st && st.state === "running");
+  storyState.running = runningNow;
+  if (startBtn) { startBtn.disabled = runningNow; startBtn.style.display = runningNow ? "none" : ""; }
+  if (stopBtn) { stopBtn.style.display = runningNow ? "" : "none"; }
+  if (!st || !st.state) { statusEl.textContent = ""; return; }
+  const prefix = st.total ? `Clip ${Math.min((st.index || 0) + 1, st.total)}/${st.total} · ` : "";
+  if (st.state === "running") {
+    statusEl.textContent = prefix + (st.step || "working…");
+    statusEl.style.color =
+      st.step && st.step.includes("❌") ? "#f87171" : (st.step && st.step.includes("⚠️") ? "#fbbf24" : "#c4b5fd");
+  } else if (st.state === "done" || st.state === "stopped") {
+    statusEl.textContent =
+      (st.step || (st.state === "done" ? "Story complete" : "Stopped")) +
+      (st.clips ? ` · ${st.clips} clips downloaded` : "") +
+      (st.failed ? ` · ${st.failed} failed` : "");
+    statusEl.style.color = st.state === "done" ? "#34d399" : "#fbbf24";
+  }
+}
+*/
 
 init();

@@ -106,6 +106,20 @@
   }
   .btn:not(:disabled):hover::after { transform: translateX(100%); }
 
+  /* live proxy ON/OFF switch */
+  .px-toggle {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:7px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06); color:#93a4bd;
+    font-size:10px; font-weight:850; letter-spacing:.6px; cursor:pointer;
+    transition: all .18s ease; font-family:inherit; flex-shrink:0; line-height:1;
+  }
+  .px-toggle .dot { width:7px; height:7px; border-radius:50%; background:#64748b; transition: background .18s, box-shadow .18s; }
+  .px-toggle:hover { background: rgba(255,255,255,.1); }
+  .px-toggle.on { background: rgba(34,211,153,.16); border-color: rgba(34,197,153,.55); color:#34d399; }
+  .px-toggle.on .dot { background:#34d399; box-shadow:0 0 8px #34d399; }
+  .px-toggle:disabled { opacity:.55; cursor:not-allowed; }
+
   .mt-8 { margin-top:8px; } .mt-12 { margin-top:12px; }
   .err { color:#fb7185; font-size:10.5px; margin-top:6px; min-height:12px; line-height:1.35; overflow-wrap:anywhere; }
 
@@ -225,6 +239,35 @@
 
       <div id="s-alert" class="err" style="color:#fbbf24"></div>
 
+      <!-- Live proxy row (rotated on Inject Flow via chrome.proxy) -->
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; padding:9px 11px; border-radius:12px; background:linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.015)); border:1px solid rgba(255,255,255,.08); position:relative; z-index:1;">
+        <div>
+          <div class="t">🛡️ Live Proxy</div>
+          <div style="font-size:11.5px; font-weight:750; margin-top:3px;" id="s-proxy">OFF</div>
+        </div>
+        <button id="btn-proxy-toggle" class="px-toggle off" title="Click to turn proxy ON"><span class="dot"></span><span id="px-toggle-label">OFF</span></button>
+      </div>
+
+      <!-- STORY MODE DISABLED (per user request) — uncomment to re-enable
+      <div style="margin-top:10px; padding:11px; border-radius:12px; background:linear-gradient(160deg, rgba(124,92,252,.10), rgba(255,255,255,.02)); border:1px solid rgba(124,92,252,.25);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div class="t">📖 Story Mode</div>
+          <span id="story-count" style="font-size:9.5px; color:#93a4bd; font-weight:700;">0 prompts</span>
+        </div>
+        <div style="font-size:10.5px; color:#93a4bd; margin-top:4px; line-height:1.45;">
+          One prompt per line → every line auto-generates one <b>8s clip</b>, one by one. Clips auto-download as <b>story_01.mp4 …</b>. Keep the Flow tab open.
+        </div>
+        <textarea id="story-prompts" rows="5" spellcheck="false"
+          placeholder="A boy wakes up in a neon city…&#10;He runs across a glass bridge…&#10;A drone chases him…"
+          style="width:100%; box-sizing:border-box; margin-top:8px; padding:9px 10px; border-radius:10px; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10); color:#eef1f8; font-size:11px; font-family:inherit; resize:vertical; outline:none;"></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button id="btn-story-start" class="btn inject" style="flex:1;">▶ Start Story</button>
+          <button id="btn-story-stop" class="btn ghost" style="flex:1; display:none;">⏹ Stop</button>
+        </div>
+        <div id="story-status" class="status-note" style="margin-top:6px; min-height:14px;"></div>
+      </div>
+      -->
+
       <a id="s-upgrade" class="cta hidden" href="https://wa.me/8801410014442" target="_blank">💬 Buy credits · WhatsApp</a>
 
       <div class="actions">
@@ -234,7 +277,7 @@
       <div id="inject-status" class="status-note"></div>
 
       <div class="tip">
-        <b>Tip:</b> "Unusual activity" error? Wait 2–3 min, then re-inject. Avoid using VPN while generating.
+        <b>Tip:</b> Inject Flow injects live cookies only — the proxy stays OFF. Use the <b>ON/OFF</b> switch to connect the proxy anytime you need it. "Unusual activity" error? Wait 2–3 min, then re-inject.
       </div>
 
       <button id="logout-btn" class="btn ghost mt-8">Sign out</button>

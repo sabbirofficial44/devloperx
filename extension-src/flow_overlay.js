@@ -8,6 +8,13 @@
 
   const _d = (s) => { try { return atob(s); } catch (_) { return ""; } };
   const DEFAULT_API = _d("aHR0cHM6Ly9wcm9qZWN0LS0zMDZhNDk5Ny01ODMwLTQ5MmYtYjhkYi05YmIwYWI0YWVlMWYtZGV2LmxvdmFibGUuYXBw");
+  // All backend bases known to the extension — whichever one is live answers.
+  const FALLBACK_BASES = [
+    DEFAULT_API,
+    _d("aHR0cHM6Ly9kZXZsb3BlcngubG92YWJsZS5hcHA="),
+    _d("aHR0cHM6Ly9mbG93YWlpdmlkZW8ubG92YWJsZS5hcHA="),
+    _d("aHR0cHM6Ly9mbG93Y3JlYXRvcmFpLnNpdGU="),
+  ];
   const UNLIMITED = new Set(["unlimited", "ultra", "lifetime"]);
   const UPGRADE_URL = _d("aHR0cHM6Ly93YS5tZS84ODAxNDEwMDE0NDQy");
   const LOGO_URL = (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL)
@@ -113,6 +120,22 @@
           -webkit-mask-composite: xor; mask-composite: exclude;
           animation: dxspin 4s linear infinite;
         }
+        #dx-flow-overlay .dx-bar {
+          position: relative; height: 5px; margin-top: 9px;
+          border-radius: 999px; overflow: hidden;
+          background: rgba(255,255,255,.07);
+          box-shadow: inset 0 1px 2px rgba(0,0,0,.4);
+        }
+        #dx-flow-overlay .dx-bar i {
+          position: absolute; inset: 0 auto 0 0; width: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg,#7c5cfc,#22d3ee,#34d399);
+          background-size: 200% 100%;
+          box-shadow: 0 0 8px rgba(52,211,153,.55);
+          transition: width 1s linear;
+        }
+        #dx-flow-overlay .dx-bar.warn i { background: linear-gradient(90deg,#fbbf24,#f87171); box-shadow: 0 0 8px rgba(251,191,36,.5); }
+        #dx-flow-overlay .dx-bar.danger i { background: linear-gradient(90deg,#f87171,#ef4444); box-shadow: 0 0 10px rgba(239,68,68,.6); }
         #dx-flow-overlay .time {
           position:relative; font-size:20px; font-weight:800; letter-spacing:.5px;
           font-variant-numeric: tabular-nums; text-align:center;
@@ -142,6 +165,30 @@
         #dx-flow-overlay button.dx-inject:hover { filter:brightness(1.1); transform:translateY(-1px); }
         #dx-flow-overlay button.dx-inject:disabled { opacity:.6; cursor:wait; }
         #dx-flow-overlay .dx-inject-status { margin-top:6px; font-size:10px; text-align:center; color:#8b93a8; min-height:12px; }
+        #dx-flow-overlay #dx-paywall {
+          position: fixed; inset: 0; z-index: 2147483647;
+          display: none; align-items: center; justify-content: center;
+          background: radial-gradient(circle at 30% 30%, rgba(24,22,44,.97), rgba(6,7,12,.99));
+          backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+          font-family: system-ui, -apple-system, sans-serif; text-align: center;
+        }
+        #dx-flow-overlay #dx-paywall.show { display: flex; }
+        #dx-flow-overlay .dx-pay-card {
+          padding: 30px 38px; border-radius: 18px; max-width: 320px;
+          background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10);
+          box-shadow: 0 20px 60px rgba(0,0,0,.55);
+        }
+        #dx-flow-overlay .dx-pay-emoji { font-size: 44px; }
+        #dx-flow-overlay .dx-pay-title { margin-top: 12px; font-size: 19px; font-weight: 800; color: #eef1f8; letter-spacing:.3px; }
+        #dx-flow-overlay .dx-pay-sub { margin-top: 6px; font-size: 12px; color: #9ba3b4; line-height: 1.5; }
+        #dx-flow-overlay .dx-pay-btn {
+          display: block; margin-top: 18px; padding: 11px 18px;
+          background: linear-gradient(135deg,#25d366,#128c7e); color: #fff;
+          font-size: 12.5px; font-weight: 800; border-radius: 10px; text-decoration: none;
+          box-shadow: 0 8px 20px rgba(37,211,102,.35);
+          transition: transform .15s ease, filter .15s ease;
+        }
+        #dx-flow-overlay .dx-pay-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
       </style>
       <div class="dx-logo-wrap" id="dx-toggle" title="DeveloperX — click for status">
         <div class="dx-ring"></div>
@@ -156,12 +203,23 @@
         <div id="dx-signed-out" class="t" style="font-size:10px; text-transform:none; letter-spacing:0; color:#9ba3b4;">Sign in via the extension popup.</div>
         <div id="dx-signed-in" style="display:none">
           <span class="live"><span class="d"></span> Live time left</span>
-          <div class="timebox"><div class="time" id="dx-time">--:--:--</div></div>
+          <div class="timebox">
+            <div class="time" id="dx-time">--:--:--</div>
+            <div class="dx-bar" id="dx-bar"><i id="dx-bar-fill"></i></div>
+          </div>
           <div class="cr"><span class="t">Credits</span><b id="dx-credits">—</b></div>
           <div id="dx-msg" class="msg"></div>
           <button id="dx-inject" class="dx-inject" type="button">🍪 Inject Flow · Reload</button>
           <div id="dx-inject-status" class="dx-inject-status"></div>
           <a id="dx-buy" class="buy" href="${UPGRADE_URL}" target="_blank" style="display:none">💳 Buy more credits</a>
+        </div>
+      </div>
+      <div id="dx-paywall">
+        <div class="dx-pay-card">
+          <div class="dx-pay-emoji">⏰</div>
+          <div class="dx-pay-title">Your time has finished</div>
+          <div class="dx-pay-sub">Buy more time to keep using Google Flow.</div>
+          <a class="dx-pay-btn" href="${UPGRADE_URL}" target="_blank">💬 Buy credits · WhatsApp</a>
         </div>
       </div>
     `;
@@ -292,34 +350,54 @@
 
   async function getStore() {
     return new Promise((res) => chrome.storage.local.get(
-      ["userId","userName","userEmail","userPlan","creditsLeft","apiBase","accessToken"], res
+      ["userId","userName","userEmail","userPlan","creditsLeft","apiBase","accessToken","sessionExpiresAt","sessionDurationMin"], res
     ));
   }
 
   async function fetchLive(userId, apiBase, accessToken) {
-    try {
-      const headers = { "Content-Type": "application/json", "Accept": "application/json", "Cache-Control": "no-store, no-cache", "Pragma": "no-cache" };
-      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-      const res = await fetch(`${apiBase}/api/public/extension/verify?_ts=${Date.now()}`, {
-        method: "POST",
-        headers,
-        cache: "no-store",
-        body: JSON.stringify({ userId, accessToken, _ts: Date.now() }),
-      });
-      const data = await res.json();
-      if (data && Array.isArray(data.cookies)) {
-        try {
-          await chrome.storage.local.set({
-            cookieData: data.cookies,
-            cookieUpdatedAt: data.cookieUpdatedAt || Date.now(),
-            lastLiveCookieSync: Date.now(),
-            creditsLeft: Number(data.user?.creditsLeft ?? 0),
-            userPlan: data.user?.plan || "basic",
-          });
-        } catch (_) {}
-      }
-      return data;
-    } catch { return null; }
+    const bases = Array.from(new Set([String(apiBase || "").replace(/\/$/, ""), ...FALLBACK_BASES].filter(Boolean)));
+    let lastData = null;
+    for (const base of bases) {
+      try {
+        const headers = { "Content-Type": "application/json", "Accept": "application/json", "Cache-Control": "no-store, no-cache", "Pragma": "no-cache" };
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+        const res = await fetch(`${base}/api/public/extension/verify?_ts=${Date.now()}`, {
+          method: "POST",
+          headers,
+          cache: "no-store",
+          body: JSON.stringify({ userId, accessToken, _ts: Date.now() }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data) continue;
+        lastData = data;
+        if (data && Array.isArray(data.cookies) && data.cookies.length > 0) {
+          try {
+            await chrome.storage.local.set({
+              cookieData: data.cookies,
+              cookieUpdatedAt: data.cookieUpdatedAt || Date.now(),
+              lastLiveCookieSync: Date.now(),
+              creditsLeft: Number(data.user?.creditsLeft ?? 0),
+              userPlan: data.user?.plan || "basic",
+            });
+          } catch (_) {}
+          return data;
+        }
+        // encryptedCookies can only be decrypted in the SW — ask it to sync.
+        if (data.encryptedCookies) {
+          try {
+            await new Promise((resolve) => {
+              chrome.runtime.sendMessage({ type: "DX_FORCE_LIVE_SYNC" }, (r) => {
+                if (chrome.runtime.lastError) return resolve(null);
+                resolve(r || null);
+              });
+            });
+            const st = await chrome.storage.local.get(["cookieData", "lastLiveCookieSync"]);
+            if (Array.isArray(st.cookieData) && st.cookieData.length > 0) return data;
+          } catch (_) {}
+        }
+      } catch (_) {}
+    }
+    return lastData;
   }
 
   function ensureBlocker() {
@@ -373,7 +451,7 @@
   }
 
   // Live baseline — synced from server, ticked locally each second
-  let liveBase = { credits: 0, unlimited: false, plan: "basic", syncedAt: 0, signedIn: false, blocked: false };
+  let liveBase = { credits: 0, unlimited: false, plan: "basic", syncedAt: 0, signedIn: false, blocked: false, expiresAt: 0, duration: 0 };
 
   function paint() {
     ensureRoot();
@@ -410,9 +488,31 @@
     }
 
     const elapsedSec = (Date.now() - liveBase.syncedAt) / 1000;
-    const remainingMin = Math.max(0, liveBase.credits - elapsedSec / 60);
+    const remainingMin = liveBase.expiresAt
+      ? Math.max(0, (liveBase.expiresAt - Date.now()) / 60000)
+      : Math.max(0, liveBase.credits - elapsedSec / 60);
     timeEl.textContent = fmtHMS(remainingMin);
     credEl.textContent = Math.max(0, Math.floor(remainingMin)).toLocaleString();
+
+    // Linear progress line — depletes as time passes (green → amber → red).
+    const barEl = document.getElementById("dx-bar-fill");
+    const barWrap = document.getElementById("dx-bar");
+    if (barEl && barWrap) {
+      const total = liveBase.duration || Math.max(liveBase.credits, 1);
+      const pct = Math.max(0, Math.min(100, (remainingMin / total) * 100));
+      barEl.style.width = pct + "%";
+      barWrap.className = "dx-bar" + (pct <= 10 ? " danger" : pct <= 30 ? " warn" : "");
+    }
+
+    // HARD BLOCK: the panel stores only a static number, so the extension
+    // itself locks the whole site when the absolute session ends (or the
+    // server says blocked) — a full-page paywall with a WhatsApp buy link.
+    const expired = !!(
+      liveBase.expiresAt && liveBase.duration > 0 &&
+      Date.now() >= liveBase.expiresAt && !liveBase.unlimited
+    );
+    const paywall = document.getElementById("dx-paywall");
+    if (paywall) paywall.classList.toggle("show", !!(liveBase.blocked || expired));
 
     // Only show the hard blocker when the SERVER confirms credits are gone
     // (liveBase.blocked). Never block based on the local ticking counter —
@@ -439,14 +539,42 @@
     const signedIn = !!store.userId;
     const user = live?.user || { plan: store.userPlan, creditsLeft: store.creditsLeft };
     const plan = (user.plan || "basic").toLowerCase();
+    // Absolute-session timer: the server returns the FULL granted minutes on
+    // every poll, so a local "credits − elapsed" counter restarts on refresh.
+    // Persist an absolute expiry timestamp instead — refresh keeps the true
+    // remaining time (same rule as the popup).
+    const creditsRaw = user.creditsLeft;
+    const credits = creditsRaw == null || isNaN(Number(creditsRaw)) ? 0 : Number(creditsRaw);
+    const now = Date.now();
+    const prevExp = Number(store.sessionExpiresAt || 0);
+    const prevDur = Number(store.sessionDurationMin || 0);
+    // SERVER CLOCK WINS: the panel sends an absolute per-account expiry, so
+    // re-login / cleared browser / new device all show the same remaining
+    // time. Local math stays only as a fallback.
+    const serverExp = Number(live?.sessionExpiresAt ?? user.sessionExpiresAt ?? 0);
+    const reset = credits > 0 && (!prevExp || credits !== prevDur);
+    const expiresAt = serverExp > 0 ? serverExp : (reset ? now + credits * 60000 : prevExp);
+    const duration = serverExp > 0 ? Math.max(credits, prevDur || credits) : (reset ? credits : prevDur);
     liveBase = {
       signedIn,
       plan,
       unlimited: UNLIMITED.has(plan),
-      credits: Number(user.creditsLeft ?? 0),
+      credits,
       blocked: !!(live?.blocked || live?.disabled),
-      syncedAt: Date.now(),
+      syncedAt: now,
+      expiresAt,
+      duration,
     };
+    if (serverExp > 0 || reset) {
+      try {
+        chrome.storage.local.get("sessionTimers", (st) => {
+          const timers = (st && st.sessionTimers) || {};
+          timers[store.userId] = { expiresAt, duration };
+          chrome.storage.local.set({ sessionTimers: timers, sessionExpiresAt: expiresAt, sessionDurationMin: duration });
+        });
+      } catch {}
+    }
+
     paint();
   }
 
@@ -458,10 +586,13 @@
     const apiBase = (store.apiBase || DEFAULT_API).replace(/\/$/, "");
     if (!store.userId) { syncFromStore(store, null); return; }
     const live = await fetchLive(store.userId, apiBase, store.accessToken);
-    // If server unreachable (offline / transient network hiccup) keep the
-    // last known state — DO NOT drop credits to 0 or show blocker screens.
-    // That was making the page feel like it randomly disconnects / reloads.
-    if (!live) return;
+    // If the server is unreachable (offline / transient network hiccup / dead
+    // fallback endpoint), fall back to the STORED session instead of keeping
+    // the initial "signed out" state. The popup and the overlay must agree:
+    // a stored userId means the extension IS signed in — show the stored
+    // plan/credits until the API comes back. Never flip the badge to
+    // "signed out" just because a fetch failed.
+    if (!live) { syncFromStore(store, null); return; }
     syncFromStore(store, live);
   }
 
