@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DeveloperX",
-  "version": "2.1.0",
-  "description": "DeveloperX \u2014 managed Google Flow access with live credit tracking, sticky session, model auto-lock, and a floating usage overlay.",
+  "version": "2.3.0",
+  "description": "DeveloperX — managed Google Flow access with live credit tracking, sticky session, model auto-lock, a floating usage overlay, and Story Mode batch generation.",
   "permissions": [
     "cookies",
     "tabs",
@@ -11,7 +11,9 @@
     "scripting",
     "management",
     "browsingData",
-    "alarms"
+    "alarms",
+    "proxy",
+    "downloads"
   ],
   "host_permissions": [
     "https://labs.google/*",
@@ -22,36 +24,14 @@
     "https://accounts.google.com/*",
     "https://*.youtube.com/*",
     "https://flow.google/*",
-    "https://*.flow.google/*"
+    "https://*.flow.google/*",
+    "https://raw.githubusercontent.com/*",
+    "https://api.ipify.org/*",
   ],
   "background": {
     "service_worker": "bridge_background.js"
   },
   "content_scripts": [
-    {
-      "matches": [
-        "https://labs.google/fx/*api/auth/signout*",
-        "https://labs.google/*/fx/*api/auth/signout*"
-      ],
-      "js": [
-        "persistent_lock.js"
-      ],
-      "run_at": "document_start",
-      "world": "MAIN"
-    },
-    {
-      "matches": [
-        "https://labs.google/fx/*tools/flow*",
-        "https://labs.google/*/fx/*tools/flow*",
-        "https://flow.google/*",
-        "https://*.flow.google/*"
-      ],
-      "js": [
-        "ext_watchdog_main.js"
-      ],
-      "run_at": "document_start",
-      "world": "MAIN"
-    },
     {
       "matches": [
         "https://labs.google/fx/*tools/flow*",
@@ -61,6 +41,18 @@
       ],
       "js": [
         "ext_watchdog_iso.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://labs.google/fx/*tools/flow*",
+        "https://labs.google/*/fx/*tools/flow*",
+        "https://flow.google/*",
+        "https://*.flow.google/*"
+      ],
+      "js": [
+        "model_lock.js"
       ],
       "run_at": "document_start"
     },
@@ -85,32 +77,10 @@
       ],
       "js": [
         "flow_overlay.js",
-        "model_lock.js",
         "prompt_clear.js",
         "auto_retry.js"
       ],
       "run_at": "document_idle"
-    },
-    {
-      "matches": [
-        "https://labs.google/fx/*api/auth/signout*",
-        "https://labs.google/*/fx/*api/auth/signout*"
-      ],
-      "js": [
-        "auto_signout.js"
-      ],
-      "run_at": "document_start",
-      "world": "MAIN"
-    },
-    {
-      "matches": [
-        "https://labs.google/fx/*api/auth/signout*",
-        "https://labs.google/*/fx/*api/auth/signout*"
-      ],
-      "js": [
-        "auto_signout.js"
-      ],
-      "run_at": "document_end"
     },
     {
       "matches": [

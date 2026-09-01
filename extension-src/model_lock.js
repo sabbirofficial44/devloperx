@@ -1,29 +1,32 @@
-/* DeveloperX — Flow single model lock v4.5
- * Real model: the Lite / Lower Priority option that Flow exposes.
- * Visible model: only "Veo 3.5 Pro".
- *
- * v4.5 fixes (deep debug pass):
- *  - Scan is scoped to the model dropdown/trigger instead of every button+li
- *    on the page (v4.4 hid ANY control whose text contained pro/fast/quality
- *    and thrashed layout every 900ms, which made typing/backspace laggy in
- *    the prompt box).
- *  - Heavy work is skipped while the user is typing.
- *  - Mutation handling is debounced.
+/* DeveloperX — Flow model display lock v6.1 (true zero-flash)
+ * ------------------------------------------------------------------
+ * v6.1: the relabel runs SYNCHRONOUSLY inside the MutationObserver
+ * callback (a microtask that fires BEFORE the browser paints), so when
+ * the dropdown opens — or the page first renders — the "Lower Priority"
+ * text is replaced in the very same frame. No debounce window, no flash.
+ * The fast path only scans freshly-added subtrees (the dropdown), so the
+ * page never freezes from full-document scans.
+ * Behavior identical to v6: click-through, native rows visible with
+ * locks, button shows the clicked name, background always uses the
+ * Lite / Lower Priority tier, video mode only.
  */
 (function () {
-  if (window.__DX_MODEL_LOCK_V45__) return;
-  window.__DX_MODEL_LOCK_V45__ = true;
+  if (window.__DX_MODEL_LOCK_V61__) return;
+  window.__DX_MODEL_LOCK_V61__ = true;
 
-  const DISPLAY_LABEL = "Veo 3.5 Pro";
+  const DEFAULT_DISPLAY = "Veo 3.1 Pro";
+  const REAL_OPTION_LABEL = "Veo 3.1 Pro";
   const MODEL_WORDS = /\b(omni|veo)\b/i;
-  const TARGET_WORDS = /lower\s*priority|low\s*priority|lite/i;
+  const REAL_WORDS = /lower\s*priority/i;
   const MAX_TEXT = 140;
 
+  let currentDisplay = DEFAULT_DISPLAY;
+
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const clean = (value) => String(value || "").replace(/\s+/g, " ").trim();
+  const clean = (v) => String(v || "").replace(/\s+/g, " ").trim();
   const textOf = (el) => clean(el?.textContent);
 
-  /* ---------- typing guard: never fight the prompt box ---------- */
+  /* ---------- typing guard ---------- */
   let lastTyped = 0;
   const markTyped = () => { lastTyped = Date.now(); };
   document.addEventListener("keydown", markTyped, true);
@@ -35,31 +38,34 @@
     return a.tagName === "TEXTAREA" || a.tagName === "INPUT" || a.isContentEditable === true;
   }
 
-  function visible(el) {
+  function shown(el) {
     if (!el || !el.isConnected) return false;
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 4 || rect.height <= 4) return false;
-    const css = getComputedStyle(el);
-    return css.display !== "none" && css.visibility !== "hidden";
+    try {
+      const css = getComputedStyle(el);
+      return css.display !== "none" && css.visibility !== "hidden";
+    } catch {
+      return false;
+    }
   }
 
-  function isTargetText(text) {
-    const t = clean(text).toLowerCase();
-    if (!t || t.length > MAX_TEXT) return false;
-    return /veo/.test(t) && TARGET_WORDS.test(t);
+  function isModelText(t) {
+    const v = clean(t);
+    return !!v && v.length <= MAX_TEXT && MODEL_WORDS.test(v);
   }
-
-  function isModelText(text) {
-    const t = clean(text);
-    return !!t && t.length <= MAX_TEXT && MODEL_WORDS.test(t);
+  function isRealText(t) {
+    return REAL_WORDS.test(clean(t).toLowerCase());
   }
 
   function clickLikeUser(el) {
     if (!el) return false;
-    try { el.scrollIntoView({ block: "center", inline: "center" }); } catch {}
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
+    let cx = 0, cy = 0;
+    try {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        cx = rect.left + rect.width / 2;
+        cy = rect.top + rect.height / 2;
+      }
+    } catch {}
     for (const type of ["pointerover", "pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
       try {
         el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, composed: true, view: window, clientX: cx, clientY: cy, button: 0 }));
@@ -69,26 +75,26 @@
     return true;
   }
 
+  /* ---------- CSS (document_start → zero flash) ---------- */
   function ensureStyle() {
     if (document.getElementById("dx-model-lock-style")) return;
     const style = document.createElement("style");
     style.id = "dx-model-lock-style";
     style.textContent = `
-      [data-dx-model-label="1"] {
+      :root { --dx-model-display: "${DEFAULT_DISPLAY}"; }
+      [data-dx-trigger-label="1"] {
         position: relative !important;
         overflow: hidden !important;
         color: transparent !important;
-        text-shadow: none !important;
         -webkit-text-fill-color: transparent !important;
       }
-      [data-dx-model-label="1"] * {
+      [data-dx-trigger-label="1"] * {
         opacity: 0 !important;
         color: transparent !important;
-        text-shadow: none !important;
         -webkit-text-fill-color: transparent !important;
       }
-      [data-dx-model-label="1"]::after {
-        content: "${DISPLAY_LABEL}";
+      [data-dx-trigger-label="1"]::after {
+        content: var(--dx-model-display);
         position: absolute !important;
         inset: 0 !important;
         z-index: 2147483647 !important;
@@ -106,190 +112,273 @@
         pointer-events: none !important;
         opacity: 1 !important;
       }
-      [data-dx-model-trigger="1"] {
-        background: rgba(34,34,34,.96) !important;
-        border-color: rgba(255,255,255,.08) !important;
+      [data-dx-option-label="1"] {
+        position: relative !important;
+        overflow: hidden !important;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
       }
-      [data-dx-model-option="target"] {
-        display: flex !important;
-        min-height: 42px !important;
-        background: rgba(39,39,42,.98) !important;
-      }
-      [data-dx-model-option="hidden"] {
-        display: none !important;
-        height: 0 !important;
-        min-height: 0 !important;
-        max-height: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: 0 !important;
+      [data-dx-option-label="1"] * {
         opacity: 0 !important;
-        visibility: hidden !important;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+      }
+      [data-dx-option-label="1"]::after {
+        content: "${REAL_OPTION_LABEL}";
+        position: absolute !important;
+        inset: 0 !important;
+        z-index: 2147483647 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        box-sizing: border-box !important;
+        padding: 0 14px !important;
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc !important;
+        font: inherit !important;
+        font-weight: 600 !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
         pointer-events: none !important;
+        opacity: 1 !important;
       }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
 
+  function updateDisplay() {
+    try {
+      document.documentElement.style.setProperty("--dx-model-display", '"' + String(currentDisplay).replace(/"/g, "") + '"');
+    } catch {}
+  }
+
   function nearestClickable(el) {
     if (!el) return null;
-    return el.closest('[role="option"], [role="menuitem"], [data-radix-collection-item], button, li') || el;
+    return el.closest('[role="option"], [role="menuitem"], [role="radio"], [data-radix-collection-item], li, button') || el;
   }
 
-  function markLabel(el, kind) {
-    if (!el || !visible(el)) return;
-    el.querySelectorAll?.('[data-dx-model-label="1"]').forEach((child) => {
-      if (child !== el) child.removeAttribute("data-dx-model-label");
-    });
-    el.setAttribute("data-dx-model-label", "1");
-    if (kind === "trigger") el.setAttribute("data-dx-model-trigger", "1");
-  }
-
-  /* ---------- trigger: only real select-like controls ---------- */
+  /* Video-mode trigger only (veo/omni text). Image mode → null → we stand down. */
   function findModelTrigger() {
     const nodes = document.querySelectorAll(
       'button[aria-haspopup="listbox"], button[aria-haspopup="menu"], [role="combobox"], [aria-haspopup="listbox"], [aria-haspopup="menu"]'
     );
-    let fallback = null;
     for (const el of nodes) {
-      if (!visible(el)) continue;
+      if (!shown(el)) continue;
       const t = textOf(el);
       if (!isModelText(t)) continue;
-      if (isTargetText(t)) return el;
-      if (!fallback) fallback = el;
+      return el;
     }
-    return fallback;
+    return null;
   }
 
-  /* ---------- options: only inside an OPEN popup ---------- */
-  function openPopups() {
-    return [
-      ...document.querySelectorAll(
-        '[role="listbox"], [role="menu"], [data-radix-popper-content-wrapper], [data-state="open"][role="dialog"]'
-      ),
-    ].filter(visible);
+  function insideOpenDropdown(el) {
+    if (!el) return false;
+    try {
+      return !!el.closest('[role="listbox"], [role="menu"], [data-radix-popper-content-wrapper]');
+    } catch {
+      return false;
+    }
   }
 
-  function optionCandidates() {
-    const out = [];
-    const seen = new Set();
-    for (const popup of openPopups()) {
-      const nodes = popup.querySelectorAll('[role="option"], [role="menuitem"], [data-radix-collection-item], li');
-      for (const n of nodes) {
-        const el = nearestClickable(n);
-        if (!el || seen.has(el) || !visible(el)) continue;
-        seen.add(el);
-        if (isModelText(textOf(el))) out.push(el);
+  /* ---------- auto-select: actually CLICK the "Lower Priority" tier so the
+   * background really uses the Veo lite tier. The relabel alone only changes
+   * the visible name — the selection itself needs a real click. We click once
+   * per dropdown open (guarded), and retry briefly if the dropdown stays open
+   * (the click didn't register). */
+  let lastTierClick = 0;
+  function ensureTierSelected(row) {
+    try {
+      if (!row || !row.isConnected || userIsTyping()) return;
+      if (!insideOpenDropdown(row)) return; // only inside the live dropdown
+      const now = Date.now();
+      if (now - lastTierClick < 1200) return;
+      lastTierClick = now;
+      clickLikeUser(row);
+      // If the dropdown stays open the click didn't take — retry a few times.
+      let tries = 0;
+      const retry = setInterval(() => {
+        tries++;
+        if (tries >= 3 || !row.isConnected) { clearInterval(retry); return; }
+        if (userIsTyping()) return;
+        clickLikeUser(row);
+      }, 350);
+    } catch {}
+  }
+
+  /* ---------- fast path: label "lower priority" inside a small subtree ---------- */
+  function labelRealTextIn(root) {
+    let found = false;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (!(node instanceof HTMLElement)) continue;
+      if (node.children.length > 0) continue;
+      const t = textOf(node);
+      if (!t || !isRealText(t)) continue;
+      const row = nearestClickable(node) || node;
+      if (row && row.isConnected) {
+        row.setAttribute("data-dx-option-label", "1");
+        found = true;
+        ensureTierSelected(row);
       }
     }
-    return out;
+    return found;
   }
 
-  function findTargetOption(trigger) {
-    return optionCandidates().find((el) => el !== trigger && !el.contains(trigger) && isTargetText(textOf(el))) || null;
-  }
-
-  function lockVisibleLabels() {
+  function relabelTrigger() {
     const trigger = findModelTrigger();
-    if (trigger) markLabel(trigger, "trigger");
-
-    const options = optionCandidates();
-    // Only prune the list when the real target is actually present, so we
-    // never blank out an unrelated menu.
-    const hasTarget = options.some((el) => isTargetText(textOf(el)));
-    for (const option of options) {
-      if (option === trigger) continue;
-      if (isTargetText(textOf(option))) {
-        option.setAttribute("data-dx-model-option", "target");
-        markLabel(option, "option");
-      } else if (hasTarget) {
-        option.setAttribute("data-dx-model-option", "hidden");
-      }
-    }
+    if (trigger) trigger.setAttribute("data-dx-trigger-label", "1");
   }
 
-  let selecting = false;
-  let lastAttempt = 0;
-
-  async function forceSelectLite() {
-    if (selecting) return;
-    if (userIsTyping()) return;
-    const now = Date.now();
-    if (now - lastAttempt < 900) return;
-    lastAttempt = now;
-
+  /* ---------- full pass (debounced — only for the steady state) ---------- */
+  function relabel() {
     const trigger = findModelTrigger();
     if (!trigger) return;
-    markLabel(trigger, "trigger");
-
-    if (isTargetText(textOf(trigger))) {
-      lockVisibleLabels();
-      return;
+    trigger.setAttribute("data-dx-trigger-label", "1");
+    const walker = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_ELEMENT);
+    let node;
+    const seen = new Set();
+    while ((node = walker.nextNode())) {
+      if (!(node instanceof HTMLElement)) continue;
+      if (node.children.length > 0) continue;
+      const t = textOf(node);
+      if (!t || !isRealText(t)) continue;
+      const row = nearestClickable(node) || node;
+      if (row && row !== trigger && row.isConnected && !seen.has(row)) {
+        seen.add(row);
+        row.setAttribute("data-dx-option-label", "1");
+      }
     }
+  }
 
-    selecting = true;
+  /* ---------- one-time auto-open on load (video mode only) so the Veo
+   * lower-priority tier gets selected even if the user never touches the
+   * dropdown — the observer's fast path clicks the row right after. */
+  setTimeout(() => {
     try {
-      clickLikeUser(trigger);
-      await wait(200);
-      lockVisibleLabels();
-
-      let option = findTargetOption(trigger);
-      if (!option) {
-        await wait(250);
-        lockVisibleLabels();
-        option = findTargetOption(trigger);
-      }
-
-      if (option) {
-        markLabel(option, "option");
-        clickLikeUser(option);
-        await wait(200);
-        lockVisibleLabels();
-      } else {
-        // Close the menu we opened so we don't trap the user.
-        try { document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); } catch {}
-      }
-    } finally {
-      selecting = false;
-    }
-  }
-
-  let debounceTimer = null;
-  function schedule() {
-    if (debounceTimer) return;
-    debounceTimer = setTimeout(() => {
-      debounceTimer = null;
       if (userIsTyping()) return;
-      ensureStyle();
-      lockVisibleLabels();
-    }, 250);
-  }
-
-  function start() {
-    ensureStyle();
-    schedule();
-
-    [200, 600, 1200, 2400, 4000].forEach((ms) => setTimeout(forceSelectLite, ms));
-
-    new MutationObserver(schedule).observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["aria-expanded", "data-state"],
-    });
-
-    setInterval(() => {
-      if (userIsTyping()) return;
-      ensureStyle();
-      lockVisibleLabels();
       const trigger = findModelTrigger();
-      if (trigger && !isTargetText(textOf(trigger))) forceSelectLite();
-    }, 2000);
+      if (!trigger) return;
+      clickLikeUser(trigger);
+    } catch {}
+  }, 1200);
+
+  /* ---------- synchronous observer: labels BEFORE the next paint ---------- */
+  let timer = null;
+  function schedule() {
+    if (timer) return;
+    timer = setTimeout(() => {
+      timer = null;
+      if (userIsTyping()) return;
+      updateDisplay();
+      relabel();
+    }, 150);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start, { once: true });
-  } else {
-    start();
+  function handleMutations(records) {
+    const trigger = findModelTrigger();
+    const videoMode = !!trigger;
+    let fast = false;
+    if (videoMode) {
+      for (const rec of records) {
+        // Attribute change on the trigger itself → re-assert immediately.
+        if (rec.type === "attributes" && rec.target instanceof HTMLElement) {
+          if (rec.target.getAttribute("data-dx-trigger-label") === "1" || rec.target === trigger || (rec.target.isSameNode && rec.target.isSameNode(trigger))) {
+            rec.target.setAttribute("data-dx-trigger-label", "1");
+            fast = true;
+          }
+        }
+        for (const node of rec.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          // Skip edits inside editable areas (typing) — never part of the dropdown.
+          try {
+            if (node.closest && node.closest('textarea, input, [contenteditable="true"]')) continue;
+          } catch {}
+          if (labelRealTextIn(node)) fast = true;
+        }
+      }
+      if (fast) updateDisplay();
+    }
+    schedule(); // steady-state debounced pass (cheap)
   }
+
+  /* ---------- click redirector: only model rows in the open dropdown ---------- */
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (userIsTyping()) return;
+      const el = e.target instanceof Element ? nearestClickable(e.target) : null;
+      if (!el) return;
+      if (!insideOpenDropdown(el)) return;
+      const t = textOf(el);
+      if (!isModelText(t)) return;
+      const trigger = findModelTrigger();
+      if (!trigger) return;
+
+      if (isRealText(t)) {
+        currentDisplay = DEFAULT_DISPLAY;
+        updateDisplay();
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      currentDisplay = t;
+      updateDisplay();
+      const real = findRealOption(trigger);
+      if (real) {
+        clickLikeUser(real);
+        setTimeout(() => { updateDisplay(); relabel(); }, 120);
+      } else {
+        clickLikeUser(trigger);
+        setTimeout(() => {
+          const real2 = findRealOption(trigger);
+          if (real2) clickLikeUser(real2);
+          setTimeout(() => { updateDisplay(); relabel(); }, 120);
+        }, 220);
+      }
+    },
+    true
+  );
+
+  function findRealOption(trigger) {
+    const walker = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_ELEMENT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (!(node instanceof HTMLElement)) continue;
+      if (node.children.length > 0) continue;
+      const t = textOf(node);
+      if (!t || !isRealText(t)) continue;
+      if (!node.isConnected) continue;
+      const el = nearestClickable(node) || node;
+      if (el && el !== trigger && el.isConnected) return el;
+    }
+    return null;
+  }
+
+  /* ---------- boot ---------- */
+  ensureStyle();
+  updateDisplay();
+  new MutationObserver(handleMutations).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["aria-expanded", "data-state", "class"],
+  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => { updateDisplay(); relabelTrigger(); relabel(); schedule(); }, { once: true });
+  } else {
+    updateDisplay();
+    relabelTrigger();
+    relabel();
+    schedule();
+  }
+  [150, 600, 1500, 3000].forEach((ms) => setTimeout(() => { updateDisplay(); relabelTrigger(); relabel(); }, ms));
+  setInterval(() => {
+    if (userIsTyping()) return;
+    updateDisplay();
+    relabelTrigger();
+    relabel();
+  }, 2000);
 })();
