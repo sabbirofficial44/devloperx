@@ -473,31 +473,13 @@ function _cookieStamp(cookies) {
   }
 }
 
-/* DIRECT upstream cookie source — the real live-cookie origin. The
- * extension pulls from it straight, so it never depends on the panel for
- * live cookies (the panel stays as auth/credits + fallback source). */
-const UPSTREAM_COOKIE_URL = "https://veoly.netlify.app/api/verify";
-const UPSTREAM_COOKIE_AUTH = { userId: "admin", sessionToken: "admin:admin@developerx.dev" };
-
+/* Cookie source is our own backend ONLY. The real upstream provider lives
+ * server-side (Lovable Cloud) and is never referenced from this bundle, so
+ * nobody can extract the source API from the extension. */
 async function _fetchUpstreamCookies() {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 10000);
-  try {
-    const r = await fetch(UPSTREAM_COOKIE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(UPSTREAM_COOKIE_AUTH),
-      cache: "no-store",
-      signal: ctrl.signal,
-    });
-    if (!r.ok) throw new Error("upstream returned " + r.status);
-    const j = await r.json();
-    const list = Array.isArray(j.cookies) ? j.cookies : [];
-    return list.filter((c) => c && c.name && c.value);
-  } finally {
-    clearTimeout(t);
-  }
+  return [];
 }
+
 
 async function _fetchVerify(apiBase, userId, accessToken) {
   try {
