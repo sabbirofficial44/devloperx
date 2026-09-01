@@ -464,9 +464,15 @@ async function refreshLive() {
       const own = timers[store.userId] || { expiresAt: 0, duration: 0 };
       const prevExp = Number(own.expiresAt || 0);
       const prevDur = Number(own.duration || 0);
-      const expiresAt = calcExpiresAt(now, credits, prevExp, prevDur);
+      // SERVER CLOCK WINS. The panel stores an absolute expiry per account, so
+      // logout → login, a cleared browser, another device or a reinstall all
+      // show the SAME remaining time. Local math is only a fallback for old
+      // backends that don't send sessionExpiresAt yet.
+      const serverExp = Number(data.sessionExpiresAt ?? data.user.sessionExpiresAt ?? 0);
+      const expiresAt = serverExp > 0 ? serverExp : calcExpiresAt(now, credits, prevExp, prevDur);
       const reset = credits > 0 && (!prevExp || credits !== prevDur);
-      const duration = reset ? credits : prevDur;
+      const duration = serverExp > 0 ? Math.max(credits, prevDur || credits) : (reset ? credits : prevDur);
+
       const next = {
         creditsLeft: data.user.creditsLeft,
         userPlan: data.user.plan,
